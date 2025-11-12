@@ -1,20 +1,34 @@
-export function Footer() {
-    return (
-      <footer className="border-t border-border/50 bg-gradient-to-b from-background to-secondary/20 mt-auto">
-        <div className="container mx-auto px-4 py-8 md:py-10">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-            {/* Columna 1: Información de la empresa */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
+import GrupoFGLogo from '@/assets/GrupoFG_Logo.png';
+
+interface FooterProps {
+  useLogoImage?: boolean;
+}
+
+export const Footer = ({ useLogoImage = false }: FooterProps) => {
+  return (
+    <footer className="border-t border-border/50 bg-gradient-to-b from-background to-secondary/20 mt-auto">
+      <div className="container mx-auto px-4 py-8 md:py-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+          {/* Columna 1: Información de la empresa */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              {useLogoImage ? (
+                <img
+                  src={GrupoFGLogo}
+                  alt="Grupo FG Logo"
+                  className="h-9 w-auto object-contain"
+                />
+              ) : (
                 <div className="h-9 w-9 rounded-lg gradient-orange flex items-center justify-center shadow-md">
                   <span className="text-white font-bold text-base">FG</span>
                 </div>
-                <span className="font-bold text-lg">Portal Grupo FG</span>
-              </div>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Sistema integral de gestión de viáticos empresariales
-              </p>
+              )}
+              <span className="font-bold text-lg">Portal Grupo FG</span>
             </div>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Sistema integral de gestión de viáticos empresariales
+            </p>
+          </div>
   
             {/* Columna 2: Enlaces rápidos */}
             <div className="space-y-3">

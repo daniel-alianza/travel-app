@@ -1,27 +1,28 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
-import { ProtectedRoute } from "./ProtectedRoute"
-import LoginPage from "@/features/auth/pages/login"
-import DashboardPage from "@/features/home/pages/page"
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { ProtectedRoute } from './ProtectedRoute';
+import LoginPage from '@/features/auth/pages/LoginPage';
+import RegisterPage from '@/features/auth/pages/RegisterPage';
+import DashboardPage from '@/features/home/pages/HomePage';
 
 const AppRouter = () => {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<LoginPage />} />
+        <Route path='/login' element={<LoginPage />} />
+        <Route path='/register' element={<RegisterPage />} />
         <Route
-          path="/home"
+          path='/home'
           element={
             <ProtectedRoute>
               <DashboardPage />
             </ProtectedRoute>
           }
         />
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path='/' element={<Navigate to='/login' replace />} />
+        <Route path='*' element={<Navigate to='/login' replace />} />
       </Routes>
     </BrowserRouter>
-  )
-}
+  );
+};
 
-export default AppRouter
-
+export default AppRouter;

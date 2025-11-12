@@ -142,3 +142,83 @@
     @apply backdrop-blur-sm bg-white/80 border border-white/20;
   }
 }
+
+/* Estilos para flip card */
+.flip-card-container {
+  perspective: 1000px;
+  width: 100%;
+  height: 100%;
+}
+
+.flip-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+}
+
+.flip-card-container:hover .flip-card-inner {
+  transform: rotateY(180deg);
+}
+
+.flip-card-front,
+.flip-card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: 0.75rem;
+  border: 1px solid oklch(0.93 0.01 85 / 0.5);
+  background-color: var(--card);
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+}
+
+.flip-card-front {
+  transform: rotateY(0deg);
+}
+
+.flip-card-back {
+  transform: rotateY(180deg);
+  background-color: #ffffff;
+  border-color: oklch(0.93 0.01 85);
+}
+
+/* Estilos personalizados para select */
+@layer base {
+  select {
+    color: var(--foreground) !important;
+    background-color: var(--background) !important;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+  }
+  
+  select option {
+    background-color: var(--background) !important;
+    color: var(--foreground) !important;
+    padding: 0.75rem 1rem !important;
+  }
+  
+  select:focus {
+    background-color: var(--background) !important;
+    color: var(--foreground) !important;
+    outline: none;
+  }
+  
+  select:not([value=""]) {
+    color: var(--foreground) !important;
+    background-color: var(--background) !important;
+  }
+  
+  select option:checked,
+  select option[selected] {
+    background: linear-gradient(to right, oklch(0.68 0.24 42 / 0.1), oklch(0.68 0.24 42 / 0.05)) !important;
+    color: var(--primary) !important;
+    font-weight: 500;
+  }
+  
+  /* Nota: Los estilos hover/focus en option no son soportados de manera consistente 
+     en todos los navegadores debido a limitaciones del sistema operativo */
+}

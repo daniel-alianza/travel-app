@@ -12,8 +12,48 @@ import {
   Receipt,
 } from 'lucide-react';
 
-export default function DashboardPage() {
+const DashboardPage = () => {
   const [showComprobaciones, setShowComprobaciones] = useState(false);
+
+  const menuItems = [
+    {
+      icon: FileText,
+      label: 'Crear Solicitud',
+      description:
+        'Crea nuevas solicitudes de viáticos con destino, fechas, motivos y presupuesto estimado.',
+    },
+    {
+      icon: FileStack,
+      label: 'Solicitudes de Viáticos',
+      description:
+        'Consulta y gestiona todas tus solicitudes. Revisa el estado y realiza seguimiento.',
+    },
+    {
+      icon: Send,
+      label: 'Dispersión de Viáticos',
+      description:
+        'Administra la dispersión y asignación de fondos para viáticos aprobados.',
+    },
+    {
+      icon: CheckCircle,
+      label: 'Autorización Contable',
+      description:
+        'Revisa y autoriza solicitudes desde el punto de vista contable y valida presupuestos.',
+    },
+    {
+      icon: CreditCard,
+      label: 'Asignación de Tarjeta',
+      description:
+        'Gestiona la asignación de tarjetas corporativas para viáticos y proyectos.',
+    },
+    {
+      icon: Receipt,
+      label: 'Comprobaciones de Viáticos',
+      description:
+        'Registra y revisa comprobantes de gastos. Sube recibos y facturas de tus viajes.',
+      onClick: () => setShowComprobaciones(true),
+    },
+  ];
 
   return (
     <div className='flex min-h-screen flex-col'>
@@ -41,37 +81,12 @@ export default function DashboardPage() {
 
           <div className='max-w-7xl mx-auto'>
             <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 lg:gap-10'>
-              <MenuCard
-                icon={FileText}
-                label='Crear Solicitud'
-                description='Crea nuevas solicitudes de viáticos con destino, fechas, motivos y presupuesto estimado.'
-              />
-              <MenuCard
-                icon={FileStack}
-                label='Solicitudes de Viáticos'
-                description='Consulta y gestiona todas tus solicitudes. Revisa el estado y realiza seguimiento.'
-              />
-              <MenuCard
-                icon={Send}
-                label='Dispersión de Viáticos'
-                description='Administra la dispersión y asignación de fondos para viáticos aprobados.'
-              />
-              <MenuCard
-                icon={CheckCircle}
-                label='Autorización Contable'
-                description='Revisa y autoriza solicitudes desde el punto de vista contable y valida presupuestos.'
-              />
-              <MenuCard
-                icon={CreditCard}
-                label='Asignación de Tarjeta'
-                description='Gestiona la asignación de tarjetas corporativas para viáticos y proyectos.'
-              />
-              <MenuCard
-                icon={Receipt}
-                label='Comprobaciones de Viáticos'
-                description='Registra y revisa comprobantes de gastos. Sube recibos y facturas de tus viajes.'
-                onClick={() => setShowComprobaciones(true)}
-              />
+              {menuItems.map((item) => (
+                <MenuCard
+                  key={item.label}
+                  {...item}
+                />
+              ))}
             </div>
           </div>
         </div>
@@ -84,4 +99,6 @@ export default function DashboardPage() {
       />
     </div>
   );
-}
+};
+
+export default DashboardPage;

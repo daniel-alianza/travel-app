@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { TravelExpenseForm } from '../components/TravelRequestForm';
+import TravelRequestForm from '../components/TravelRequestForm';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 
@@ -39,7 +39,7 @@ const TravelRequestPage = () => {
               </p>
             </div>
           </section>
-          <TravelExpenseForm />
+          <TravelRequestForm />
         </div>
       </main>
       <Footer useLogoImage={true} />

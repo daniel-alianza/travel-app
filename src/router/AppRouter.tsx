@@ -3,6 +3,7 @@ import { ProtectedRoute } from './ProtectedRoute';
 import LoginPage from '@/features/auth/pages/LoginPage';
 import RegisterPage from '@/features/auth/pages/RegisterPage';
 import DashboardPage from '@/features/home/pages/HomePage';
+import TravelRequestPage from '@/features/travel-request/pages/RequestPage';
 
 const AppRouter = () => {
   return (
@@ -15,6 +16,14 @@ const AppRouter = () => {
           element={
             <ProtectedRoute>
               <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path='/travel-request'
+          element={
+            <ProtectedRoute>
+              <TravelRequestPage />
             </ProtectedRoute>
           }
         />

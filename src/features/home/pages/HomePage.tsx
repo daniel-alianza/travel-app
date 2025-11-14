@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 import MenuCard from '../components/MenuCard';
@@ -13,6 +14,7 @@ import {
 } from 'lucide-react';
 
 const DashboardPage = () => {
+  const navigate = useNavigate();
   const [showComprobaciones, setShowComprobaciones] = useState(false);
 
   const menuItems = [
@@ -21,6 +23,7 @@ const DashboardPage = () => {
       label: 'Crear Solicitud',
       description:
         'Crea nuevas solicitudes de viáticos con destino, fechas, motivos y presupuesto estimado.',
+      onClick: () => navigate('/travel-request'),
     },
     {
       icon: FileStack,

@@ -1,4 +1,4 @@
-// import { travelApi } from '@/api/travel-api';
+// import travelApi from '@/api/travel-api';
 import type { LoginFormData } from '../interfaces/LoginFormData';
 import type { RegisterFormData } from '../interfaces/RegisterFormData';
 

@@ -73,7 +73,7 @@ export const Header = ({
             variant='ghost'
             size='icon'
             aria-label='Volver al inicio'
-            className='rounded-xl bg-primary/5 text-primary hover:bg-primary/10 hover:text-primary transition-colors'
+            className='rounded-xl text-primary hover:bg-primary/10 hover:text-primary transition-colors'
             onClick={() => (onBack ? onBack() : navigate('/home'))}
           >
             <ArrowLeft className='h-5 w-5' />

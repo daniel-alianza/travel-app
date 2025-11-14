@@ -30,6 +30,7 @@ const DashboardPage = () => {
       label: 'Solicitudes de Viáticos',
       description:
         'Consulta y gestiona todas tus solicitudes. Revisa el estado y realiza seguimiento.',
+      onClick: () => navigate('/travel-request-review'),
     },
     {
       icon: Send,

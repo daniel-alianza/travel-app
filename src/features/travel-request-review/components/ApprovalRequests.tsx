@@ -30,267 +30,68 @@ import {
   Filter,
   Banknote,
 } from 'lucide-react';
-import { useState, useMemo } from 'react';
+import useApprovalRequests from '../hooks/useApprovalRequests';
+import type { RequestStatus } from '../interfaces';
 
-interface Request {
-  id: number;
-  employee: string;
-  position: string;
-  company: string;
-  reason: string;
-  startDate: string;
-  endDate: string;
-  objectives: string[];
-  status: 'pending' | 'approved' | 'rejected';
-  dispersed: boolean; // Added dispersed field
-  expenses: {
-    transporte: number;
-    peajes: number;
-    hospedaje: number;
-    alimentos: number;
-    fletes: number;
-    herramientas: number;
-    enviosMensajeria: number;
-    miscelaneos: number;
-  };
-}
+const getStatusConfig = (status: RequestStatus) => {
+  switch (status) {
+    case 'pending':
+      return {
+        label: 'Pendiente',
+        variant: 'secondary' as const,
+        icon: Clock,
+        color: 'text-primary',
+        bgColor: 'bg-primary/10',
+        borderColor: 'border-primary/20',
+      };
+    case 'approved':
+      return {
+        label: 'Aprobada',
+        variant: 'default' as const,
+        icon: CheckCircle2,
+        color: 'text-green-600',
+        bgColor: 'bg-green-600/10',
+        borderColor: 'border-green-600/20',
+      };
+    case 'rejected':
+      return {
+        label: 'Rechazada',
+        variant: 'destructive' as const,
+        icon: XCircle,
+        color: 'text-red-600',
+        bgColor: 'bg-red-600/10',
+        borderColor: 'border-red-600/20',
+      };
+    default:
+      return {
+        label: 'Desconocido',
+        variant: 'secondary' as const,
+        icon: Clock,
+        color: 'text-muted-foreground',
+        bgColor: 'bg-muted',
+        borderColor: 'border-muted',
+      };
+  }
+};
 
-export function ApprovalRequests() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [companyFilter, setCompanyFilter] = useState<string>('all');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [showDispersed, setShowDispersed] = useState(false);
-  const [openAccordion, setOpenAccordion] = useState<string | undefined>(
-    undefined,
-  );
+const ApprovalRequests = () => {
+  const {
+    requests: filteredRequests,
+    companies,
+    filters,
+    updateFilter,
+    clearFilters,
+    approveRequest,
+    rejectRequest,
+    calculateTotal,
+    openAccordion,
+    setOpenAccordion,
+  } = useApprovalRequests();
 
-  const [requests, setRequests] = useState<Request[]>([
-    {
-      id: 1,
-      employee: 'María González',
-      position: 'Gerente de Ventas',
-      company: 'Alianza Eléctrica',
-      reason:
-        'Reunión con clientes potenciales y presentación de nuevos productos',
-      startDate: '20 Oct 2024',
-      endDate: '23 Oct 2024',
-      objectives: [
-        'Presentar nueva línea de productos',
-        'Cerrar contratos con 3 clientes clave',
-        'Evaluar mercado regional',
-      ],
-      status: 'pending',
-      dispersed: false,
-      expenses: {
-        transporte: 800,
-        peajes: 150,
-        hospedaje: 1200,
-        alimentos: 400,
-        fletes: 0,
-        herramientas: 0,
-        enviosMensajeria: 50,
-        miscelaneos: 100,
-      },
-    },
-    {
-      id: 2,
-      employee: 'Carlos Ramírez',
-      position: 'Director de Operaciones',
-      company: 'Alianza Eléctrica',
-      reason: 'Supervisión de nueva sucursal y capacitación de personal',
-      startDate: '25 Oct 2024',
-      endDate: '27 Oct 2024',
-      objectives: [
-        'Supervisar instalación de equipos',
-        'Capacitar equipo técnico',
-        'Establecer protocolos operativos',
-        'Auditar procesos de seguridad',
-      ],
-      status: 'pending',
-      dispersed: false,
-      expenses: {
-        transporte: 600,
-        peajes: 100,
-        hospedaje: 900,
-        alimentos: 300,
-        fletes: 500,
-        herramientas: 800,
-        enviosMensajeria: 0,
-        miscelaneos: 50,
-      },
-    },
-    {
-      id: 3,
-      employee: 'Ana Martínez',
-      position: 'Coordinadora de Marketing',
-      company: 'Alianza Eléctrica',
-      reason: 'Conferencia de marketing digital y networking',
-      startDate: '15 Oct 2024',
-      endDate: '17 Oct 2024',
-      objectives: [
-        'Asistir a conferencia anual',
-        'Networking con proveedores',
-        'Actualización en tendencias digitales',
-      ],
-      status: 'approved',
-      dispersed: true,
-      expenses: {
-        transporte: 700,
-        peajes: 80,
-        hospedaje: 1000,
-        alimentos: 350,
-        fletes: 0,
-        herramientas: 0,
-        enviosMensajeria: 0,
-        miscelaneos: 50,
-      },
-    },
-    {
-      id: 4,
-      employee: 'Roberto Silva',
-      position: 'Analista Financiero',
-      company: 'Alianza Eléctrica',
-      reason: 'Congreso de finanzas corporativas',
-      startDate: '10 Oct 2024',
-      endDate: '12 Oct 2024',
-      objectives: [
-        'Participar en congreso nacional',
-        'Actualización normativa fiscal',
-      ],
-      status: 'rejected',
-      dispersed: false,
-      expenses: {
-        transporte: 1200,
-        peajes: 0,
-        hospedaje: 1500,
-        alimentos: 450,
-        fletes: 0,
-        herramientas: 0,
-        enviosMensajeria: 0,
-        miscelaneos: 50,
-      },
-    },
-    {
-      id: 5,
-      employee: 'Laura Pérez',
-      position: 'Ingeniera de Proyectos',
-      company: 'Tecnología Avanzada',
-      reason: 'Instalación de sistemas eléctricos en planta industrial',
-      startDate: '05 Oct 2024',
-      endDate: '08 Oct 2024',
-      objectives: [
-        'Supervisar instalación de sistemas',
-        'Capacitar personal técnico',
-        'Validar cumplimiento de normas',
-      ],
-      status: 'approved',
-      dispersed: true,
-      expenses: {
-        transporte: 900,
-        peajes: 120,
-        hospedaje: 1100,
-        alimentos: 380,
-        fletes: 600,
-        herramientas: 450,
-        enviosMensajeria: 80,
-        miscelaneos: 70,
-      },
-    },
-  ]);
-
-  const filteredRequests = useMemo(() => {
-    return requests.filter(request => {
-      // Filter by dispersed status
-      if (showDispersed && !request.dispersed) return false;
-      if (!showDispersed && request.dispersed) return false;
-
-      // Filter by search term (employee name)
-      if (
-        searchTerm &&
-        !request.employee.toLowerCase().includes(searchTerm.toLowerCase())
-      ) {
-        return false;
-      }
-
-      // Filter by company
-      if (companyFilter !== 'all' && request.company !== companyFilter) {
-        return false;
-      }
-
-      // Filter by status
-      if (statusFilter !== 'all' && request.status !== statusFilter) {
-        return false;
-      }
-
-      return true;
-    });
-  }, [requests, searchTerm, companyFilter, statusFilter, showDispersed]);
-
-  const companies = useMemo(() => {
-    const uniqueCompanies = Array.from(new Set(requests.map(r => r.company)));
-    return uniqueCompanies;
-  }, [requests]);
-
-  const handleApprove = (id: number) => {
-    setRequests(
-      requests.map(req =>
-        req.id === id ? { ...req, status: 'approved' as const } : req,
-      ),
-    );
-  };
-
-  const handleReject = (id: number) => {
-    setRequests(
-      requests.map(req =>
-        req.id === id ? { ...req, status: 'rejected' as const } : req,
-      ),
-    );
-  };
-
-  const getStatusConfig = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return {
-          label: 'Pendiente',
-          variant: 'secondary' as const,
-          icon: Clock,
-          color: 'text-primary',
-          bgColor: 'bg-primary/10',
-          borderColor: 'border-primary/20',
-        };
-      case 'approved':
-        return {
-          label: 'Aprobada',
-          variant: 'default' as const,
-          icon: CheckCircle2,
-          color: 'text-green-600',
-          bgColor: 'bg-green-600/10',
-          borderColor: 'border-green-600/20',
-        };
-      case 'rejected':
-        return {
-          label: 'Rechazada',
-          variant: 'destructive' as const,
-          icon: XCircle,
-          color: 'text-red-600',
-          bgColor: 'bg-red-600/10',
-          borderColor: 'border-red-600/20',
-        };
-      default:
-        return {
-          label: 'Desconocido',
-          variant: 'secondary' as const,
-          icon: Clock,
-          color: 'text-muted-foreground',
-          bgColor: 'bg-muted',
-          borderColor: 'border-muted',
-        };
-    }
-  };
-
-  const calculateTotal = (expenses: Request['expenses']) => {
-    return Object.values(expenses).reduce((sum, val) => sum + val, 0);
-  };
+  const hasActiveFilters =
+    filters.searchTerm ||
+    filters.companyFilter !== 'all' ||
+    filters.statusFilter !== 'all';
 
   return (
     <div className='space-y-4 sm:space-y-6 lg:space-y-8'>
@@ -315,8 +116,8 @@ export function ApprovalRequests() {
                 <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground' />
                 <Input
                   placeholder='Nombre del colaborador...'
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
+                  value={filters.searchTerm}
+                  onChange={e => updateFilter('searchTerm', e.target.value)}
                   className='pl-10 h-12 border-2 focus:border-primary'
                 />
               </div>
@@ -330,8 +131,8 @@ export function ApprovalRequests() {
               <div className='relative'>
                 <Building2 className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 pointer-events-none' />
                 <Select
-                  value={companyFilter}
-                  onChange={e => setCompanyFilter(e.target.value)}
+                  value={filters.companyFilter}
+                  onChange={e => updateFilter('companyFilter', e.target.value)}
                   placeholder='Todas las compañías'
                   className='h-12 border-2 focus:border-primary pl-10'
                 >
@@ -353,8 +154,8 @@ export function ApprovalRequests() {
               <div className='relative'>
                 <Clock className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 pointer-events-none' />
                 <Select
-                  value={statusFilter}
-                  onChange={e => setStatusFilter(e.target.value)}
+                  value={filters.statusFilter}
+                  onChange={e => updateFilter('statusFilter', e.target.value)}
                   placeholder='Todos los estados'
                   className='h-12 border-2 focus:border-primary pl-10'
                 >
@@ -372,12 +173,16 @@ export function ApprovalRequests() {
                 Vista
               </label>
               <Button
-                onClick={() => setShowDispersed(!showDispersed)}
-                variant={showDispersed ? 'default' : 'outline'}
+                onClick={() =>
+                  updateFilter('showDispersed', !filters.showDispersed)
+                }
+                variant={filters.showDispersed ? 'default' : 'outline'}
                 className='w-full h-12 border-2 font-semibold'
               >
                 <Banknote className='h-4 w-4 mr-2' />
-                {showDispersed ? 'Mostrando Dispersadas' : 'Ver Dispersadas'}
+                {filters.showDispersed
+                  ? 'Mostrando Dispersadas'
+                  : 'Ver Dispersadas'}
               </Button>
             </div>
           </div>
@@ -392,17 +197,13 @@ export function ApprovalRequests() {
           </span>{' '}
           solicitud
           {filteredRequests.length !== 1 ? 'es' : ''}
-          {showDispersed && ' dispersadas'}
+          {filters.showDispersed && ' dispersadas'}
         </p>
-        {(searchTerm || companyFilter !== 'all' || statusFilter !== 'all') && (
+        {hasActiveFilters && (
           <Button
             variant='ghost'
             size='sm'
-            onClick={() => {
-              setSearchTerm('');
-              setCompanyFilter('all');
-              setStatusFilter('all');
-            }}
+            onClick={clearFilters}
             className='text-primary hover:text-primary/80 text-xs sm:text-sm'
           >
             Limpiar filtros
@@ -499,7 +300,7 @@ export function ApprovalRequests() {
                             <Button
                               onClick={e => {
                                 e.stopPropagation();
-                                handleApprove(request.id);
+                                approveRequest(request.id);
                               }}
                               size='lg'
                               className='bg-green-600 hover:bg-green-700 text-white shadow-md hover:shadow-lg transition-all text-[10px] sm:text-[11px] md:text-xs lg:text-base px-2 sm:px-2.5 md:px-3 lg:px-4 h-9 sm:h-9 md:h-10 lg:h-11 whitespace-nowrap'
@@ -510,7 +311,7 @@ export function ApprovalRequests() {
                             <Button
                               onClick={e => {
                                 e.stopPropagation();
-                                handleReject(request.id);
+                                rejectRequest(request.id);
                               }}
                               size='lg'
                               variant='destructive'
@@ -573,9 +374,7 @@ export function ApprovalRequests() {
                                   <span className='text-primary mt-0.5 font-bold flex-shrink-0'>
                                     •
                                   </span>
-                                  <span className='text-pretty'>
-                                    {objective}
-                                  </span>
+                                  <span className='text-pretty'>{objective}</span>
                                 </li>
                               ))}
                             </ul>
@@ -709,7 +508,7 @@ export function ApprovalRequests() {
                           <Button
                             onClick={e => {
                               e.stopPropagation();
-                              handleApprove(request.id);
+                              approveRequest(request.id);
                             }}
                             size='lg'
                             className='bg-green-600 hover:bg-green-700 text-white shadow-md hover:shadow-lg transition-all w-full sm:w-auto text-sm sm:text-base'
@@ -720,7 +519,7 @@ export function ApprovalRequests() {
                           <Button
                             onClick={e => {
                               e.stopPropagation();
-                              handleReject(request.id);
+                              rejectRequest(request.id);
                             }}
                             size='lg'
                             variant='destructive'
@@ -741,4 +540,6 @@ export function ApprovalRequests() {
       </div>
     </div>
   );
-}
+};
+
+export default ApprovalRequests;

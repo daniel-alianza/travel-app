@@ -1,75 +1,48 @@
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Clock, CheckCircle2, XCircle, TrendingUp } from 'lucide-react';
+import useRecentRequests from '../hooks/useRecentRequests';
+import type { RequestStatus } from '../interfaces';
 
-export function RecentRequests() {
-  const requests = [
-    {
-      id: 1,
-      destination: 'Ciudad de México',
-      date: '15 Oct 2024',
-      amount: '$2,500',
-      status: 'pending',
-    },
-    {
-      id: 2,
-      destination: 'Guadalajara',
-      date: '10 Oct 2024',
-      amount: '$1,800',
-      status: 'approved',
-    },
-    {
-      id: 3,
-      destination: 'Monterrey',
-      date: '5 Oct 2024',
-      amount: '$2,100',
-      status: 'approved',
-    },
-    {
-      id: 4,
-      destination: 'Cancún',
-      date: '1 Oct 2024',
-      amount: '$3,200',
-      status: 'rejected',
-    },
-  ];
+const getStatusConfig = (status: RequestStatus) => {
+  switch (status) {
+    case 'pending':
+      return {
+        label: 'Pendiente',
+        variant: 'secondary' as const,
+        icon: Clock,
+        color: 'text-primary',
+        bgColor: 'bg-primary/10',
+      };
+    case 'approved':
+      return {
+        label: 'Aprobada',
+        variant: 'default' as const,
+        icon: CheckCircle2,
+        color: 'text-green-600',
+        bgColor: 'bg-green-600/10',
+      };
+    case 'rejected':
+      return {
+        label: 'Rechazada',
+        variant: 'destructive' as const,
+        icon: XCircle,
+        color: 'text-red-600',
+        bgColor: 'bg-red-600/10',
+      };
+    default:
+      return {
+        label: 'Desconocido',
+        variant: 'secondary' as const,
+        icon: Clock,
+        color: 'text-muted-foreground',
+        bgColor: 'bg-muted',
+      };
+  }
+};
 
-  const getStatusConfig = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return {
-          label: 'Pendiente',
-          variant: 'secondary' as const,
-          icon: Clock,
-          color: 'text-primary',
-          bgColor: 'bg-primary/10',
-        };
-      case 'approved':
-        return {
-          label: 'Aprobada',
-          variant: 'default' as const,
-          icon: CheckCircle2,
-          color: 'text-green-600',
-          bgColor: 'bg-green-600/10',
-        };
-      case 'rejected':
-        return {
-          label: 'Rechazada',
-          variant: 'destructive' as const,
-          icon: XCircle,
-          color: 'text-red-600',
-          bgColor: 'bg-red-600/10',
-        };
-      default:
-        return {
-          label: 'Desconocido',
-          variant: 'secondary' as const,
-          icon: Clock,
-          color: 'text-muted-foreground',
-          bgColor: 'bg-muted',
-        };
-    }
-  };
+const RecentRequests = () => {
+  const { requests } = useRecentRequests();
 
   return (
     <Card className='p-8 shadow-xl border-2 hover:border-primary/20 transition-all duration-300 lg:sticky lg:top-8'>
@@ -133,4 +106,6 @@ export function RecentRequests() {
       </div>
     </Card>
   );
-}
+};
+
+export default RecentRequests;

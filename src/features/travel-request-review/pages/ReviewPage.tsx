@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { ApprovalRequests } from '../components/ApprovalRequests';
+import ApprovalRequests from '../components/ApprovalRequests';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 

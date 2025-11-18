@@ -112,7 +112,7 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
     const hasError = className?.includes('border-destructive');
 
     return (
-      <div ref={selectRef} className='relative w-full z-[100] isolate'>
+      <div ref={selectRef} className='relative w-full z-20 isolate'>
         {/* Hidden select for form integration */}
         <select
           ref={node => {
@@ -163,10 +163,7 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
 
         {/* Dropdown menu */}
         {isOpen && (
-          <div
-            className='absolute z-[99999] mt-1 w-full rounded-md border border-input bg-background shadow-lg'
-            style={{ zIndex: 999999 }}
-          >
+          <div className='absolute z-30 mt-1 w-full rounded-md border border-input bg-background shadow-lg'>
             <div className='max-h-60 overflow-auto p-1'>
               {parsedOptions.map(option => (
                 <button
@@ -175,10 +172,10 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
                   onClick={() => handleSelect(option.value)}
                   className={cn(
                     'w-full rounded-sm px-3 py-2 text-left text-sm transition-colors',
-                    'hover:bg-primary/10 hover:text-primary',
-                    'focus:bg-primary/10 focus:text-primary focus:outline-none',
+                    'hover:bg-primary/5 hover:text-primary',
+                    'focus:bg-primary/5 focus:text-primary focus:outline-none',
                     selectedValue === option.value &&
-                      'bg-primary/15 text-primary font-medium',
+                      'bg-primary/10 text-primary font-medium',
                   )}
                 >
                   {option.label}

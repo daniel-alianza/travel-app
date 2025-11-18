@@ -37,6 +37,7 @@ const DashboardPage = () => {
       label: 'Dispersión de Viáticos',
       description:
         'Administra la dispersión y asignación de fondos para viáticos aprobados.',
+      onClick: () => navigate('/travel-dispersion'),
     },
     {
       icon: CheckCircle,

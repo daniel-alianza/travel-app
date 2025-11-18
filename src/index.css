@@ -221,4 +221,22 @@
   
   /* Nota: Los estilos hover/focus en option no son soportados de manera consistente 
      en todos los navegadores debido a limitaciones del sistema operativo */
+  
+  /* Select específico para compañías - siempre fondo blanco */
+  select.company-select {
+    background-color: white !important;
+    color: var(--foreground) !important;
+  }
+  
+  select.company-select:hover {
+    background-color: white !important;
+  }
+  
+  select.company-select:focus {
+    background-color: white !important;
+  }
+  
+  select.company-select:active {
+    background-color: white !important;
+  }
 }

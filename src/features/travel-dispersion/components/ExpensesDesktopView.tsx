@@ -6,27 +6,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type { Expense, ExpenseStatus } from '../interfaces';
+import type { ExpenseStatus } from '../interfaces';
+import type { ExpensesDesktopViewProps } from '../interfaces/expense-view-desktop.interface';
 import { formatDate, formatCurrency } from '../utils/format';
 
-const PRIMARY_COLOR = 'oklch(0.68 0.24 42)';
 const SIGN_TOOLTIP = 'Selecciona + para aumentar o - para disminuir el monto';
-
-interface ExpensesDesktopViewProps {
-  expenses: Expense[];
-  selectedExpenses: string[];
-  statusConfig: Record<
-    ExpenseStatus,
-    { label: string; bgColor: string; textColor: string }
-  >;
-  onToggleSelection: (id: string) => void;
-  onAdjustmentChange: (
-    id: string,
-    sign: '+' | '-',
-    amount: number,
-  ) => void;
-  onStatusChange: (id: string, status: ExpenseStatus) => void;
-}
 
 const ExpensesDesktopView = ({
   expenses,
@@ -43,7 +27,7 @@ const ExpensesDesktopView = ({
           <TableHeader>
             <TableRow
               className='border-0 hover:bg-transparent'
-              style={{ backgroundColor: PRIMARY_COLOR }}
+              style={{ backgroundColor: 'oklch(0.68 0.24 42)' }}
             >
               <TableHead className='text-white font-bold text-sm lg:text-base py-3 lg:py-4 px-3 lg:px-4 text-center w-12 lg:w-16'>
                 Sel.
@@ -111,7 +95,7 @@ const ExpensesDesktopView = ({
                   </TableCell>
                   <TableCell
                     className='font-semibold text-sm lg:text-base py-3 lg:py-4 px-3 lg:px-4 text-center'
-                    style={{ color: PRIMARY_COLOR }}
+                    style={{ color: 'oklch(0.68 0.24 42)' }}
                   >
                     {formatCurrency(expense.requestedAmount)}
                   </TableCell>
@@ -186,4 +170,3 @@ const ExpensesDesktopView = ({
 };
 
 export default ExpensesDesktopView;
-

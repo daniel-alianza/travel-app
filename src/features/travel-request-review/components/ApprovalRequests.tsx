@@ -374,7 +374,9 @@ const ApprovalRequests = () => {
                                   <span className='text-primary mt-0.5 font-bold flex-shrink-0'>
                                     •
                                   </span>
-                                  <span className='text-pretty'>{objective}</span>
+                                  <span className='text-pretty'>
+                                    {objective}
+                                  </span>
                                 </li>
                               ))}
                             </ul>

@@ -6,12 +6,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { CheckCircle2 } from 'lucide-react';
-
-interface DispersionSuccessDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  dispersedCount: number;
-}
+import type { DispersionSuccessDialogProps } from '../interfaces';
 
 const DispersionSuccessDialog = ({
   open,
@@ -41,4 +36,3 @@ const DispersionSuccessDialog = ({
 };
 
 export default DispersionSuccessDialog;
-

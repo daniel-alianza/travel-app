@@ -50,6 +50,7 @@ const DashboardPage = () => {
       label: 'Asignación de Tarjeta',
       description:
         'Gestiona la asignación de tarjetas corporativas para viáticos y proyectos.',
+      onClick: () => navigate('/travel-management-card'),
     },
     {
       icon: Receipt,

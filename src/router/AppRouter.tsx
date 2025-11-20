@@ -6,6 +6,7 @@ import DashboardPage from '@/features/home/pages/HomePage';
 import TravelRequestPage from '@/features/travel-request/pages/RequestPage';
 import ReviewPage from '@/features/travel-request-review/pages/ReviewPage';
 import DispersionPage from '@/features/travel-dispersion/pages/DispersionPage';
+import ManagementCardPage from '@/features/travel-management-card/pages/ManagementCardPage';
 
 const AppRouter = () => {
   return (
@@ -42,6 +43,14 @@ const AppRouter = () => {
           element={
             <ProtectedRoute>
               <DispersionPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path='/travel-management-card'
+          element={
+            <ProtectedRoute>
+              <ManagementCardPage />
             </ProtectedRoute>
           }
         />

@@ -7,6 +7,7 @@ import TravelRequestPage from '@/features/travel-request/pages/RequestPage';
 import ReviewPage from '@/features/travel-request-review/pages/ReviewPage';
 import DispersionPage from '@/features/travel-dispersion/pages/DispersionPage';
 import ManagementCardPage from '@/features/travel-management-card/pages/ManagementCardPage';
+import { TravelPage } from '@/features/travel-checks/pages/TravelPage';
 
 const AppRouter = () => {
   return (
@@ -51,6 +52,14 @@ const AppRouter = () => {
           element={
             <ProtectedRoute>
               <ManagementCardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path='/travel-checks'
+          element={
+            <ProtectedRoute>
+              <TravelPage />
             </ProtectedRoute>
           }
         />

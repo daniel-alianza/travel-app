@@ -1,6 +1,7 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Users, User, ArrowRight } from "lucide-react"
+import { useNavigate } from "react-router-dom"
 
 interface ComprobacionesModalProps {
   open: boolean
@@ -8,6 +9,7 @@ interface ComprobacionesModalProps {
 }
 
 export function ComprobacionesModal({ open, onOpenChange }: ComprobacionesModalProps) {
+  const navigate = useNavigate()
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl w-full max-w-md px-4 sm:px-6">
@@ -46,6 +48,7 @@ export function ComprobacionesModal({ open, onOpenChange }: ComprobacionesModalP
             className="group h-auto w-full flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-5 p-5 sm:p-7 hover:border-primary hover:bg-gradient-to-r hover:from-primary/10 hover:to-primary/5 bg-white transition-all duration-300 hover:shadow-md hover:-translate-y-1"
             onClick={() => {
               onOpenChange(false)
+              navigate('/travel-checks')
             }}
           >
             <div className="flex-shrink-0 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 p-3 sm:p-4 group-hover:from-primary/30 group-hover:to-primary/15 transition-all">

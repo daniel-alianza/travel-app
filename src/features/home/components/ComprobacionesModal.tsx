@@ -29,6 +29,7 @@ export function ComprobacionesModal({ open, onOpenChange }: ComprobacionesModalP
             className="group h-auto w-full flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-5 p-5 sm:p-7 hover:border-primary hover:bg-gradient-to-r hover:from-primary/10 hover:to-primary/5 bg-white transition-all duration-300 hover:shadow-md hover:-translate-y-1"
             onClick={() => {
               onOpenChange(false)
+              navigate('/travel-employee-checks')
             }}
           >
             <div className="flex-shrink-0 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 p-3 sm:p-4 group-hover:from-primary/30 group-hover:to-primary/15 transition-all">

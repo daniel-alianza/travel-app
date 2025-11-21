@@ -8,6 +8,7 @@ import ReviewPage from '@/features/travel-request-review/pages/ReviewPage';
 import DispersionPage from '@/features/travel-dispersion/pages/DispersionPage';
 import ManagementCardPage from '@/features/travel-management-card/pages/ManagementCardPage';
 import { TravelPage } from '@/features/travel-checks/pages/TravelPage';
+import EmployeeChecksPage from '@/features/travel-employee-checks/pages/Employee-checks';
 
 const AppRouter = () => {
   return (
@@ -60,6 +61,14 @@ const AppRouter = () => {
           element={
             <ProtectedRoute>
               <TravelPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path='/travel-employee-checks'
+          element={
+            <ProtectedRoute>
+              <EmployeeChecksPage />
             </ProtectedRoute>
           }
         />

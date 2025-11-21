@@ -19,21 +19,28 @@ const categoryLabels: Record<string, string> = {
 };
 
 export function MovementCard({ movement }: MovementCardProps) {
+  const category = movement.category || 'other';
+  const icon = categoryIcons[category] || categoryIcons.other;
+  const label = categoryLabels[category] || categoryLabels.other;
+
   return (
-    <div className='flex items-center justify-between p-4 bg-white border border-border rounded-lg hover:shadow-md transition-shadow duration-300'>
-      <div className='flex items-center gap-3 flex-1'>
-        <div className='text-2xl'>{categoryIcons[movement.category]}</div>
-        <div className='flex-1'>
-          <p className='font-medium text-foreground'>{movement.description}</p>
-          <p className='text-sm text-muted-foreground'>
-            {categoryLabels[movement.category]} •{' '}
-            {new Date(movement.date).toLocaleDateString('es-ES')}
+    <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 sm:p-4 md:p-4 lg:p-4 bg-white border border-border rounded-lg hover:shadow-md transition-shadow duration-300 gap-3 sm:gap-4'>
+      <div className='flex items-center gap-2 sm:gap-3 md:gap-3 flex-1 min-w-0 w-full sm:w-auto'>
+        <div className='text-xl sm:text-2xl md:text-2xl lg:text-2xl flex-shrink-0'>
+          {icon}
+        </div>
+        <div className='flex-1 min-w-0'>
+          <p className='font-medium text-foreground text-sm sm:text-base md:text-base lg:text-base truncate'>
+            {movement.description}
+          </p>
+          <p className='text-xs sm:text-sm md:text-sm text-muted-foreground mt-1'>
+            {label} • {new Date(movement.date).toLocaleDateString('es-ES')}
           </p>
         </div>
       </div>
-      <div className='text-right'>
+      <div className='text-left sm:text-right w-full sm:w-auto flex justify-between sm:block items-center sm:items-end'>
         <p
-          className='font-semibold text-lg'
+          className='font-semibold text-base sm:text-lg md:text-lg lg:text-lg xl:text-lg'
           style={{ color: 'oklch(0.68 0.24 42)' }}
         >
           ${movement.amount.toLocaleString('es-AR')}

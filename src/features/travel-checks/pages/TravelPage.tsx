@@ -111,19 +111,21 @@ export function TravelPage() {
         subtitle='Visualiza y comprueba todos tus gastos de viáticos'
         onBack={() => navigate('/home')}
       />
-      <main className='flex-1 py-10 px-4 sm:px-6 lg:px-8'>
-        <div className='mx-auto flex max-w-6xl flex-col gap-8'>
+      <main className='flex-1 py-4 sm:py-6 md:py-6 lg:py-6 xl:py-8 px-3 sm:px-4 md:px-6 lg:px-8 xl:px-8 2xl:px-10'>
+        <div className='mx-auto flex max-w-6xl xl:max-w-6xl 2xl:max-w-6xl flex-col gap-4 sm:gap-4 md:gap-5 lg:gap-5 xl:gap-6'>
           {/* Viáticos Activos */}
           <div>
-            <h2 className='text-xl font-semibold text-foreground mb-4'>
+            <h2 className='text-base sm:text-lg md:text-lg lg:text-lg xl:text-xl font-semibold text-foreground mb-3 sm:mb-3 md:mb-3 lg:mb-4'>
               Viáticos Activos
             </h2>
             {activeViaticos.length === 0 ? (
-              <div className='text-center py-8 bg-white rounded-lg border border-border'>
-                <p className='text-muted-foreground'>No hay viáticos activos</p>
+              <div className='text-center py-6 sm:py-8 md:py-8 lg:py-8 bg-white rounded-lg border border-border'>
+                <p className='text-sm sm:text-base md:text-base text-muted-foreground'>
+                  No hay viáticos activos
+                </p>
               </div>
             ) : (
-              <div className='space-y-3'>
+              <div className='space-y-2 sm:space-y-3 md:space-y-3 lg:space-y-3'>
                 {activeViaticos.map(viatico => (
                   <ViaticCard
                     key={viatico.id}
@@ -140,7 +142,7 @@ export function TravelPage() {
             <div>
               <button
                 onClick={() => setShowExpired(!showExpired)}
-                className='w-full py-3 px-4 bg-white border-2 border-orange-500 text-orange-500 font-semibold rounded-lg hover:bg-orange-50 transition-colors'
+                className='w-full py-2.5 sm:py-3 md:py-3 lg:py-3 px-3 sm:px-4 md:px-4 lg:px-4 bg-white border-2 border-orange-500 text-orange-500 font-semibold rounded-lg hover:bg-orange-50 transition-colors text-sm sm:text-base md:text-base lg:text-base'
               >
                 {showExpired ? 'Ocultar' : 'Ver'} Viáticos Caducados (
                 {expiredViaticos.length})
@@ -151,10 +153,10 @@ export function TravelPage() {
           {/* Viáticos Expirados */}
           {showExpired && (
             <div>
-              <h2 className='text-xl font-semibold text-foreground mb-4'>
+              <h2 className='text-base sm:text-lg md:text-lg lg:text-lg xl:text-xl font-semibold text-foreground mb-3 sm:mb-3 md:mb-3 lg:mb-4'>
                 Viáticos Caducados
               </h2>
-              <div className='space-y-3 opacity-75'>
+              <div className='space-y-2 sm:space-y-3 md:space-y-3 lg:space-y-3 opacity-75'>
                 {expiredViaticos.map(viatico => (
                   <ViaticCard
                     key={viatico.id}
@@ -167,7 +169,7 @@ export function TravelPage() {
           )}
 
           {/* Footer Info */}
-          <div className='bg-white rounded-lg p-4 border border-border text-center text-sm text-muted-foreground'>
+          <div className='bg-white rounded-lg p-3 sm:p-4 md:p-4 lg:p-4 border border-border text-center text-xs sm:text-sm md:text-sm text-muted-foreground'>
             <p>Últimas transacciones sincronizadas hace poco</p>
           </div>
         </div>

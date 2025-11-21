@@ -3,6 +3,7 @@ export interface Movement {
   description: string;
   amount: number;
   date: Date;
+  category?: string;
 }
 
 export interface TravelExpense {

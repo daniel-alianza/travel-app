@@ -33,7 +33,9 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
 
     // Parse options from children if options prop is not provided
     const parsedOptions = React.useMemo(() => {
-      if (options) return options;
+      if (options && Array.isArray(options) && options.length > 0) {
+        return options;
+      }
 
       const opts: SelectOption[] = [];
       if (children) {
@@ -78,41 +80,46 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
       };
     }, [isOpen]);
 
-    // Sync with hidden select for form integration
-    React.useEffect(() => {
-      if (
-        hiddenSelectRef.current &&
-        selectedValue !== hiddenSelectRef.current.value
-      ) {
-        hiddenSelectRef.current.value = selectedValue as string;
-        // Trigger change event for react-hook-form
-        const event = new Event('change', { bubbles: true });
-        hiddenSelectRef.current.dispatchEvent(event);
-      }
-    }, [selectedValue]);
-
     // Handle external value changes (from react-hook-form)
     React.useEffect(() => {
       if (props.value !== undefined && props.value !== selectedValue) {
         setSelectedValue(props.value);
       }
-    }, [props.value]);
+    }, [props.value, selectedValue]);
 
     const handleSelect = (value: string) => {
+      // Don't select empty placeholder value
+      if (value === '') {
+        setIsOpen(false);
+        return;
+      }
+
       setSelectedValue(value);
       setIsOpen(false);
 
       if (hiddenSelectRef.current) {
+        // Update the hidden select value first - this is critical for react-hook-form
         hiddenSelectRef.current.value = value;
-        const event = new Event('change', { bubbles: true });
-        hiddenSelectRef.current.dispatchEvent(event);
+        
+        // Create a proper React synthetic event
+        // The target must be the actual select element with updated value
+        const event = {
+          target: hiddenSelectRef.current,
+          currentTarget: hiddenSelectRef.current,
+        } as React.ChangeEvent<HTMLSelectElement>;
+        
+        // Call onChange handler from react-hook-form register if provided
+        // This will register the value change in the form state
+        if (props.onChange) {
+          props.onChange(event);
+        }
       }
     };
 
     const hasError = className?.includes('border-destructive');
 
     return (
-      <div ref={selectRef} className='relative w-full z-20 isolate'>
+      <div ref={selectRef} className={cn('relative w-full', isOpen ? 'z-50' : 'z-10')}>
         {/* Hidden select for form integration */}
         <select
           ref={node => {
@@ -132,7 +139,13 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
           className='hidden'
           aria-hidden='true'
         >
-          {children}
+          {options && options.length > 0
+            ? options.map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))
+            : children}
         </select>
 
         {/* Custom select button */}
@@ -162,25 +175,34 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
         </button>
 
         {/* Dropdown menu */}
-        {isOpen && (
-          <div className='absolute z-30 mt-1 w-full rounded-md border border-input bg-background shadow-lg'>
+        {isOpen && parsedOptions.length > 0 && (
+          <div className='absolute z-[60] mt-1 w-full rounded-md border border-input bg-background shadow-lg'>
             <div className='max-h-60 overflow-auto p-1'>
-              {parsedOptions.map(option => (
-                <button
-                  key={option.value}
-                  type='button'
-                  onClick={() => handleSelect(option.value)}
-                  className={cn(
-                    'w-full rounded-sm px-3 py-2 text-left text-sm transition-colors',
-                    'hover:bg-primary/5 hover:text-primary',
-                    'focus:bg-primary/5 focus:text-primary focus:outline-none',
-                    selectedValue === option.value &&
-                      'bg-primary/10 text-primary font-medium',
-                  )}
-                >
-                  {option.label}
-                </button>
-              ))}
+              {parsedOptions
+                .filter(option => option.value !== '') // Filter out placeholder option
+                .map(option => (
+                  <button
+                    key={option.value}
+                    type='button'
+                    onClick={() => handleSelect(option.value)}
+                    className={cn(
+                      'w-full rounded-sm px-3 py-2 text-left text-sm transition-colors',
+                      'hover:bg-primary/5 hover:text-primary',
+                      'focus:bg-primary/5 focus:text-primary focus:outline-none',
+                      selectedValue === option.value &&
+                        'bg-primary/10 text-primary font-medium',
+                    )}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+            </div>
+          </div>
+        )}
+        {isOpen && parsedOptions.length === 0 && (
+          <div className='absolute z-[60] mt-1 w-full rounded-md border border-input bg-background shadow-lg'>
+            <div className='p-3 text-sm text-muted-foreground text-center'>
+              No hay opciones disponibles
             </div>
           </div>
         )}

@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from './ProtectedRoute';
-import LoginPage from '@/features/auth/pages/LoginPage';
-import RegisterPage from '@/features/auth/pages/RegisterPage';
+import { LoginPage } from '@/features/auth/pages/LoginPage';
+import { RegisterPage } from '@/features/auth/pages/RegisterPage';
 import DashboardPage from '@/features/home/pages/HomePage';
 import TravelRequestPage from '@/features/travel-request/pages/RequestPage';
 import ReviewPage from '@/features/travel-request-review/pages/ReviewPage';

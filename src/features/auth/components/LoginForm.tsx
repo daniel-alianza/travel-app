@@ -5,10 +5,11 @@ import { Input } from '@/components/ui/input';
 import { LogIn, Mail, Lock, Building2, UserPlus } from 'lucide-react';
 import type { LoginFormProps } from '../interfaces/LoginFormProps';
 
-const LoginForm = ({
+export const LoginForm = ({
   register,
   errors,
   isLoading,
+  error,
   onSubmit,
 }: LoginFormProps) => {
   const navigate = useNavigate();
@@ -16,7 +17,6 @@ const LoginForm = ({
   return (
     <div className='flex-1 flex items-center justify-center p-6 bg-gradient-to-br from-background via-background to-primary/5'>
       <div className='w-full max-w-md'>
-        {/* Logo en móvil */}
         <div className='lg:hidden mb-8 text-center'>
           <div className='inline-flex items-center justify-center w-14 h-14 rounded-xl gradient-orange mb-4 shadow-lg'>
             <Building2 className='h-7 w-7 text-white' />
@@ -37,6 +37,12 @@ const LoginForm = ({
                 Ingresa tus credenciales para continuar
               </p>
             </div>
+
+            {error && (
+              <div className='mb-6 p-4 rounded-lg bg-destructive/10 border border-destructive/20'>
+                <p className='text-sm text-destructive font-medium'>{error}</p>
+              </div>
+            )}
 
             <form onSubmit={onSubmit} className='space-y-6'>
               <div className='space-y-2'>
@@ -95,8 +101,7 @@ const LoginForm = ({
                       required: 'La contraseña es requerida',
                       minLength: {
                         value: 6,
-                        message:
-                          'La contraseña debe tener al menos 6 caracteres',
+                        message: 'La contraseña debe tener al menos 6 caracteres',
                       },
                     })}
                   />
@@ -152,5 +157,3 @@ const LoginForm = ({
     </div>
   );
 };
-
-export default LoginForm;

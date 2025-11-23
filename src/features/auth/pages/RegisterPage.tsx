@@ -1,22 +1,36 @@
-import RegisterBranding from '../components/RegisterBranding';
-import RegisterForm from '../components/RegisterForm';
-import useRegister from '../hooks/useRegister';
+import { AuthBranding } from '../components/AuthBranding';
+import { RegisterForm } from '../components/RegisterForm';
+import { useRegister } from '../hooks/useRegister';
 
-const RegisterPage = () => {
-  const { register, onSubmit, errors, isLoading, password } = useRegister();
+export const RegisterPage = () => {
+  const {
+    register,
+    onSubmit,
+    errors,
+    isLoading,
+    password,
+    error,
+    isSuccess,
+    handleSuccessClose,
+    watch,
+    setValue,
+  } = useRegister();
 
   return (
     <div className='min-h-screen flex'>
-      <RegisterBranding />
+      <AuthBranding />
       <RegisterForm
         register={register}
         errors={errors}
         isLoading={isLoading}
         password={password}
+        error={error}
+        isSuccess={isSuccess}
+        handleSuccessClose={handleSuccessClose}
+        watch={watch}
+        setValue={setValue}
         onSubmit={onSubmit}
       />
     </div>
   );
 };
-
-export default RegisterPage;

@@ -4,6 +4,7 @@ import { Settings, LogOut, Calendar, Menu, X, ArrowLeft } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import GrupoFGLogo from '@/assets/GrupoFG_Logo.png';
+import { useLogout } from '@/features/auth/hooks/useLogout';
 
 interface HeaderProps {
   useLogoImage?: boolean;
@@ -25,11 +26,7 @@ export const Header = ({
   const navigate = useNavigate();
   const [daysUntilEndOfMonth, setDaysUntilEndOfMonth] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  const logout = () => {
-    localStorage.removeItem('token');
-    navigate('/login');
-  };
+  const { logout } = useLogout();
 
   useEffect(() => {
     const calculateDays = () => {
@@ -159,7 +156,8 @@ export const Header = ({
                 <Menu className='h-5 w-5' />
               )}
             </Button>
-            {isMobileMenuOpen && (              <div className='absolute right-0 mt-2 w-56 rounded-xl border border-border bg-white p-3 shadow-lg'>
+            {isMobileMenuOpen && (
+              <div className='absolute right-0 mt-2 w-56 rounded-xl border border-border bg-white p-3 shadow-lg'>
                 <div className='flex items-center gap-2 rounded-lg bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 px-3 py-2'>
                   <Calendar className='h-4 w-4 text-primary' />
                   <div className='text-sm'>
@@ -199,4 +197,3 @@ export const Header = ({
     </header>
   );
 };
-

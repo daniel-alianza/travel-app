@@ -1,10 +1,15 @@
-import type { UseFormRegister, FieldErrors } from 'react-hook-form';
-import type { RegisterFormData } from './RegisterFormData';
+import type { UseFormRegister, FieldErrors, UseFormWatch, UseFormSetValue } from 'react-hook-form';
+import type { RegisterFormData } from './authApiInterfaces';
 
 export interface RegisterFormProps {
   register: UseFormRegister<RegisterFormData>;
   errors: FieldErrors<RegisterFormData>;
   isLoading: boolean;
-  password: string;
+  password?: string;
+  error?: string | null;
+  isSuccess?: boolean;
+  handleSuccessClose?: () => void;
+  watch: UseFormWatch<RegisterFormData>;
+  setValue: UseFormSetValue<RegisterFormData>;
   onSubmit: (e?: React.BaseSyntheticEvent) => void;
 }

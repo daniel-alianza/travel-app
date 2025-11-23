@@ -1,25 +1,34 @@
-// import travelApi from '@/api/travel-api';
-import type { LoginFormData } from '../interfaces/LoginFormData';
-import type { RegisterFormData } from '../interfaces/RegisterFormData';
-
-interface AuthResponse {
-  success: boolean;
-  message?: string;
-}
+import { travelApi } from '@/infrastructure/http/axiosInstance';
+import { setAccessToken } from '@/infrastructure/http/interceptors/interceptors';
+import axios from 'axios';
+import type {
+  AuthResponse,
+  CreateUserPayload,
+  LoginFormData,
+  LogoutResponse,
+  RegisterFormData,
+  UserResponse,
+  ValidateSessionResponse,
+} from '../interfaces/authApiInterfaces';
 
 const login = async (data: LoginFormData): Promise<AuthResponse> => {
   try {
-    // TODO: Implementar lógica de autenticación real con API
-    // Por ahora simulamos la autenticación
-    console.log('Login data:', data);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Cuando esté listo el backend, descomentar y usar:
-    // const response = await travelApi.post('/auth/login', data);
-    // return response.data;
-    
+    const response = await travelApi.post<{
+      data: { accessToken: string };
+      message: string;
+      error: null;
+    }>('/auth/login', {
+      email: data.email,
+      password: data.password,
+    });
+
+    if (response.data.data.accessToken) {
+      setAccessToken(response.data.data.accessToken);
+    }
+
     return {
       success: true,
+      message: response.data.message,
     };
   } catch (error) {
     console.error('Error en login:', error);
@@ -29,17 +38,24 @@ const login = async (data: LoginFormData): Promise<AuthResponse> => {
 
 const register = async (data: RegisterFormData): Promise<AuthResponse> => {
   try {
-    // TODO: Implementar lógica de registro real con API
-    // Por ahora simulamos el registro
-    console.log('Register data:', data);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Cuando esté listo el backend, descomentar y usar:
-    // const response = await travelApi.post('/auth/register', data);
-    // return response.data;
-    
+    const payload: CreateUserPayload = {
+      name: data.name,
+      paternalSurname: data.paternalSurname,
+      maternalSurname: data.maternalSurname,
+      email: data.email,
+      password: data.password,
+      companyId: Number(data.companyId),
+      branchId: Number(data.branchId),
+      areaId: Number(data.areaId),
+      roleId: 1,
+      supervisorId: data.supervisorId ? Number(data.supervisorId) : undefined,
+    };
+
+    const response = await travelApi.post<UserResponse>('/users', payload);
+
     return {
       success: true,
+      message: response.data.message,
     };
   } catch (error) {
     console.error('Error en registro:', error);
@@ -47,10 +63,46 @@ const register = async (data: RegisterFormData): Promise<AuthResponse> => {
   }
 };
 
-const authService = {
-  login,
-  register,
+const logout = async (): Promise<AuthResponse> => {
+  try {
+    const response = await travelApi.post<LogoutResponse>('/auth/logout');
+    setAccessToken(null);
+
+    return {
+      success: true,
+      message: response.data.message,
+    };
+  } catch (error) {
+    console.error('Error en logout:', error);
+    setAccessToken(null);
+    throw error;
+  }
 };
 
-export default authService;
+const validateSession = async (): Promise<boolean> => {
+  try {
+    const response = await axios.post<ValidateSessionResponse>(
+      `${import.meta.env.VITE_TRAVEL_API}/api/auth/refresh`,
+      {},
+      { withCredentials: true },
+    );
 
+    if (response.data?.data?.accessToken) {
+      setAccessToken(response.data.data.accessToken);
+      return true;
+    }
+
+    return false;
+  } catch (error) {
+    console.error('Error validando sesión:', error);
+    setAccessToken(null);
+    return false;
+  }
+};
+
+export const authService = {
+  login,
+  register,
+  logout,
+  validateSession,
+};

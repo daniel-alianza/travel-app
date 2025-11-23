@@ -1,18 +1,10 @@
-import type { UseFormRegister } from 'react-hook-form';
-import type { LoginFormData } from '../interfaces/LoginFormData';
+import type { UseFormRegister, FieldErrors } from 'react-hook-form';
+import type { LoginFormData } from './authApiInterfaces';
 
 export interface LoginFormProps {
   register: UseFormRegister<LoginFormData>;
-  errors: {
-    email?: {
-      message?: string;
-      type?: string;
-    };
-    password?: {
-      message?: string;
-      type?: string;
-    };
-  };
+  errors: FieldErrors<LoginFormData>;
   isLoading: boolean;
+  error: string | null;
   onSubmit: (e?: React.BaseSyntheticEvent) => void;
 }

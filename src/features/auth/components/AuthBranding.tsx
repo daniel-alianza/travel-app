@@ -1,11 +1,10 @@
 import { Building2 } from 'lucide-react';
 
-const LoginBranding = () => {
+export const AuthBranding = () => {
   return (
     <div className='hidden lg:flex lg:w-1/2 relative overflow-hidden'>
       <div className='absolute inset-0 bg-gradient-to-br from-primary via-primary/90 to-primary/80' />
 
-      {/* Decoración de fondo con patrones */}
       <div className='absolute inset-0'>
         <div className='absolute top-0 left-0 w-full h-full opacity-5'>
           <div className='absolute top-10 left-10 w-32 h-32 bg-white rounded-full blur-3xl' />
@@ -30,6 +29,4 @@ const LoginBranding = () => {
     </div>
   );
 };
-
-export default LoginBranding;
 

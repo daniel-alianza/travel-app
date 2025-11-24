@@ -8,55 +8,62 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { SearchableSelect } from '@/components/SearchableSelect';
-import { CreditCard } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
+import { CreditCard, Building2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
-import type { CardAssignmentFormData } from '../interfaces';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 
-interface AssignCardDialogProps {
+const createCardSchema = z.object({
+  numero: z
+    .string()
+    .min(1, 'El número de tarjeta es requerido')
+    .regex(/^\d+$/, 'El número de tarjeta solo debe contener números'),
+  companyId: z.string().min(1, 'Debes seleccionar una empresa'),
+});
+
+type CreateCardFormData = z.infer<typeof createCardSchema>;
+
+interface CreateCardDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: CardAssignmentFormData) => void;
+  onSubmit: (data: { numero: string; companyId: string }) => void;
   isLoading?: boolean;
-  availableCards: Array<{ id: string; numero: string }>;
-  userName: string;
-  userId: string;
+  companies: string[];
 }
 
-const AssignCardDialog = ({
+const CreateCardDialog = ({
   open,
   onOpenChange,
   onSubmit,
   isLoading = false,
-  availableCards,
-  userName,
-  userId,
-}: AssignCardDialogProps) => {
+  companies,
+}: CreateCardDialogProps) => {
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm<Omit<CardAssignmentFormData, 'fechaAsignacion'>>({
+  } = useForm<CreateCardFormData>({
+    resolver: zodResolver(createCardSchema),
     defaultValues: {
-      usuarioId: userId,
+      numero: '',
+      companyId: '',
     },
   });
 
-  const submitForm = (
-    data: Omit<CardAssignmentFormData, 'fechaAsignacion'>,
-  ) => {
+  const submitForm = (data: CreateCardFormData) => {
     onSubmit({
-      ...data,
-      usuarioId: userId,
-      fechaAsignacion: new Date().toISOString().split('T')[0],
+      numero: data.numero,
+      companyId: data.companyId,
     });
     reset();
   };
 
-  const formatCardNumber = (numero: string) => {
-    if (!numero || numero.length < 4) return numero;
-    return numero.slice(-4);
+  const handleClose = () => {
+    reset();
+    onOpenChange(false);
   };
 
   return (
@@ -68,7 +75,7 @@ const AssignCardDialog = ({
               <div className='flex flex-col items-center gap-2'>
                 <div className='h-6 w-6 sm:h-7 sm:w-7 border-2 border-[#F34602] border-t-transparent rounded-full animate-spin' />
                 <p className='text-xs sm:text-sm font-medium text-[#02082C]'>
-                  Asignando tarjeta...
+                  Creando tarjeta...
                 </p>
               </div>
             </div>
@@ -76,43 +83,62 @@ const AssignCardDialog = ({
           <DialogHeader className='pb-2'>
             <DialogTitle className='flex items-center gap-2 text-base text-[#02082C]'>
               <CreditCard className='h-4 w-4 text-[#F34602]' />
-              Asignar Tarjeta
+              Crear Tarjeta
             </DialogTitle>
             <DialogDescription className='text-sm'>
-              Asignar una tarjeta a <strong>{userName}</strong>
+              Ingresa los datos de la nueva tarjeta corporativa
             </DialogDescription>
           </DialogHeader>
-          <form
-            onSubmit={handleSubmit(submitForm)}
-            className='space-y-3'
-          >
+          <form onSubmit={handleSubmit(submitForm)} className='space-y-3'>
             <div className='space-y-1.5'>
               <Label
-                htmlFor='tarjetaId'
+                htmlFor='numero'
                 className='text-sm font-semibold text-[#02082C] flex items-center gap-1.5'
               >
                 <CreditCard className='h-4 w-4 text-[#F34602]' />
-                Seleccionar Tarjeta
+                Número de Tarjeta
               </Label>
-              <SearchableSelect
-                id='tarjetaId'
-                {...register('tarjetaId', {
-                  required: 'Debes seleccionar una tarjeta',
+              <Input
+                id='numero'
+                type='text'
+                placeholder='Ingresa el número de tarjeta'
+                {...register('numero', {
+                  onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+                    e.target.value = e.target.value.replace(/[^0-9]/g, '');
+                  },
                 })}
                 className='border-gray-300 focus:border-[#F34602] focus:ring-2 focus:ring-[#F34602]/20 transition-all rounded-lg h-9 text-sm'
-                searchPlaceholder='Buscar tarjeta por número...'
-                searchNumbersOnly={true}
+                disabled={isLoading}
+              />
+              {errors.numero && (
+                <p className='text-xs text-red-600'>{errors.numero.message}</p>
+              )}
+            </div>
+
+            <div className='space-y-1.5'>
+              <Label
+                htmlFor='companyId'
+                className='text-sm font-semibold text-[#02082C] flex items-center gap-1.5'
               >
-                <option value=''>Selecciona una tarjeta</option>
-                {availableCards.map(card => (
-                  <option key={card.id} value={card.id}>
-                    {formatCardNumber(card.numero)}
+                <Building2 className='h-4 w-4 text-[#F34602]' />
+                Empresa
+              </Label>
+              <Select
+                id='companyId'
+                {...register('companyId')}
+                className='border-gray-300 focus:border-[#F34602] focus:ring-2 focus:ring-[#F34602]/20 transition-all rounded-lg h-9 text-sm'
+                disabled={isLoading}
+              >
+                <option value=''>Selecciona una empresa</option>
+                {companies.map(company => (
+                  <option key={company} value={company}>
+                    {company}
                   </option>
                 ))}
-              </SearchableSelect>
-              {errors.tarjetaId && (
+              </Select>
+              {errors.companyId && (
                 <p className='text-xs text-red-600'>
-                  {errors.tarjetaId.message}
+                  {errors.companyId.message}
                 </p>
               )}
             </div>
@@ -121,10 +147,7 @@ const AssignCardDialog = ({
               <Button
                 type='button'
                 variant='outline'
-                onClick={() => {
-                  reset();
-                  onOpenChange(false);
-                }}
+                onClick={handleClose}
                 disabled={isLoading}
                 className='cursor-pointer text-sm h-9'
               >
@@ -138,10 +161,10 @@ const AssignCardDialog = ({
                 {isLoading ? (
                   <span className='flex items-center justify-center gap-1.5'>
                     <div className='h-3 w-3 border-2 border-white border-t-transparent rounded-full animate-spin' />
-                    Asignando...
+                    Creando...
                   </span>
                 ) : (
-                  'Asignar Tarjeta'
+                  'Crear Tarjeta'
                 )}
               </Button>
             </DialogFooter>
@@ -152,4 +175,5 @@ const AssignCardDialog = ({
   );
 };
 
-export default AssignCardDialog;
+export default CreateCardDialog;
+

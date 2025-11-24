@@ -28,7 +28,7 @@ const TravelRequestPage = () => {
                 Recuerda respetar las políticas vigentes de viajes corporativos.
                 Si aún no las conoces, consulta las{' '}
                 <a
-                  href='https://intranet.grupofg.com.mx/politicas-viajes'
+                  href='https://grupo-fg.com/politicas/assets/grupofg/Politica%20de%20Viaticos%20y%20Gastos%20de%20Viaje.pdf'
                   target='_blank'
                   rel='noreferrer'
                   className='font-semibold text-[#F34602] underline decoration-transparent transition-colors hover:decoration-[#F34602] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#F34602]/50'

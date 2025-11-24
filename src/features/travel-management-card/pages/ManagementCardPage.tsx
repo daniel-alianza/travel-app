@@ -7,6 +7,7 @@ import AssignCardDialog from '../components/AssignCardDialog';
 import MessageDialog from '../components/MessageDialog';
 import ConfirmDialog from '../components/ConfirmDialog';
 import UserCardsDialog from '../components/UserCardsDialog';
+import CreateCardDialog from '../components/CreateCardDialog';
 import useUsersCards from '../hooks/useUsersCards';
 
 const ManagementCardPage = () => {
@@ -34,6 +35,10 @@ const ManagementCardPage = () => {
     viewCardsDialog,
     openViewCardsDialog,
     closeViewCardsDialog,
+    createCardDialogOpen,
+    createCard,
+    openCreateCardDialog,
+    closeCreateCardDialog,
   } = useUsersCards();
 
   const selectedUserForView =
@@ -49,24 +54,20 @@ const ManagementCardPage = () => {
       />
       <main className='flex-1 py-4 sm:py-6 md:py-8 lg:py-10 xl:py-12 px-3 sm:px-4 md:px-6 lg:px-8 xl:px-10 2xl:px-12'>
         <div className='mx-auto flex max-w-[95rem] flex-col gap-4 sm:gap-5 md:gap-6 lg:gap-7 xl:gap-8'>
-          {/* Filtros */}
           <UsersCardsFilters
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
             selectedCompany={selectedCompany}
             setSelectedCompany={setSelectedCompany}
             companies={companies}
+            onCreateCardClick={openCreateCardDialog}
           />
-
-          {/* Tabla de usuarios con tarjetas */}
           <UsersCardsTable
             users={users}
             onAssignCard={openAssignDialog}
             onOpenCardsDialog={openViewCardsDialog}
             isLoading={isLoading}
           />
-
-          {/* Diálogo para asignar tarjeta */}
           {selectedUserId && (
             <AssignCardDialog
               open={assignDialogOpen}
@@ -78,8 +79,6 @@ const ManagementCardPage = () => {
               userId={selectedUserId}
             />
           )}
-
-          {/* Diálogo de mensajes */}
           <MessageDialog
             open={messageDialog.open}
             onOpenChange={open => setMessageDialog(prev => ({ ...prev, open }))}
@@ -87,8 +86,6 @@ const ManagementCardPage = () => {
             title={messageDialog.title}
             message={messageDialog.message}
           />
-
-          {/* Diálogo de confirmación */}
           <ConfirmDialog
             open={confirmDialog.open}
             onOpenChange={open => setConfirmDialog(prev => ({ ...prev, open }))}
@@ -97,8 +94,6 @@ const ManagementCardPage = () => {
             onConfirm={confirmDialog.onConfirm}
             isLoading={isLoading}
           />
-
-          {/* Diálogo para ver tarjetas del usuario */}
           <UserCardsDialog
             open={viewCardsDialog.open}
             onOpenChange={closeViewCardsDialog}
@@ -106,6 +101,13 @@ const ManagementCardPage = () => {
             mode={viewCardsDialog.mode}
             onRemoveCard={deactivateCard}
             isLoading={isLoading}
+          />
+          <CreateCardDialog
+            open={createCardDialogOpen}
+            onOpenChange={closeCreateCardDialog}
+            onSubmit={createCard}
+            isLoading={isLoading}
+            companies={companies}
           />
         </div>
       </main>

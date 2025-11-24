@@ -40,15 +40,12 @@ const UsersCardsTable = ({
 
   return (
     <>
-      {/* Vista móvil */}
       <UsersCardsMobileView
         users={users}
         onAssignCard={onAssignCard}
         onOpenCardsDialog={onOpenCardsDialog}
         isLoading={isLoading}
       />
-
-      {/* Vista desktop/tablet/TV */}
       <div className='hidden md:block rounded-2xl border border-gray-200 bg-white overflow-hidden shadow-sm max-w-full'>
         <div className='overflow-x-auto'>
           <Table className='w-full'>

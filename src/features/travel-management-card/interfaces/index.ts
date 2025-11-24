@@ -2,9 +2,6 @@ export interface Card {
   id: string;
   numero: string;
   banco: string;
-  fechaVencimiento: string;
-  limiteCredito: number;
-  saldoDisponible: number;
   estado: 'activa' | 'desactivada';
   fechaAsignacion: string;
   fechaDesactivacion?: string;
@@ -29,4 +26,3 @@ export interface CardAssignmentResponse {
   success: boolean;
   message?: string;
 }
-

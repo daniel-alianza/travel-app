@@ -3,6 +3,8 @@ import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import { getAccessToken } from '@/infrastructure/http/interceptors/interceptors';
 import { authService } from '@/features/auth/services/authService';
+import { useTermsAcceptance } from '@/hooks/useTermsAcceptance';
+import { TermsAndConditionsModal } from '@/components/TermsAndConditionsModal';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -11,6 +13,7 @@ interface ProtectedRouteProps {
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { showModal, hasAccepted, acceptPolicies } = useTermsAcceptance();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -56,8 +59,19 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     return <Navigate to='/login' replace />;
   }
 
-  // Si está autenticado, mostrar el contenido
-  return <>{children}</>;
+  // Si está autenticado, mostrar el contenido con el modal de políticas si es necesario
+  // El contenido solo se muestra si el usuario ha aceptado las políticas
+  return (
+    <>
+      {isAuthenticated && (
+        <TermsAndConditionsModal
+          open={showModal}
+          onAccept={acceptPolicies}
+        />
+      )}
+      {isAuthenticated && !showModal && children}
+    </>
+  );
 };
 
 export { ProtectedRoute };

@@ -4,6 +4,7 @@ import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 import MenuCard from '../components/MenuCard';
 import { ComprobacionesModal } from '../components/ComprobacionesModal';
+import { useCurrentUser } from '@/features/auth/hooks/useCurrentUser';
 import {
   FileText,
   FileStack,
@@ -16,6 +17,7 @@ import {
 const DashboardPage = () => {
   const navigate = useNavigate();
   const [showComprobaciones, setShowComprobaciones] = useState(false);
+  const { name: userName, isLoading: isLoadingUser } = useCurrentUser();
 
   const menuItems = [
     {
@@ -77,7 +79,7 @@ const DashboardPage = () => {
             <h2 className='text-4xl md:text-5xl font-bold text-foreground tracking-tight text-balance'>
               Bienvenido de nuevo,{' '}
               <span className='bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent'>
-                Administrador
+                {isLoadingUser ? '...' : userName || 'Usuario'}
               </span>
             </h2>
             <p className='text-muted-foreground text-base md:text-lg max-w-2xl mx-auto text-pretty'>

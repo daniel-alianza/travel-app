@@ -30,6 +30,7 @@ export interface TravelRequestResponse {
 
 export interface BaseCardProps {
   register: UseFormRegister<TravelRequestFormData>;
+  userCards?: Array<{ id: string; numero: string; company?: string }>;
 }
 
 export interface EstimatedExpensesCardProps extends BaseCardProps {

@@ -29,8 +29,20 @@ import {
   Building2,
   Filter,
   Banknote,
+  Loader2,
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
-import useApprovalRequests from '../hooks/useApprovalRequests';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { useApprovalRequests } from '../hooks/useApprovalRequests';
 import type { RequestStatus } from '../interfaces';
 
 const getStatusConfig = (status: RequestStatus) => {
@@ -86,12 +98,20 @@ const ApprovalRequests = () => {
     calculateTotal,
     openAccordion,
     setOpenAccordion,
+    isLoading,
+    messageDialog,
+    setMessageDialog,
+    pagination,
+    currentPage,
+    setCurrentPage,
   } = useApprovalRequests();
 
   const hasActiveFilters =
     filters.searchTerm ||
     filters.companyFilter !== 'all' ||
-    filters.statusFilter !== 'all';
+    filters.statusFilter !== 'all' ||
+    filters.minAmount !== '' ||
+    filters.maxAmount !== '';
 
   return (
     <div className='space-y-4 sm:space-y-6 lg:space-y-8'>
@@ -106,7 +126,7 @@ const ApprovalRequests = () => {
             </h2>
           </div>
 
-          <div className='grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'>
+          <div className='grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5'>
             {/* Search by name */}
             <div className='space-y-2'>
               <label className='text-sm font-semibold text-muted-foreground uppercase tracking-wide'>
@@ -167,6 +187,46 @@ const ApprovalRequests = () => {
               </div>
             </div>
 
+            {/* Filter by min amount */}
+            <div className='space-y-2'>
+              <label className='text-sm font-semibold text-muted-foreground uppercase tracking-wide'>
+                Monto Mínimo
+              </label>
+              <div className='relative'>
+                <Banknote className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 pointer-events-none' />
+                <Input
+                  type='number'
+                  placeholder='Monto mínimo...'
+                  value={filters.minAmount}
+                  onChange={e => updateFilter('minAmount', e.target.value)}
+                  className='pl-10 h-12 border-2 focus:border-primary'
+                  min='0'
+                  step='0.01'
+                />
+              </div>
+            </div>
+
+            {/* Filter by max amount */}
+            <div className='space-y-2'>
+              <label className='text-sm font-semibold text-muted-foreground uppercase tracking-wide'>
+                Monto Máximo
+              </label>
+              <div className='relative'>
+                <Banknote className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 pointer-events-none' />
+                <Input
+                  type='number'
+                  placeholder='Monto máximo...'
+                  value={filters.maxAmount}
+                  onChange={e => updateFilter('maxAmount', e.target.value)}
+                  className='pl-10 h-12 border-2 focus:border-primary'
+                  min='0'
+                  step='0.01'
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className='grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5'>
             {/* Toggle dispersed */}
             <div className='space-y-2'>
               <label className='text-sm font-semibold text-muted-foreground uppercase tracking-wide'>
@@ -261,7 +321,7 @@ const ApprovalRequests = () => {
                             {request.employee}
                           </h3>
                           <p className='text-xs sm:text-xs md:text-xs lg:text-sm text-muted-foreground font-medium truncate'>
-                            {request.position} - {request.company}
+                            {request.company}
                           </p>
                           <div className='flex items-center gap-2 flex-wrap'>
                             <Badge
@@ -539,9 +599,142 @@ const ApprovalRequests = () => {
             })}
           </Accordion>
         )}
+
+        {/* Paginación */}
+        {pagination && pagination.totalPages > 1 && (
+          <div className='flex items-center justify-center px-2 py-4 border-t border-border/50'>
+            <div className='flex items-center gap-2'>
+              <Button
+                variant='outline'
+                size='sm'
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1 || isLoading}
+                className='h-9 px-3'
+              >
+                <ChevronLeft className='h-4 w-4' />
+                Anterior
+              </Button>
+              <div className='flex items-center gap-1'>
+                {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
+                  .filter(page => {
+                    // Mostrar primera, última, actual y páginas adyacentes
+                    return (
+                      page === 1 ||
+                      page === pagination.totalPages ||
+                      (page >= currentPage - 1 && page <= currentPage + 1)
+                    );
+                  })
+                  .map((page, index, array) => {
+                    // Agregar puntos suspensivos si hay gap
+                    const showEllipsis = index > 0 && page - array[index - 1] > 1;
+                    return (
+                      <div key={page} className='flex items-center gap-1'>
+                        {showEllipsis && (
+                          <span className='px-2 text-muted-foreground'>...</span>
+                        )}
+                        <Button
+                          variant={currentPage === page ? 'default' : 'outline'}
+                          size='sm'
+                          onClick={() => setCurrentPage(page)}
+                          disabled={isLoading}
+                          className='h-9 w-9 p-0'
+                        >
+                          {page}
+                        </Button>
+                      </div>
+                    );
+                  })}
+              </div>
+              <Button
+                variant='outline'
+                size='sm'
+                onClick={() =>
+                  setCurrentPage(prev =>
+                    Math.min(pagination.totalPages, prev + 1),
+                  )
+                }
+                disabled={currentPage === pagination.totalPages || isLoading}
+                className='h-9 px-3'
+              >
+                Siguiente
+                <ChevronRight className='h-4 w-4' />
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Preloader overlay */}
+      {isLoading && (
+        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm'>
+          <div className='flex flex-col items-center gap-4 p-6 bg-white rounded-xl shadow-lg'>
+            <Loader2 className='h-8 w-8 animate-spin text-primary' />
+            <p className='text-sm font-medium text-foreground'>
+              Procesando solicitud...
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Message Dialog */}
+      <Dialog
+        open={messageDialog.open}
+        onOpenChange={open =>
+          setMessageDialog(prev => ({ ...prev, open }))
+        }
+      >
+        <DialogContent className='w-[95vw] max-w-xs sm:max-w-sm p-4 sm:p-5'>
+          <DialogHeader>
+            <div className='flex items-center justify-center mb-3 sm:mb-4'>
+              {messageDialog.type === 'success' ? (
+                <div className='rounded-full bg-emerald-100 dark:bg-emerald-900/30 p-2.5 sm:p-3'>
+                  <CheckCircle2 className='h-6 w-6 sm:h-7 sm:w-7 text-emerald-600 dark:text-emerald-400' />
+                </div>
+              ) : messageDialog.type === 'rejected' ? (
+                <div className='rounded-full bg-orange-100 dark:bg-orange-900/30 p-2.5 sm:p-3'>
+                  <AlertCircle className='h-6 w-6 sm:h-7 sm:w-7 text-orange-600 dark:text-orange-400' />
+                </div>
+              ) : (
+                <div className='rounded-full bg-red-100 dark:bg-red-900/30 p-2.5 sm:p-3'>
+                  <XCircle className='h-6 w-6 sm:h-7 sm:w-7 text-red-600 dark:text-red-400' />
+                </div>
+              )}
+            </div>
+            <DialogTitle
+              className={`text-center text-base sm:text-lg font-bold px-2 ${
+                messageDialog.type === 'success'
+                  ? 'text-emerald-700 dark:text-emerald-400'
+                  : messageDialog.type === 'rejected'
+                    ? 'text-orange-700 dark:text-orange-400'
+                    : 'text-red-700 dark:text-red-400'
+              }`}
+            >
+              {messageDialog.title}
+            </DialogTitle>
+            <DialogDescription className='text-center text-sm sm:text-base pt-2 px-2'>
+              {messageDialog.message}
+            </DialogDescription>
+          </DialogHeader>
+          <div className='mt-4 sm:mt-5 flex justify-center'>
+            <Button
+              onClick={() =>
+                setMessageDialog(prev => ({ ...prev, open: false }))
+              }
+              className={`w-full sm:w-auto shadow-lg hover:shadow-xl transition-all duration-300 text-sm font-semibold hover:scale-[1.02] active:scale-[0.98] px-5 sm:px-6 h-9 sm:h-10 ${
+                messageDialog.type === 'success'
+                  ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white'
+                  : messageDialog.type === 'rejected'
+                    ? 'bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white'
+                    : 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white'
+              }`}
+            >
+              Aceptar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
 
-export default ApprovalRequests;
+export { ApprovalRequests };

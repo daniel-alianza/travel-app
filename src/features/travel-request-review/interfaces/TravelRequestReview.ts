@@ -23,6 +23,7 @@ export interface TravelRequest {
   status: RequestStatus;
   dispersed: boolean;
   expenses: TravelRequestExpenses;
+  createdAt?: string | Date;
 }
 
 export interface RecentRequest {
@@ -38,6 +39,8 @@ export interface ApprovalRequestsFilters {
   companyFilter: string;
   statusFilter: string;
   showDispersed: boolean;
+  minAmount: string;
+  maxAmount: string;
 }
 
 export interface ApprovalRequestsResponse {
@@ -52,3 +55,71 @@ export interface ApproveRejectRequestResponse {
   data?: TravelRequest;
 }
 
+export interface Company {
+  id: number;
+  name: string;
+}
+
+export interface CompaniesResponse {
+  success: boolean;
+  message: string;
+  data: Company[];
+}
+
+export interface TravelRequestsResponse {
+  success: boolean;
+  message: string;
+  data: TravelRequest[];
+  pagination?: {
+    total: number;
+    limit: number;
+    offset: number;
+    totalPages: number;
+    currentPage: number;
+  };
+}
+
+// Interfaz para los datos que retorna el backend
+export interface BackendTravelRequest {
+  id: number;
+  userId: number;
+  statusId: number;
+  cardId: number;
+  totalAmount: number;
+  travelReason: string;
+  travelObjectives: string;
+  departureDate: string | Date;
+  returnDate: string | Date;
+  disbursementDate: string | Date | null;
+  approvalDate: string | Date | null;
+  approverId: number | null;
+  comment: string | null;
+  user: {
+    id: number;
+    name: string;
+    paternalSurname: string;
+    maternalSurname: string;
+    email: string;
+  };
+  status: {
+    id: number;
+    name: string;
+  };
+  approver: {
+    id: number;
+    name: string;
+    email: string;
+  } | null;
+  card: {
+    id: number;
+    cardNumber: string;
+  };
+  details: Array<{
+    id: number;
+    travelRequestId: number;
+    concept: string;
+    amount: number;
+  }>;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+}

@@ -112,9 +112,14 @@ const ExpenseCard = ({
               </div>
               <input
                 type='number'
+                step='0.01'
+                min='0'
                 value={expense.adjustAmount.toFixed(2)}
-                readOnly
-                className='flex-1 min-w-0 max-w-full px-2 py-1 border border-gray-200 rounded text-center text-sm bg-gray-50 cursor-not-allowed overflow-hidden text-ellipsis'
+                onChange={e => {
+                  const value = parseFloat(e.target.value) || 0;
+                  onAdjustmentChange(expense.id, expense.adjustSign, value);
+                }}
+                className='flex-1 min-w-0 max-w-full px-2 py-1 border border-gray-300 rounded text-center text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary overflow-hidden text-ellipsis [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none'
                 placeholder='0.00'
               />
             </div>

@@ -1,3 +1,4 @@
+import { useRef, useEffect } from 'react';
 import {
   Table,
   TableBody,
@@ -16,48 +17,77 @@ const ExpensesDesktopView = ({
   expenses,
   selectedExpenses,
   statusConfig,
+  isAllSelected,
+  isIndeterminate,
   onToggleSelection,
+  onToggleSelectAll,
   onAdjustmentChange,
   onStatusChange,
 }: ExpensesDesktopViewProps) => {
+  const selectAllCheckboxRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (selectAllCheckboxRef.current) {
+      selectAllCheckboxRef.current.indeterminate = isIndeterminate;
+    }
+  }, [isIndeterminate]);
+
   return (
-    <div className='hidden md:block border border-gray-200 rounded-lg overflow-hidden bg-white'>
+    <div className='hidden md:block border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm'>
       <div className='overflow-x-auto'>
-        <Table>
+        <Table className='w-full table-fixed'>
           <TableHeader>
             <TableRow
               className='border-0 hover:bg-transparent'
               style={{ backgroundColor: 'oklch(0.68 0.24 42)' }}
             >
-              <TableHead className='text-white font-bold text-sm lg:text-base py-3 lg:py-4 px-3 lg:px-4 text-center w-12 lg:w-16'>
-                Sel.
+              <TableHead className='text-white font-bold text-sm lg:text-base py-3 lg:py-4 px-2 lg:px-3 text-center w-20'>
+                <div className='flex flex-col items-center justify-center gap-1.5'>
+                  <span className='text-xs font-normal leading-tight whitespace-nowrap'>
+                    Seleccionar
+                    <br />
+                    todos
+                  </span>
+                  <input
+                    ref={selectAllCheckboxRef}
+                    type='checkbox'
+                    checked={isAllSelected}
+                    onChange={onToggleSelectAll}
+                    className='w-4 h-4 lg:w-5 lg:h-5 cursor-pointer'
+                    aria-label={
+                      isAllSelected
+                        ? 'Deseleccionar todos los gastos'
+                        : 'Seleccionar todos los gastos'
+                    }
+                  />
+                </div>
               </TableHead>
-              <TableHead className='text-white font-bold text-sm lg:text-base py-3 lg:py-4 px-3 lg:px-4 text-center min-w-[150px] lg:min-w-[200px]'>
+              <TableHead className='text-white font-bold text-sm lg:text-base py-3 lg:py-4 px-2 lg:px-3 text-center w-[180px]'>
                 Nombre Usuario
               </TableHead>
-              <TableHead className='text-white font-bold text-sm lg:text-base py-3 lg:py-4 px-3 lg:px-4 text-center min-w-[140px] lg:min-w-[180px]'>
+              <TableHead className='text-white font-bold text-sm lg:text-base py-3 lg:py-4 px-2 lg:px-3 text-center w-[160px]'>
                 Número de Tarjeta
               </TableHead>
-              <TableHead className='text-white font-bold text-sm lg:text-base py-3 lg:py-4 px-3 lg:px-4 text-center min-w-[180px] lg:min-w-[220px]'>
+              <TableHead className='text-white font-bold text-sm lg:text-base py-3 lg:py-4 px-2 lg:px-3 text-center w-[200px]'>
                 Descripción
               </TableHead>
-              <TableHead className='text-white font-bold text-sm lg:text-base py-3 lg:py-4 px-3 lg:px-4 text-center min-w-[100px] lg:min-w-[120px] leading-tight'>
+              <TableHead className='text-white font-bold text-sm lg:text-base py-3 lg:py-4 px-2 lg:px-3 text-center w-[120px] leading-tight'>
                 Viáticos
                 <br />
                 Solicitados
               </TableHead>
-              <TableHead className='text-white font-bold text-sm lg:text-base py-3 lg:py-4 px-3 lg:px-4 text-center min-w-[80px] lg:min-w-[100px]'>
+              <TableHead className='text-white font-bold text-sm lg:text-base py-3 lg:py-4 px-2 lg:px-3 text-center w-[90px]'>
                 Signo
               </TableHead>
-              <TableHead className='text-white font-bold text-sm lg:text-base py-3 lg:py-4 px-3 lg:px-4 text-center min-w-[130px] lg:min-w-[160px]'>
+              <TableHead className='text-white font-bold text-sm lg:text-base py-3 lg:py-4 px-2 lg:px-3 text-center w-[150px]'>
                 Monto a Ajustar
               </TableHead>
-              <TableHead className='text-white font-bold text-sm lg:text-base py-3 lg:py-4 px-3 lg:px-4 text-center min-w-[130px] lg:min-w-[160px] leading-tight'>
+              <TableHead className='text-white font-bold text-sm lg:text-base py-3 lg:py-4 px-2 lg:px-3 text-center w-[160px] leading-tight'>
                 Fechas
                 <br />
                 <span className='text-xs font-normal'>Inicio / Fin</span>
               </TableHead>
-              <TableHead className='text-white font-bold text-sm lg:text-base py-3 lg:py-4 px-3 lg:px-4 text-center min-w-[100px] lg:min-w-[130px] leading-tight'>
+              <TableHead className='text-white font-bold text-sm lg:text-base py-3 lg:py-4 px-2 lg:px-3 text-center w-[130px] leading-tight'>
                 Cambio de
                 <br />
                 Estatus
@@ -76,31 +106,39 @@ const ExpensesDesktopView = ({
                     isSelected ? 'bg-primary/5' : ''
                   }`}
                 >
-                  <TableCell className='text-center py-3 lg:py-4 px-3 lg:px-4'>
+                  <TableCell className='text-center py-3 lg:py-4 px-2 lg:px-3 align-middle'>
                     <input
                       type='checkbox'
                       checked={isSelected}
                       onChange={() => onToggleSelection(expense.id)}
-                      className='w-4 h-4 lg:w-5 lg:h-5 cursor-pointer'
+                      className='w-4 h-4 lg:w-5 lg:h-5 cursor-pointer mx-auto'
                     />
                   </TableCell>
-                  <TableCell className='font-medium text-sm lg:text-base py-3 lg:py-4 px-3 lg:px-4 text-foreground text-center break-words whitespace-normal align-top'>
-                    {expense.username}
+                  <TableCell className='font-medium text-sm lg:text-base py-3 lg:py-4 px-2 lg:px-3 text-foreground text-center break-words whitespace-normal align-middle'>
+                    <div className='flex items-center justify-center min-h-[2.5rem]'>
+                      {expense.username}
+                    </div>
                   </TableCell>
-                  <TableCell className='text-sm lg:text-base py-3 lg:py-4 px-3 lg:px-4 text-foreground text-center break-words whitespace-normal align-top'>
-                    {expense.cardNumber}
+                  <TableCell className='text-sm lg:text-base py-3 lg:py-4 px-2 lg:px-3 text-foreground text-center break-words whitespace-normal align-middle font-mono'>
+                    <div className='flex items-center justify-center min-h-[2.5rem]'>
+                      {expense.cardNumber}
+                    </div>
                   </TableCell>
-                  <TableCell className='text-sm lg:text-base py-3 lg:py-4 px-3 lg:px-4 text-foreground text-center break-words whitespace-pre-wrap align-top'>
-                    {expense.description}
+                  <TableCell className='text-sm lg:text-base py-3 lg:py-4 px-2 lg:px-3 text-foreground text-center break-words whitespace-pre-wrap align-middle'>
+                    <div className='flex items-center justify-center min-h-[2.5rem]'>
+                      {expense.description}
+                    </div>
                   </TableCell>
                   <TableCell
-                    className='font-semibold text-sm lg:text-base py-3 lg:py-4 px-3 lg:px-4 text-center'
+                    className='font-semibold text-sm lg:text-base py-3 lg:py-4 px-2 lg:px-3 text-center align-middle'
                     style={{ color: 'oklch(0.68 0.24 42)' }}
                   >
-                    {formatCurrency(expense.requestedAmount)}
+                    <div className='flex items-center justify-center min-h-[2.5rem]'>
+                      {formatCurrency(expense.requestedAmount)}
+                    </div>
                   </TableCell>
-                  <TableCell className='text-center py-3 lg:py-4 px-3 lg:px-4'>
-                    <div className='relative group inline-block'>
+                  <TableCell className='text-center py-3 lg:py-4 px-2 lg:px-3 align-middle'>
+                    <div className='relative group inline-flex items-center justify-center'>
                       <select
                         value={expense.adjustSign}
                         onChange={e =>
@@ -111,7 +149,7 @@ const ExpensesDesktopView = ({
                           )
                         }
                         title={SIGN_TOOLTIP}
-                        className='px-2 lg:px-3 py-1 lg:py-1.5 border border-gray-300 rounded text-sm lg:text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary bg-white hover:bg-gray-50 cursor-pointer transition-colors'
+                        className='w-16 px-2 py-1.5 border border-gray-300 rounded text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary bg-white hover:bg-gray-50 cursor-pointer transition-colors text-center'
                       >
                         <option value='+'>+</option>
                         <option value='-'>−</option>
@@ -122,42 +160,55 @@ const ExpensesDesktopView = ({
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className='text-center py-3 lg:py-4 px-3 lg:px-4'>
-                    <input
-                      type='number'
-                      value={expense.adjustAmount.toFixed(2)}
-                      readOnly
-                      className='w-full lg:w-28 px-2 lg:px-3 py-1 lg:py-1.5 border border-gray-200 rounded text-center text-sm lg:text-base bg-gray-50 cursor-not-allowed'
-                      placeholder='0.00'
-                    />
-                  </TableCell>
-                  <TableCell className='text-sm lg:text-base py-3 lg:py-4 px-3 lg:px-4 text-foreground text-center align-top'>
-                    <div className='space-y-1'>
-                      <div className='font-medium'>Inicio:</div>
-                      <div>{formatDate(expense.startDate)}</div>
-                      <div className='font-medium pt-1'>Fin:</div>
-                      <div>{formatDate(expense.endDate)}</div>
+                  <TableCell className='text-center py-3 lg:py-4 px-2 lg:px-3 align-middle'>
+                    <div className='flex items-center justify-center'>
+                      <input
+                        type='number'
+                        step='0.01'
+                        min='0'
+                        value={expense.adjustAmount.toFixed(2)}
+                        onChange={e => {
+                          const value = parseFloat(e.target.value) || 0;
+                          onAdjustmentChange(expense.id, expense.adjustSign, value);
+                        }}
+                        className='w-28 px-2 py-1.5 border border-gray-300 rounded text-center text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none'
+                        placeholder='0.00'
+                      />
                     </div>
                   </TableCell>
-                  <TableCell className='py-3 lg:py-4 px-3 lg:px-4 text-center'>
-                    <select
-                      value={expense.status}
-                      onChange={e =>
-                        onStatusChange(
-                          expense.id,
-                          e.target.value as ExpenseStatus,
-                        )
-                      }
-                      className={`px-3 lg:px-4 py-1.5 lg:py-2 rounded text-sm lg:text-base font-medium border-0 cursor-pointer ${config.bgColor} ${config.textColor} focus:outline-none focus:ring-2 focus:ring-primary w-full lg:w-auto`}
-                    >
-                      {(Object.keys(statusConfig) as ExpenseStatus[]).map(
-                        status => (
-                          <option key={status} value={status}>
-                            {statusConfig[status].label}
-                          </option>
-                        ),
-                      )}
-                    </select>
+                  <TableCell className='text-sm lg:text-base py-3 lg:py-4 px-2 lg:px-3 text-foreground text-center align-middle'>
+                    <div className='flex flex-col items-center justify-center space-y-1 min-h-[2.5rem]'>
+                      <div className='flex items-center gap-1'>
+                        <span className='font-medium text-xs'>Inicio:</span>
+                        <span className='text-xs'>{formatDate(expense.startDate)}</span>
+                      </div>
+                      <div className='flex items-center gap-1'>
+                        <span className='font-medium text-xs'>Fin:</span>
+                        <span className='text-xs'>{formatDate(expense.endDate)}</span>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell className='py-3 lg:py-4 px-2 lg:px-3 text-center align-middle'>
+                    <div className='flex items-center justify-center'>
+                      <select
+                        value={expense.status}
+                        onChange={e =>
+                          onStatusChange(
+                            expense.id,
+                            e.target.value as ExpenseStatus,
+                          )
+                        }
+                        className={`w-full max-w-[140px] px-2 py-1.5 rounded text-sm font-medium border-0 cursor-pointer ${config.bgColor} ${config.textColor} focus:outline-none focus:ring-2 focus:ring-primary text-center`}
+                      >
+                        {(Object.keys(statusConfig) as ExpenseStatus[]).map(
+                          status => (
+                            <option key={status} value={status}>
+                              {statusConfig[status].label}
+                            </option>
+                          ),
+                        )}
+                      </select>
+                    </div>
                   </TableCell>
                 </TableRow>
               );

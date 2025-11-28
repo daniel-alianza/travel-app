@@ -1,68 +1,9 @@
-import { useState, useMemo } from 'react';
-import type { Expense, ExpenseStatus } from '../interfaces';
-
-const mockData: Expense[] = [
-  {
-    id: '1',
-    username: 'ANTONIO SOTO GUERRERO',
-    cardNumber: '5161020004323913',
-    description: 'DISPERSION PARA CUBRIR RUTAS',
-    requestedAmount: 7500.0,
-    adjustSign: '+',
-    adjustAmount: 0.0,
-    startDate: '2025-11-14',
-    endDate: '2025-11-30',
-    status: 'sin cambio',
-  },
-  {
-    id: '2',
-    username: 'JUAN MANUEL HERNANDEZ REYES',
-    cardNumber: '5161020004761153',
-    description: 'VIATICAS PARA CUBRIR GASTOS EN RUTAS',
-    requestedAmount: 4000.0,
-    adjustSign: '+',
-    adjustAmount: 0.0,
-    startDate: '2025-11-18',
-    endDate: '2025-11-24',
-    status: 'sin cambio',
-  },
-  {
-    id: '3',
-    username: 'María López',
-    cardNumber: '5161020004000000',
-    description: 'Viáticos transporte y hospedaje',
-    requestedAmount: 3500.0,
-    adjustSign: '+',
-    adjustAmount: 500.0,
-    startDate: '2025-11-15',
-    endDate: '2025-11-22',
-    status: 'activo',
-  },
-  {
-    id: '4',
-    username: 'Carlos Martínez',
-    cardNumber: '5161020004111111',
-    description: 'Gastos de operación regional',
-    requestedAmount: 2800.0,
-    adjustSign: '+',
-    adjustAmount: 200.0,
-    startDate: '2025-11-10',
-    endDate: '2025-11-28',
-    status: 'inactivo',
-  },
-  {
-    id: '5',
-    username: 'Ana Rodríguez',
-    cardNumber: '5161020004222222',
-    description: 'Viáticos proyecto cancelado',
-    requestedAmount: 5000.0,
-    adjustSign: '+',
-    adjustAmount: 5000.0,
-    startDate: '2025-11-20',
-    endDate: '2025-11-25',
-    status: 'cancelado',
-  },
-];
+import { useState, useMemo, useEffect } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import type { ExpenseStatus } from '../interfaces';
+import { useApprovedExpenses } from './useApprovedExpenses';
+import { useCompanies } from '@/features/auth/hooks/useCompanies';
+import { dispersionService } from '../services/dispersion.service';
 
 const statusConfig: Record<
   ExpenseStatus,
@@ -91,13 +32,40 @@ const statusConfig: Record<
 };
 
 const useExpensesTable = () => {
-  const [expenses, setExpenses] = useState<Expense[]>(mockData);
+  const queryClient = useQueryClient();
   const [selectedCompany, setSelectedCompany] = useState('todos');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedExpenses, setSelectedExpenses] = useState<string[]>([]);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
-  const [isDispersing, setIsDispersing] = useState(false);
+  const [showErrorDialog, setShowErrorDialog] = useState(false);
   const [dispersedCount, setDispersedCount] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
+  const offset = useMemo(
+    () => (currentPage - 1) * itemsPerPage,
+    [currentPage, itemsPerPage],
+  );
+
+  // Obtener datos paginados del servidor
+  const {
+    data: expensesData = { data: [], pagination: undefined },
+    isLoading,
+  } = useApprovedExpenses({ limit: itemsPerPage, offset });
+
+  const serverExpenses = expensesData.data;
+  const pagination = expensesData.pagination;
+
+  // Estado local para ajustes y cambios de estado (no se guardan hasta dispersar)
+  const [expenses, setExpenses] = useState(serverExpenses);
+
+  // Sincronizar expenses con serverExpenses cuando cambian
+  useEffect(() => {
+    setExpenses(serverExpenses);
+  }, [serverExpenses]);
+
+  const { data: companies = [], isLoading: isLoadingCompanies } =
+    useCompanies();
 
   const handleAdjustmentChange = (
     id: string,
@@ -123,44 +91,146 @@ const useExpensesTable = () => {
     );
   };
 
+  const adjustAmounts = () => {
+    if (selectedExpenses.length === 0) {
+      // Si no hay selección, ajustar todos
+      setExpenses(
+        expenses.map(e => ({
+          ...e,
+          adjustAmount: e.requestedAmount,
+          adjustSign: '+' as const,
+        })),
+      );
+      return;
+    }
+
+    // Si hay selección, solo ajustar los seleccionados
+    setExpenses(
+      expenses.map(e =>
+        selectedExpenses.includes(e.id)
+          ? {
+              ...e,
+              adjustAmount: e.requestedAmount,
+              adjustSign: '+' as const,
+            }
+          : e,
+      ),
+    );
+  };
+
+  const disperseMutation = useMutation({
+    mutationFn: (requestIds: number[]) =>
+      dispersionService.disperseMultipleRequests(requestIds),
+    onSuccess: (_, requestIds) => {
+      queryClient.invalidateQueries({ queryKey: ['approved-expenses'] });
+      queryClient.invalidateQueries({ queryKey: ['travel-requests'] });
+      setDispersedCount(requestIds.length);
+      setSelectedExpenses([]);
+      setShowSuccessDialog(true);
+      // Resetear a la primera página después de dispersar
+      setCurrentPage(1);
+    },
+    onError: (error: Error) => {
+      console.error('Error al dispersar viáticos:', error);
+      throw error;
+    },
+  });
+
   const disperseExpenses = async () => {
     if (selectedExpenses.length === 0) return;
 
-    setIsDispersing(true);
-    const count = selectedExpenses.length;
-    try {
-      // TODO: Implementar llamada real a la API cuando el backend esté listo
-      await new Promise(resolve => setTimeout(resolve, 1000));
+    // Validar que al menos uno de los gastos seleccionados tenga un monto ajustado > 0
+    const hasAdjustedAmount = selectedExpenses.some(expenseId => {
+      const expense = expenses.find(e => e.id === expenseId);
+      return expense && expense.adjustAmount > 0;
+    });
 
-      // Simular éxito
-      setDispersedCount(count);
-      setSelectedExpenses([]);
-      setShowSuccessDialog(true);
-    } catch (error) {
-      console.error('Error al dispersar viáticos:', error);
-    } finally {
-      setIsDispersing(false);
+    if (!hasAdjustedAmount) {
+      setShowErrorDialog(true);
+      return;
     }
+
+    const requestIds = selectedExpenses.map(id => Number.parseInt(id, 10));
+    disperseMutation.mutate(requestIds);
   };
 
+  // Filtrado del lado del cliente (si el backend no soporta búsqueda)
   const filteredExpenses = useMemo(
     () =>
-      expenses.filter(e =>
-        e.username.toLowerCase().includes(searchTerm.toLowerCase()),
+      expenses.filter(
+        e =>
+          e.username?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false,
       ),
     [expenses, searchTerm],
   );
 
+  // Resetear página cuando cambian los filtros
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedCompany]);
+
+  // Usar paginación del servidor si está disponible, sino calcular del lado del cliente
+  const totalPages = useMemo(() => {
+    if (pagination?.totalPages) {
+      return pagination.totalPages;
+    }
+    // Fallback: calcular del lado del cliente si no hay paginación del servidor
+    return Math.ceil(filteredExpenses.length / itemsPerPage);
+  }, [pagination, filteredExpenses.length, itemsPerPage]);
+
+  // Usar los datos filtrados directamente (ya vienen paginados del servidor)
+  const paginatedExpenses = filteredExpenses;
+
+  const toggleSelectAll = () => {
+    const allFilteredIds = filteredExpenses.map(e => e.id);
+    const allSelected = allFilteredIds.every(id =>
+      selectedExpenses.includes(id),
+    );
+
+    if (allSelected) {
+      // Deseleccionar todos los filtrados
+      setSelectedExpenses(prev =>
+        prev.filter(id => !allFilteredIds.includes(id)),
+      );
+    } else {
+      // Seleccionar todos los filtrados (sin duplicados)
+      setSelectedExpenses(prev => {
+        const newSelection = [...prev];
+        allFilteredIds.forEach(id => {
+          if (!newSelection.includes(id)) {
+            newSelection.push(id);
+          }
+        });
+        return newSelection;
+      });
+    }
+  };
+
+  const isAllSelected = useMemo(() => {
+    if (filteredExpenses.length === 0) return false;
+    return filteredExpenses.every(e => selectedExpenses.includes(e.id));
+  }, [filteredExpenses, selectedExpenses]);
+
+  const isIndeterminate = useMemo(() => {
+    if (filteredExpenses.length === 0) return false;
+    const selectedCount = filteredExpenses.filter(e =>
+      selectedExpenses.includes(e.id),
+    ).length;
+    return selectedCount > 0 && selectedCount < filteredExpenses.length;
+  }, [filteredExpenses, selectedExpenses]);
+
   const totalRequested = useMemo(
-    () =>
-      filteredExpenses.reduce((sum, e) => sum + e.requestedAmount, 0),
-    [filteredExpenses],
+    () => paginatedExpenses.reduce((sum, e) => sum + e.requestedAmount, 0),
+    [paginatedExpenses],
   );
 
   const isDisperseEnabled = selectedExpenses.length > 0;
 
   return {
     expenses,
+    isLoading,
+    companies,
+    isLoadingCompanies,
     selectedCompany,
     setSelectedCompany,
     searchTerm,
@@ -168,18 +238,29 @@ const useExpensesTable = () => {
     selectedExpenses,
     showSuccessDialog,
     setShowSuccessDialog,
-    isDispersing,
+    showErrorDialog,
+    setShowErrorDialog,
+    isDispersing: disperseMutation.isPending,
     dispersedCount,
     handleAdjustmentChange,
     handleStatusChange,
     toggleExpenseSelection,
+    toggleSelectAll,
+    isAllSelected,
+    isIndeterminate,
+    adjustAmounts,
     disperseExpenses,
     filteredExpenses,
+    paginatedExpenses,
     totalRequested,
     isDisperseEnabled,
     statusConfig,
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    itemsPerPage,
+    totalItems: pagination?.total,
   };
 };
 
 export default useExpensesTable;
-

@@ -15,7 +15,7 @@ const DispersionPage = () => {
         onBack={() => navigate('/home')}
       />
       <main className='flex-1 py-10 px-4 sm:px-6 lg:px-10 xl:px-12'>
-        <div className='mx-auto flex w-full max-w-[1600px] flex-col gap-10'>
+        <div className='mx-auto flex w-full max-w-[1920px] flex-col gap-10'>
           <ExpensesTable />
         </div>
       </main>

@@ -44,6 +44,7 @@ import {
 } from '@/components/ui/dialog';
 import { useApprovalRequests } from '../hooks/useApprovalRequests';
 import type { RequestStatus } from '../interfaces';
+import { CommentDialog } from './CommentDialog';
 
 const getStatusConfig = (status: RequestStatus) => {
   switch (status) {
@@ -104,6 +105,10 @@ const ApprovalRequests = () => {
     pagination,
     currentPage,
     setCurrentPage,
+    commentDialog,
+    setCommentDialog,
+    handleCommentConfirm,
+    isCommentDialogLoading,
   } = useApprovalRequests();
 
   const hasActiveFilters =
@@ -675,6 +680,17 @@ const ApprovalRequests = () => {
           </div>
         </div>
       )}
+
+      {/* Comment Dialog */}
+      <CommentDialog
+        open={commentDialog.open}
+        onOpenChange={open =>
+          setCommentDialog(prev => ({ ...prev, open }))
+        }
+        type={commentDialog.type}
+        onConfirm={handleCommentConfirm}
+        isLoading={isCommentDialogLoading}
+      />
 
       {/* Message Dialog */}
       <Dialog

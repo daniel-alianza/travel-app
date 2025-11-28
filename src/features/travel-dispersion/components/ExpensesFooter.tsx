@@ -7,6 +7,7 @@ interface ExpensesFooterProps {
   selectedCount: number;
   isDisperseEnabled: boolean;
   isDispersing: boolean;
+  onAdjust: () => void;
   onDisperse: () => void;
 }
 
@@ -15,6 +16,7 @@ const ExpensesFooter = ({
   selectedCount,
   isDisperseEnabled,
   isDispersing,
+  onAdjust,
   onDisperse,
 }: ExpensesFooterProps) => {
   return (
@@ -33,6 +35,17 @@ const ExpensesFooter = ({
         </div>
       </div>
       <div className='flex gap-3 w-full sm:w-auto'>
+        <button
+          onClick={onAdjust}
+          disabled={isDispersing}
+          className={`flex-1 sm:flex-none px-6 sm:px-8 lg:px-10 py-3 sm:py-2.5 lg:py-3 font-medium text-sm sm:text-base lg:text-lg rounded-lg transition border-2 ${
+            !isDispersing
+              ? 'border-primary text-primary bg-white cursor-pointer hover:bg-primary/5 active:scale-95'
+              : 'border-gray-300 bg-gray-100 text-gray-400 cursor-not-allowed'
+          }`}
+        >
+          Ajustar montos
+        </button>
         <button
           onClick={onDisperse}
           disabled={!isDisperseEnabled || isDispersing}

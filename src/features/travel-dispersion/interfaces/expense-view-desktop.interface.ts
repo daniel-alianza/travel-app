@@ -6,7 +6,10 @@ export interface ExpensesDesktopViewProps {
     ExpenseStatus,
     { label: string; bgColor: string; textColor: string }
   >;
+  isAllSelected: boolean;
+  isIndeterminate: boolean;
   onToggleSelection: (id: string) => void;
+  onToggleSelectAll: () => void;
   onAdjustmentChange: (id: string, sign: '+' | '-', amount: number) => void;
   onStatusChange: (id: string, status: ExpenseStatus) => void;
 }

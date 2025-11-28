@@ -181,10 +181,22 @@ const useApprovalRequests = () => {
     message: '',
   });
 
+  const [commentDialog, setCommentDialog] = useState<{
+    open: boolean;
+    type: 'approve' | 'reject';
+    requestId: number | null;
+  }>({
+    open: false,
+    type: 'approve',
+    requestId: null,
+  });
+
   const approveMutation = useMutation({
-    mutationFn: (id: number) => travelRequestReviewService.approveRequest(id),
+    mutationFn: ({ id, comment }: { id: number; comment: string }) =>
+      travelRequestReviewService.approveRequest(id, comment),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['travel-requests'] });
+      setCommentDialog({ open: false, type: 'approve', requestId: null });
       setMessageDialog({
         open: true,
         type: 'success',
@@ -205,9 +217,11 @@ const useApprovalRequests = () => {
   });
 
   const rejectMutation = useMutation({
-    mutationFn: (id: number) => travelRequestReviewService.rejectRequest(id),
+    mutationFn: ({ id, comment }: { id: number; comment: string }) =>
+      travelRequestReviewService.rejectRequest(id, comment),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['travel-requests'] });
+      setCommentDialog({ open: false, type: 'reject', requestId: null });
       setMessageDialog({
         open: true,
         type: 'rejected',
@@ -228,11 +242,21 @@ const useApprovalRequests = () => {
   });
 
   const approveRequest = (id: number) => {
-    approveMutation.mutate(id);
+    setCommentDialog({ open: true, type: 'approve', requestId: id });
   };
 
   const rejectRequest = (id: number) => {
-    rejectMutation.mutate(id);
+    setCommentDialog({ open: true, type: 'reject', requestId: id });
+  };
+
+  const handleCommentConfirm = (comment: string) => {
+    if (!commentDialog.requestId) return;
+
+    if (commentDialog.type === 'approve') {
+      approveMutation.mutate({ id: commentDialog.requestId, comment });
+    } else {
+      rejectMutation.mutate({ id: commentDialog.requestId, comment });
+    }
   };
 
   const isLoading = approveMutation.isPending || rejectMutation.isPending;
@@ -254,6 +278,10 @@ const useApprovalRequests = () => {
     pagination,
     currentPage,
     setCurrentPage,
+    commentDialog,
+    setCommentDialog,
+    handleCommentConfirm,
+    isCommentDialogLoading: approveMutation.isPending || rejectMutation.isPending,
   };
 };
 

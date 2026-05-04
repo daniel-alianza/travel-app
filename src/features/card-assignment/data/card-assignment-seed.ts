@@ -1,0 +1,68 @@
+import type { CardAssignmentUser } from "../interfaces/card-assignment-user.interface"
+
+export const CARD_ASSIGNMENT_USERS_SEED: CardAssignmentUser[] = [
+  {
+    id: "u1",
+    nombreCompleto: "Ana Martínez López",
+    correo: "ana.martinez@grupofg.com",
+    compania: "Grupo FG Industrial",
+    area: "Tecnologías de la Información",
+    tarjetaEnmascarada: null,
+  },
+  {
+    id: "u2",
+    nombreCompleto: "Carlos Ruiz Hernández",
+    correo: "carlos.ruiz@grupofg.com",
+    compania: "Alianza Eléctrica",
+    area: "Operaciones",
+    tarjetaEnmascarada: "•••• 4821",
+  },
+  {
+    id: "u3",
+    nombreCompleto: "Diana Flores Soto",
+    correo: "diana.flores@grupofg.com",
+    compania: "FG Servicios",
+    area: "Recursos Humanos",
+    tarjetaEnmascarada: null,
+  },
+  {
+    id: "u4",
+    nombreCompleto: "Eduardo Núñez Vega",
+    correo: "eduardo.nunez@grupofg.com",
+    compania: "Grupo FG Industrial",
+    area: "Ventas",
+    tarjetaEnmascarada: "•••• 9034",
+  },
+  {
+    id: "u5",
+    nombreCompleto: "Fernanda Castro Gil",
+    correo: "fernanda.castro@grupofg.com",
+    compania: "Alianza Eléctrica",
+    area: "Logística",
+    tarjetaEnmascarada: null,
+  },
+  {
+    id: "u6",
+    nombreCompleto: "Gabriel Mendoza Ríos",
+    correo: "gabriel.mendoza@grupofg.com",
+    compania: "FG Servicios",
+    area: "Tecnologías de la Información",
+    tarjetaEnmascarada: "•••• 7712",
+  },
+  {
+    id: "u7",
+    nombreCompleto: "Helena Ortiz Campos",
+    correo: "helena.ortiz@grupofg.com",
+    compania: "Grupo FG Industrial",
+    area: "Recursos Humanos",
+    tarjetaEnmascarada: null,
+  },
+  {
+    id: "u8",
+    nombreCompleto: "Iván Delgado Peña",
+    correo: "ivan.delgado@grupofg.com",
+    compania: "Alianza Eléctrica",
+    area: "Ventas",
+    tarjetaEnmascarada: null,
+  },
+]

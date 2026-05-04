@@ -1,0 +1,86 @@
+import type { ExpenseMovimiento } from "@/features/travel-expenses/interfaces/expense-movimiento.interface"
+import type { ExpenseViajeResumen } from "@/features/travel-expenses/interfaces/expense-viaje-resumen.interface"
+
+export const EXPENSE_SEED_VIAJES: ExpenseViajeResumen[] = [
+  {
+    id: "viaje-1",
+    titulo: "Visita clientes León y Querétaro",
+    motivo: "Seguimiento comercial y cierre de pedidos Q1",
+    emailSolicitante: "colaborador@grupofg.mx",
+    compania: "Grupo FG Holding",
+    montoSolicitado: 18500,
+    fechaAutorizacion: "2026-03-08",
+    numeroTarjeta: "**** **** **** 4821",
+    fechaSalida: "2026-03-10",
+    fechaRegreso: "2026-03-15",
+  },
+  {
+    id: "viaje-2",
+    titulo: "Capacitación planta Monterrey",
+    motivo: "Inducción de procesos y seguridad industrial",
+    emailSolicitante: "colaborador@grupofg.mx",
+    compania: "Grupo FG Holding",
+    montoSolicitado: 9200,
+    fechaAutorizacion: "2026-04-02",
+    numeroTarjeta: "**** **** **** 4821",
+    fechaSalida: "2026-04-14",
+    fechaRegreso: "2026-04-18",
+  },
+]
+
+export const EXPENSE_SEED_MOVIMIENTOS: ExpenseMovimiento[] = [
+  {
+    id: "mov-506",
+    numeroMovimiento: 506,
+    fecha: "2026-03-11",
+    descripcion: "Hospedaje — Hotel Centro León",
+    numeroTarjeta: "**** **** **** 4821",
+    gasto: 3200,
+    estado: "comprobado",
+  },
+  {
+    id: "mov-504",
+    numeroMovimiento: 504,
+    fecha: "2026-03-12",
+    descripcion: "Combustible y casetas",
+    numeroTarjeta: "**** **** **** 4821",
+    gasto: 1850,
+    estado: "comprobado",
+  },
+  {
+    id: "mov-503",
+    numeroMovimiento: 503,
+    fecha: "2026-03-13",
+    descripcion: "Alimentos — comidas con cliente",
+    numeroTarjeta: "**** **** **** 4821",
+    gasto: 980,
+    estado: "pendiente",
+  },
+  {
+    id: "mov-502",
+    numeroMovimiento: 502,
+    fecha: "2026-03-09",
+    descripcion: "Cargo previo al periodo (no aplica al viaje)",
+    numeroTarjeta: "**** **** **** 4821",
+    gasto: 120,
+    estado: "comprobado",
+  },
+  {
+    id: "mov-601",
+    numeroMovimiento: 601,
+    fecha: "2026-04-15",
+    descripcion: "Transporte local Monterrey",
+    numeroTarjeta: "**** **** **** 4821",
+    gasto: 640,
+    estado: "pendiente",
+  },
+  {
+    id: "mov-602",
+    numeroMovimiento: 602,
+    fecha: "2026-04-16",
+    descripcion: "Materiales de capacitación",
+    numeroTarjeta: "**** **** **** 4821",
+    gasto: 1120,
+    estado: "pendiente",
+  },
+]

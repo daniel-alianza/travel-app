@@ -32,6 +32,48 @@ interface OpcionFiltro {
   label: string
 }
 
+function mapFuelCardKind(
+  value: string | undefined
+): "physical" | "virtual" | undefined {
+  if (value === "Fisica") {
+    return "physical"
+  }
+  if (value === "Virtual") {
+    return "virtual"
+  }
+  return undefined
+}
+
+function mapFuelAssignmentType(
+  value: string | undefined
+): "NotAcumulative" | "Acumulable" | undefined {
+  if (value === "No Acumulativa") {
+    return "NotAcumulative"
+  }
+  if (value === "Acumulable") {
+    return "Acumulable"
+  }
+  return undefined
+}
+
+function mapFuelStatus(
+  value: string | undefined
+): "active" | "inactive" | "blocked" | "cancelled" | undefined {
+  if (value === "Activa") {
+    return "active"
+  }
+  if (value === "Inactiva") {
+    return "inactive"
+  }
+  if (value === "Bloqueada") {
+    return "blocked"
+  }
+  if (value === "Cancelada") {
+    return "cancelled"
+  }
+  return undefined
+}
+
 function actualizarUsuarioEnCachesPaginados(
   queryClient: ReturnType<typeof useQueryClient>,
   usuarioId: number,
@@ -322,11 +364,23 @@ export function useCardAssignmentPage(): UseCardAssignmentPageReturn {
     if (usuarioModalAsignacion === null) {
       return
     }
+    const esGasolina = tipoTarjetaModal === "FUEL"
     mutacionAsignar.mutate({
       usuario: usuarioModalAsignacion,
       digitosTarjeta: valores.digitosTarjeta,
       empresaTarjeta: valores.empresaTarjeta,
       cardType: tipoTarjetaModal,
+      fuelName: esGasolina ? valores.nombreTarjeta : undefined,
+      fuelCardKind: esGasolina
+        ? mapFuelCardKind(valores.tipoTarjetaGasolina)
+        : undefined,
+      fuelAssignmentType: esGasolina
+        ? mapFuelAssignmentType(valores.tipoAsignacionGasolina)
+        : undefined,
+      fuelGroup: esGasolina ? valores.grupoTarjetaGasolina : undefined,
+      fuelStatus: esGasolina
+        ? mapFuelStatus(valores.estadoTarjetaGasolina)
+        : undefined,
     })
   }
 

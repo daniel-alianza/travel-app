@@ -27,6 +27,11 @@ export interface AsignarTarjetaParametros {
   digitosTarjeta: string
   empresaTarjeta: string
   cardType: "VIATIC" | "FUEL"
+  fuelName?: string
+  fuelCardKind?: "physical" | "virtual"
+  fuelAssignmentType?: "NotAcumulative" | "Acumulable"
+  fuelGroup?: string
+  fuelStatus?: "active" | "inactive" | "blocked" | "cancelled"
 }
 
 export interface CardAssignmentUsersListQuery {
@@ -109,12 +114,27 @@ export async function obtenerUsuariosAsignacionTarjeta(
 export async function asignarTarjetaUsuario(
   parametros: AsignarTarjetaParametros
 ): Promise<CardAssignmentUser> {
-  const { usuario, digitosTarjeta, empresaTarjeta, cardType } = parametros
+  const {
+    usuario,
+    digitosTarjeta,
+    empresaTarjeta,
+    cardType,
+    fuelName,
+    fuelCardKind,
+    fuelAssignmentType,
+    fuelGroup,
+    fuelStatus,
+  } = parametros
   const digitosNormalizados = normalizarDigitosTarjeta(digitosTarjeta)
   const cuerpo = {
     cardNumber: digitosNormalizados,
     companyName: empresaTarjeta,
     cardType,
+    fuelName,
+    fuelCardKind,
+    fuelAssignmentType,
+    fuelGroup,
+    fuelStatus,
   }
   const respuesta = await travelApi.post<ApiEnvelope<CardAssignmentUser>>(
     `/card-assignment/users/${usuario.id}/assign`,

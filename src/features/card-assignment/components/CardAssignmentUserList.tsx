@@ -1,7 +1,8 @@
-import type { ReactElement } from "react"
+import { useState, type ReactElement } from "react"
 import {
   Building2,
   CreditCard,
+  Fuel,
   Layers,
   Loader2,
   Mail,
@@ -17,10 +18,16 @@ interface CardAssignmentUserListProps {
   usuariosCarga: boolean
   usuariosError: boolean
   listaVaciaPorFiltros: boolean
-  usuarioEnAccion: (userId: string) => boolean
+  usuarioEnAccion: (userId: number) => boolean
   desactivacionEnCurso: boolean
-  onAbrirModalAsignacion: (usuario: CardAssignmentUser) => void
-  onDesactivarTarjeta: (usuario: CardAssignmentUser) => void
+  onAbrirModalAsignacion: (
+    usuario: CardAssignmentUser,
+    cardType: "VIATIC" | "FUEL"
+  ) => void
+  onDesactivarTarjeta: (
+    usuario: CardAssignmentUser,
+    cardType: "VIATIC" | "FUEL"
+  ) => void
   onReintentar: () => void
 }
 
@@ -37,6 +44,10 @@ function TarjetaUsuarioSkeleton(): ReactElement {
       <div className="mb-4 space-y-2">
         <div className="h-3 w-full rounded bg-muted/50" />
         <div className="h-3 w-2/3 rounded bg-muted/50" />
+        <div className="mt-3 grid gap-2">
+          <div className="h-14 rounded-xl bg-muted/40" />
+          <div className="h-14 rounded-xl bg-muted/40" />
+        </div>
       </div>
       <div className="flex gap-2">
         <div className="h-9 flex-1 rounded-xl bg-muted/70" />
@@ -57,6 +68,21 @@ export function CardAssignmentUserList({
   onDesactivarTarjeta,
   onReintentar,
 }: CardAssignmentUserListProps) {
+  const [tipoSeleccionadoPorUsuario, setTipoSeleccionadoPorUsuario] = useState<
+    Record<number, "VIATIC" | "FUEL">
+  >({})
+
+  function getTipoSeleccionado(userId: number): "VIATIC" | "FUEL" {
+    return tipoSeleccionadoPorUsuario[userId] ?? "VIATIC"
+  }
+
+  function seleccionarTipo(userId: number, cardType: "VIATIC" | "FUEL"): void {
+    setTipoSeleccionadoPorUsuario((previo) => ({
+      ...previo,
+      [userId]: cardType,
+    }))
+  }
+
   if (usuariosCarga) {
     return (
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -116,7 +142,14 @@ export function CardAssignmentUserList({
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
       {usuarios.map((usuario, index) => {
         const accionEnEste = usuarioEnAccion(usuario.id)
-        const tieneTarjeta = usuario.tarjetaEnmascarada !== null
+        const tipoSeleccionado = getTipoSeleccionado(usuario.id)
+        const tieneViaticos = usuario.tarjetaViaticosEnmascarada !== null
+        const tieneGasolina = usuario.tarjetaGasolinaEnmascarada !== null
+        const tieneAlgunaTarjeta = tieneViaticos || tieneGasolina
+        const tarjetaSeleccionadaAsignada =
+          tipoSeleccionado === "VIATIC" ? tieneViaticos : tieneGasolina
+        const etiquetaTipoSeleccionado =
+          tipoSeleccionado === "VIATIC" ? "viáticos" : "gasolina"
 
         return (
           <article
@@ -139,7 +172,7 @@ export function CardAssignmentUserList({
               <div
                 className={cn(
                   "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-linear-to-br shadow-md transition-transform duration-500 group-hover:scale-105",
-                  tieneTarjeta
+                  tieneAlgunaTarjeta
                     ? "from-emerald-500 to-emerald-600 shadow-emerald-500/25"
                     : "from-muted to-muted/70 shadow-black/10"
                 )}
@@ -147,7 +180,7 @@ export function CardAssignmentUserList({
                 <User
                   className={cn(
                     "h-6 w-6",
-                    tieneTarjeta ? "text-white" : "text-foreground/90"
+                    tieneAlgunaTarjeta ? "text-white" : "text-foreground/90"
                   )}
                   aria-hidden
                 />
@@ -178,14 +211,51 @@ export function CardAssignmentUserList({
                   <dd>{usuario.area}</dd>
                 </div>
               </div>
-              <div className="flex items-center gap-2 rounded-xl border border-border/60 bg-background/60 px-3 py-2 transition-colors duration-300 group-hover:border-primary/25 group-hover:bg-background/90">
-                <CreditCard className="h-4 w-4 shrink-0 text-rose-500" />
-                <div>
-                  <dt className="text-xs text-muted-foreground">Tarjeta</dt>
-                  <dd className="font-medium text-foreground">
-                    {tieneTarjeta ? usuario.tarjetaEnmascarada : "Sin asignar"}
-                  </dd>
-                </div>
+              <div className="grid gap-2">
+                <button
+                  type="button"
+                  onClick={() => seleccionarTipo(usuario.id, "VIATIC")}
+                  className={cn(
+                    "cursor-pointer flex w-full items-center gap-2 rounded-xl border bg-background/60 px-3 py-2 text-left transition-colors duration-300 group-hover:bg-background/90",
+                    tipoSeleccionado === "VIATIC"
+                      ? "border-rose-500/70 bg-rose-500/10 ring-2 ring-rose-500/25 shadow-sm"
+                      : "border-border/60 group-hover:border-rose-500/35 group-hover:bg-rose-500/5"
+                  )}
+                >
+                  <CreditCard className="h-4 w-4 shrink-0 text-rose-500" />
+                  <div className="min-w-0">
+                    <dt className="text-xs text-muted-foreground">
+                      Tarjeta de viáticos
+                    </dt>
+                    <dd className="truncate font-medium text-foreground">
+                      {tieneViaticos
+                        ? usuario.tarjetaViaticosEnmascarada
+                        : "Sin asignar"}
+                    </dd>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => seleccionarTipo(usuario.id, "FUEL")}
+                  className={cn(
+                    "cursor-pointer flex w-full items-center gap-2 rounded-xl border bg-background/60 px-3 py-2 text-left transition-colors duration-300 group-hover:bg-background/90",
+                    tipoSeleccionado === "FUEL"
+                      ? "border-amber-500/70 bg-amber-500/10 ring-2 ring-amber-500/25 shadow-sm"
+                      : "border-border/60 group-hover:border-amber-500/35 group-hover:bg-amber-500/5"
+                  )}
+                >
+                  <Fuel className="h-4 w-4 shrink-0 text-amber-600" />
+                  <div className="min-w-0">
+                    <dt className="text-xs text-muted-foreground">
+                      Tarjeta de gasolina
+                    </dt>
+                    <dd className="truncate font-medium text-foreground">
+                      {tieneGasolina
+                        ? usuario.tarjetaGasolinaEnmascarada
+                        : "Sin asignar"}
+                    </dd>
+                  </div>
+                </button>
               </div>
             </dl>
 
@@ -193,41 +263,41 @@ export function CardAssignmentUserList({
               <Button
                 type="button"
                 size="sm"
-                disabled={tieneTarjeta || accionEnEste}
-                onClick={() => onAbrirModalAsignacion(usuario)}
+                disabled={tarjetaSeleccionadaAsignada || accionEnEste}
+                onClick={() => onAbrirModalAsignacion(usuario, tipoSeleccionado)}
                 className={cn(
                   "h-10 flex-1 cursor-pointer rounded-xl shadow-sm transition-all duration-300",
                   "hover:scale-[1.02] hover:shadow-md",
-                  tieneTarjeta && "pointer-events-none"
+                  tarjetaSeleccionadaAsignada && "pointer-events-none"
                 )}
               >
-                {accionEnEste && !tieneTarjeta ? (
+                {accionEnEste && !tarjetaSeleccionadaAsignada ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
                 ) : null}
-                Asignar tarjeta
+                {`Asignar ${etiquetaTipoSeleccionado}`}
               </Button>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 disabled={
-                  !tieneTarjeta ||
+                  !tarjetaSeleccionadaAsignada ||
                   accionEnEste ||
                   desactivacionEnCurso
                 }
-                onClick={() => onDesactivarTarjeta(usuario)}
+                onClick={() => onDesactivarTarjeta(usuario, tipoSeleccionado)}
                 className={cn(
                   "h-10 flex-1 cursor-pointer rounded-xl border-destructive/30 transition-all duration-300",
                   "hover:scale-[1.02] hover:border-destructive/50 hover:bg-destructive/10 hover:shadow-md",
-                  !tieneTarjeta && "pointer-events-none"
+                  !tarjetaSeleccionadaAsignada && "pointer-events-none"
                 )}
               >
-                {accionEnEste && tieneTarjeta ? (
+                {accionEnEste && tarjetaSeleccionadaAsignada ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
                 ) : null}
-                {accionEnEste && tieneTarjeta
+                {accionEnEste && tarjetaSeleccionadaAsignada
                   ? "Desactivando…"
-                  : "Desactivar tarjeta"}
+                  : `Desactivar ${etiquetaTipoSeleccionado}`}
               </Button>
             </div>
           </article>

@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { DISPERSION_BUTTON_INTERACTIVE_CLASS } from "@/features/dispersion-travel/hooks/dispersion-page-helpers"
 import { DispersionPillSelect } from "@/features/dispersion-travel/components/DispersionPillSelect"
-import { EMPRESAS_TARJETA } from "@/features/card-assignment/data/card-assignment-empresas"
 import type { CardAssignmentUser } from "@/features/card-assignment/interfaces/card-assignment-user.interface"
 import {
   asignacionTarjetaSchema,
@@ -18,22 +17,54 @@ import { cn } from "@/lib/utils"
 
 interface CardAssignmentModalProps {
   usuario: CardAssignmentUser | null
+  tipoTarjeta: "VIATIC" | "FUEL"
+  opcionesEmpresa: ReadonlyArray<{ value: string; label: string }>
   accionCargando: boolean
   onCerrar: () => void
   onConfirmar: (valores: AsignacionTarjetaFormValues) => void
 }
 
-function empresaPredeterminada(usuario: CardAssignmentUser): string {
-  const coincide = EMPRESAS_TARJETA.find((e) => e === usuario.compania)
-  return coincide ?? EMPRESAS_TARJETA[0]
+function empresaPredeterminada(
+  usuario: CardAssignmentUser,
+  opcionesEmpresa: ReadonlyArray<{ value: string; label: string }>
+): string {
+  const coincide = opcionesEmpresa.find((e) => e.value === usuario.compania)
+  if (coincide) {
+    return coincide.value
+  }
+  return opcionesEmpresa[0]?.value ?? ""
 }
 
 export function CardAssignmentModal({
   usuario,
+  tipoTarjeta,
+  opcionesEmpresa,
   accionCargando,
   onCerrar,
   onConfirmar,
 }: CardAssignmentModalProps) {
+  const isFuelModal = tipoTarjeta === "FUEL"
+  const etiquetaTipoTarjeta =
+    tipoTarjeta === "FUEL" ? "tarjeta de gasolina" : "tarjeta de viáticos"
+  const opcionesTipoTarjetaGasolina = [
+    { value: "Fisica", label: "Física" },
+    { value: "Virtual", label: "Virtual" },
+  ] as const
+  const opcionesTipoAsignacion = [
+    { value: "No Acumulativa", label: "No Acumulativa" },
+    { value: "Acumulable", label: "Acumulable" },
+  ] as const
+  const opcionesGrupoTarjeta = [
+    { value: "Tarjetas Base", label: "Tarjetas Base" },
+    { value: "Grupo Operativo", label: "Grupo Operativo" },
+  ] as const
+  const opcionesEstadoTarjeta = [
+    { value: "Activa", label: "Activa" },
+    { value: "Inactiva", label: "Inactiva" },
+    { value: "Bloqueada", label: "Bloqueada" },
+    { value: "Cancelada", label: "Cancelada" },
+  ] as const
+
   const [dropdownModalAbierto, setDropdownModalAbierto] = useState<
     string | null
   >(null)
@@ -41,8 +72,13 @@ export function CardAssignmentModal({
   const formulario = useForm<AsignacionTarjetaFormValues>({
     resolver: zodResolver(asignacionTarjetaSchema),
     defaultValues: {
+      nombreTarjeta: "",
       digitosTarjeta: "",
-      empresaTarjeta: EMPRESAS_TARJETA[0],
+      tipoTarjetaGasolina: "Fisica",
+      tipoAsignacionGasolina: "No Acumulativa",
+      grupoTarjetaGasolina: "Tarjetas Base",
+      estadoTarjetaGasolina: "Activa",
+      empresaTarjeta: opcionesEmpresa[0]?.value ?? "",
     },
   })
 
@@ -51,11 +87,16 @@ export function CardAssignmentModal({
   useEffect(() => {
     if (usuario) {
       reset({
+        nombreTarjeta: "",
         digitosTarjeta: "",
-        empresaTarjeta: empresaPredeterminada(usuario),
+        tipoTarjetaGasolina: "Fisica",
+        tipoAsignacionGasolina: "No Acumulativa",
+        grupoTarjetaGasolina: "Tarjetas Base",
+        estadoTarjetaGasolina: "Activa",
+        empresaTarjeta: empresaPredeterminada(usuario, opcionesEmpresa),
       })
     }
-  }, [usuario, reset])
+  }, [usuario, reset, opcionesEmpresa])
 
   useEffect(() => {
     if (usuario === null) {
@@ -73,11 +114,6 @@ export function CardAssignmentModal({
   if (usuario === null) {
     return null
   }
-
-  const opcionesEmpresa = EMPRESAS_TARJETA.map((e) => ({
-    value: e,
-    label: e,
-  }))
 
   return (
     <div
@@ -104,7 +140,9 @@ export function CardAssignmentModal({
               id="titulo-asignar-tarjeta"
               className="text-lg font-semibold text-foreground"
             >
-              Asignar tarjeta
+              {isFuelModal
+                ? "Crear Tarjeta de Gasolina"
+                : `Asignar ${etiquetaTipoTarjeta}`}
             </h3>
             <p className="mt-1 text-sm text-muted-foreground">
               <span className="font-medium text-foreground">
@@ -119,19 +157,43 @@ export function CardAssignmentModal({
           onSubmit={handleSubmit((valores) => onConfirmar(valores))}
           className="space-y-5"
         >
+          {isFuelModal ? (
+            <div className="space-y-2">
+              <Label htmlFor="nombre-tarjeta-modal" className="text-foreground">
+                Nombre de la Tarjeta
+              </Label>
+              <Input
+                id="nombre-tarjeta-modal"
+                type="text"
+                autoComplete="off"
+                placeholder="Ej. Tarjeta Operaciones Norte"
+                disabled={accionCargando}
+                className={cn(
+                  "h-12 cursor-text rounded-2xl border-2 bg-background/80 transition-all duration-300",
+                  "focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+                )}
+                {...register("nombreTarjeta")}
+              />
+            </div>
+          ) : null}
+
           <div className="space-y-2">
             <Label
               htmlFor="digitos-tarjeta-modal"
               className="text-foreground"
             >
-              Número completo de la tarjeta
+              {isFuelModal ? "Número de Tarjeta" : "Número completo de la tarjeta"}
             </Label>
             <Input
               id="digitos-tarjeta-modal"
               type="text"
               inputMode="numeric"
               autoComplete="off"
-              placeholder="Ej. 4532 1234 5678 9010 (todos los dígitos)"
+              placeholder={
+                isFuelModal
+                  ? "13 o 16 dígitos (calcomanía o normal)"
+                  : "Ej. 4532 1234 5678 9010 (todos los dígitos)"
+              }
               disabled={accionCargando}
               aria-invalid={Boolean(formState.errors.digitosTarjeta)}
               className={cn(
@@ -147,11 +209,87 @@ export function CardAssignmentModal({
               </p>
             ) : (
               <p className="text-xs text-muted-foreground">
-                Obligatorio ingresar el PAN completo (13–19 dígitos). En listados
-                solo se muestra enmascarado (últimos 4 dígitos).
+                {isFuelModal
+                  ? "Calcomanía: 13 dígitos. Normal: 16 dígitos."
+                  : "Obligatorio ingresar el PAN completo (13–19 dígitos). En listados solo se muestra enmascarado (últimos 4 dígitos)."}
               </p>
             )}
           </div>
+
+          {isFuelModal ? (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label className="text-foreground">Tipo de Tarjeta</Label>
+                <Controller
+                  name="tipoTarjetaGasolina"
+                  control={control}
+                  render={({ field }) => (
+                    <DispersionPillSelect
+                      instanceId="modal-tipo-tarjeta-gasolina"
+                      value={field.value ?? ""}
+                      options={opcionesTipoTarjetaGasolina}
+                      onChange={field.onChange}
+                      placeholder="Selecciona tipo de tarjeta"
+                      disabled={accionCargando}
+                      dropdownOpen={dropdownModalAbierto}
+                      setDropdownOpen={setDropdownModalAbierto}
+                      ariaLabel="Tipo de tarjeta de gasolina"
+                    />
+                  )}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-foreground">Tipo de Asignación</Label>
+                <Controller
+                  name="tipoAsignacionGasolina"
+                  control={control}
+                  render={({ field }) => (
+                    <DispersionPillSelect
+                      instanceId="modal-tipo-asignacion-gasolina"
+                      value={field.value ?? ""}
+                      options={opcionesTipoAsignacion}
+                      onChange={field.onChange}
+                      placeholder="Selecciona tipo de asignación"
+                      disabled={accionCargando}
+                      dropdownOpen={dropdownModalAbierto}
+                      setDropdownOpen={setDropdownModalAbierto}
+                      ariaLabel="Tipo de asignación de gasolina"
+                    />
+                  )}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-foreground">Grupo de Tarjetas</Label>
+                <Controller
+                  name="grupoTarjetaGasolina"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      value={field.value ?? "Tarjetas Base"}
+                      readOnly
+                      disabled
+                      className="h-12 rounded-2xl border-2 bg-muted/50 text-foreground"
+                    />
+                  )}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-foreground">Estado</Label>
+                <Controller
+                  name="estadoTarjetaGasolina"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      value={field.value ?? "Activa"}
+                      readOnly
+                      disabled
+                      className="h-12 rounded-2xl border-2 bg-muted/50 text-foreground"
+                    />
+                  )}
+                />
+              </div>
+            </div>
+          ) : null}
 
           <div className="space-y-2">
             <Label className="text-foreground">Empresa de la tarjeta</Label>

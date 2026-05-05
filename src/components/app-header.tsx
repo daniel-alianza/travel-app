@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react"
+import { startTransition, useEffect, useState, type ReactNode } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
 import {
   ArrowLeft,
@@ -16,6 +16,7 @@ import { DropdownMenu } from "radix-ui"
 import { Button } from "@/components/ui/button"
 import { GRUPO_FG_LOGO_URL } from "@/components/app-brand"
 import { useAuthStore } from "@/features/auth/store/authStore"
+import { useDaysUntilMonthEndQuery } from "@/hooks/useDaysUntilMonthEndQuery"
 
 type AppHeaderProps = {
   mounted?: boolean
@@ -41,11 +42,20 @@ export function AppHeader({
   const [configuracionMenuAbierto, setConfiguracionMenuAbierto] =
     useState<boolean>(false)
 
+  const diasFinMesQuery = useDaysUntilMonthEndQuery()
+
   const mostrarCuentaYsesion = pathname === "/home"
 
+  const etiquetaDiasFinMes =
+    diasFinMesQuery.data !== undefined
+      ? `Días para fin de mes: ${diasFinMesQuery.data}`
+      : "Días para fin de mes"
+
   useEffect(() => {
-    setMobileMenuOpen(false)
-    setMobileConfigSubmenuOpen(false)
+    startTransition(() => {
+      setMobileMenuOpen(false)
+      setMobileConfigSubmenuOpen(false)
+    })
   }, [pathname])
 
   function handleLogout(): void {
@@ -59,11 +69,12 @@ export function AppHeader({
     <Button
       type="button"
       variant="ghost"
-      title="Días para fin de mes"
+      title={etiquetaDiasFinMes}
+      aria-busy={diasFinMesQuery.isPending}
       className="group h-10 max-w-[min(100%,14rem)] shrink cursor-pointer rounded-2xl px-2 text-xs transition-all duration-500 hover:scale-105 hover:bg-primary/10 sm:h-11 sm:max-w-none sm:px-4 sm:text-sm"
     >
       <Calendar className="mr-1 h-4 w-4 shrink-0 transition-all duration-300 group-hover:rotate-12 sm:mr-2 sm:h-5 sm:w-5" />
-      <span className="truncate">Días para fin de mes</span>
+      <span className="truncate">{etiquetaDiasFinMes}</span>
     </Button>
   )
 

@@ -1,8 +1,9 @@
 export interface CardAssignmentUser {
-  id: string
+  id: number
   nombreCompleto: string
   correo: string
   compania: string
   area: string
-  tarjetaEnmascarada: string | null
+  tarjetaViaticosEnmascarada: string | null
+  tarjetaGasolinaEnmascarada: string | null
 }

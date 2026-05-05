@@ -75,6 +75,8 @@ export function CardPage() {
 
       <CardAssignmentModal
         usuario={page.usuarioModalAsignacion}
+        tipoTarjeta={page.tipoTarjetaModal}
+        opcionesEmpresa={page.opcionesEmpresaModal}
         accionCargando={page.asignacionModalCargando}
         onCerrar={page.cerrarModalAsignacion}
         onConfirmar={page.confirmarAsignacionDesdeModal}

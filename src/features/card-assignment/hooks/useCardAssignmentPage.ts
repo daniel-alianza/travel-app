@@ -8,7 +8,6 @@ import {
 
 import { showAppToast } from "@/components/app-toast"
 import { useDebouncedValue } from "@/hooks/useDebouncedValue"
-import { CARD_ASSIGNMENT_USERS_SEED } from "@/features/card-assignment/data/card-assignment-seed"
 import type { TravelRequestMousePosition } from "@/features/travel-request/interfaces/travel-request-mouse-position.interface"
 import { limitarPagina } from "@/lib/list-pagination-helpers"
 import type { ListaPaginada } from "@/lib/list-pagination-types"
@@ -18,6 +17,7 @@ import {
   asignarTarjetaUsuario,
   desactivarTarjetaUsuario,
   obtenerUsuariosAsignacionTarjeta,
+  obtenerCatalogoFiltrosTarjeta,
   type CardAssignmentUsersListQuery,
 } from "../services/card-assignment-api"
 import { FILTRO_TODAS_CARD_ASSIGNMENT } from "../utils/card-assignment-usuarios-filtro"
@@ -32,31 +32,9 @@ interface OpcionFiltro {
   label: string
 }
 
-function construirOpcionesCompania(
-  usuarios: CardAssignmentUser[]
-): OpcionFiltro[] {
-  const valores = [...new Set(usuarios.map((u) => u.compania))].sort(
-    (a, b) => a.localeCompare(b, "es")
-  )
-  return [
-    { value: FILTRO_TODAS_CARD_ASSIGNMENT, label: "Todas las compañías" },
-    ...valores.map((c) => ({ value: c, label: c })),
-  ]
-}
-
-function construirOpcionesArea(usuarios: CardAssignmentUser[]): OpcionFiltro[] {
-  const valores = [...new Set(usuarios.map((u) => u.area))].sort((a, b) =>
-    a.localeCompare(b, "es")
-  )
-  return [
-    { value: FILTRO_TODAS_CARD_ASSIGNMENT, label: "Todas las áreas" },
-    ...valores.map((a) => ({ value: a, label: a })),
-  ]
-}
-
 function actualizarUsuarioEnCachesPaginados(
   queryClient: ReturnType<typeof useQueryClient>,
-  usuarioId: string,
+  usuarioId: number,
   actualizado: CardAssignmentUser
 ): void {
   queryClient.setQueriesData<ListaPaginada<CardAssignmentUser>>(
@@ -85,6 +63,7 @@ interface UseCardAssignmentPageReturn {
   setFiltroArea: (valor: string) => void
   opcionesCompania: ReadonlyArray<OpcionFiltro>
   opcionesArea: ReadonlyArray<OpcionFiltro>
+  opcionesEmpresaModal: ReadonlyArray<OpcionFiltro>
   dropdownPillAbierto: string | null
   setDropdownPillAbierto: (id: string | null) => void
   usuariosFiltrados: CardAssignmentUser[]
@@ -93,14 +72,21 @@ interface UseCardAssignmentPageReturn {
   usuariosError: boolean
   actualizandoLista: boolean
   onRefrescar: () => void
-  usuarioEnAccion: (userId: string) => boolean
+  usuarioEnAccion: (userId: number) => boolean
   usuarioModalAsignacion: CardAssignmentUser | null
-  abrirModalAsignacion: (usuario: CardAssignmentUser) => void
+  abrirModalAsignacion: (
+    usuario: CardAssignmentUser,
+    cardType: "VIATIC" | "FUEL"
+  ) => void
   cerrarModalAsignacion: () => void
   confirmarAsignacionDesdeModal: (valores: AsignacionTarjetaFormValues) => void
   asignacionModalCargando: boolean
   desactivacionEnCurso: boolean
-  onDesactivarTarjeta: (usuario: CardAssignmentUser) => void
+  onDesactivarTarjeta: (
+    usuario: CardAssignmentUser,
+    cardType: "VIATIC" | "FUEL"
+  ) => void
+  tipoTarjetaModal: "VIATIC" | "FUEL"
   pagina: number
   totalPaginas: number
   tamanoPagina: number
@@ -128,44 +114,12 @@ export function useCardAssignmentPage(): UseCardAssignmentPageReturn {
   )
   const [usuarioModalAsignacion, setUsuarioModalAsignacion] =
     useState<CardAssignmentUser | null>(null)
-
-  const opcionesCompania = useMemo(
-    () => construirOpcionesCompania(CARD_ASSIGNMENT_USERS_SEED),
-    []
+  const [tipoTarjetaModal, setTipoTarjetaModal] = useState<"VIATIC" | "FUEL">(
+    "VIATIC"
   )
 
-  const opcionesArea = useMemo(
-    () => construirOpcionesArea(CARD_ASSIGNMENT_USERS_SEED),
-    []
-  )
-
-  const valoresCompaniaValidos = useMemo(
-    () =>
-      new Set(
-        opcionesCompania
-          .map((o) => o.value)
-          .filter((v) => v !== FILTRO_TODAS_CARD_ASSIGNMENT)
-      ),
-    [opcionesCompania]
-  )
-
-  const valoresAreaValidos = useMemo(
-    () =>
-      new Set(
-        opcionesArea
-          .map((o) => o.value)
-          .filter((v) => v !== FILTRO_TODAS_CARD_ASSIGNMENT)
-      ),
-    [opcionesArea]
-  )
-
-  const filtroCompaniaEfectivo = valoresCompaniaValidos.has(filtroCompania)
-    ? filtroCompania
-    : FILTRO_TODAS_CARD_ASSIGNMENT
-
-  const filtroAreaEfectivo = valoresAreaValidos.has(filtroArea)
-    ? filtroArea
-    : FILTRO_TODAS_CARD_ASSIGNMENT
+  const filtroCompaniaEfectivo = filtroCompania
+  const filtroAreaEfectivo = filtroArea
 
   function setFiltroCompania(valor: string): void {
     setPagina(1)
@@ -220,6 +174,32 @@ export function useCardAssignmentPage(): UseCardAssignmentPageReturn {
     [consultaUsuarios.data]
   )
 
+  const consultaCatalogoFiltros = useQuery({
+    queryKey: ["card-assignment", "filters"] as const,
+    queryFn: obtenerCatalogoFiltrosTarjeta,
+    staleTime: 3_600_000,
+  })
+
+  const opcionesCompania = useMemo((): OpcionFiltro[] => {
+    const empresas = consultaCatalogoFiltros.data?.companies ?? []
+    return [
+      { value: FILTRO_TODAS_CARD_ASSIGNMENT, label: "Todas las compañías" },
+      ...empresas.map((c) => ({ value: c.name, label: c.name })),
+    ]
+  }, [consultaCatalogoFiltros.data])
+
+  const opcionesArea = useMemo((): OpcionFiltro[] => {
+    const areas = consultaCatalogoFiltros.data?.areas ?? []
+    return [
+      { value: FILTRO_TODAS_CARD_ASSIGNMENT, label: "Todas las áreas" },
+      ...areas.map((a) => ({ value: a.name, label: a.name })),
+    ]
+  }, [consultaCatalogoFiltros.data])
+  const opcionesEmpresaModal = useMemo((): OpcionFiltro[] => {
+    const empresas = consultaCatalogoFiltros.data?.companies ?? []
+    return empresas.map((c) => ({ value: c.name, label: c.name }))
+  }, [consultaCatalogoFiltros.data])
+
   const totalResultados = meta?.total ?? 0
   const totalPaginas = meta?.totalPages ?? 1
 
@@ -246,15 +226,15 @@ export function useCardAssignmentPage(): UseCardAssignmentPageReturn {
     }
   }, [meta, pagina])
 
-  const [idsUsuarioEnAccion, setIdsUsuarioEnAccion] = useState<Set<string>>(
+  const [idsUsuarioEnAccion, setIdsUsuarioEnAccion] = useState<Set<number>>(
     () => new Set()
   )
 
-  function agregarUsuarioEnAccion(userId: string): void {
+  function agregarUsuarioEnAccion(userId: number): void {
     setIdsUsuarioEnAccion((anterior) => new Set(anterior).add(userId))
   }
 
-  function quitarUsuarioEnAccion(userId: string): void {
+  function quitarUsuarioEnAccion(userId: number): void {
     setIdsUsuarioEnAccion((anterior) => {
       const siguiente = new Set(anterior)
       siguiente.delete(userId)
@@ -285,10 +265,12 @@ export function useCardAssignmentPage(): UseCardAssignmentPageReturn {
   })
 
   const mutacionDesactivar = useMutation({
-    mutationFn: (usuario: CardAssignmentUser) =>
-      desactivarTarjetaUsuario(usuario.id, usuario),
-    onMutate: (usuario) => {
-      agregarUsuarioEnAccion(usuario.id)
+    mutationFn: (parametros: {
+      readonly usuario: CardAssignmentUser
+      readonly cardType: "VIATIC" | "FUEL"
+    }) => desactivarTarjetaUsuario(parametros.usuario.id, parametros.cardType),
+    onMutate: (parametros) => {
+      agregarUsuarioEnAccion(parametros.usuario.id)
     },
     onSuccess: (actualizado) => {
       actualizarUsuarioEnCachesPaginados(
@@ -301,12 +283,12 @@ export function useCardAssignmentPage(): UseCardAssignmentPageReturn {
     onError: () => {
       showAppToast("No se pudo desactivar la tarjeta.", "error")
     },
-    onSettled: (_datos, _error, usuario) => {
-      quitarUsuarioEnAccion(usuario.id)
+    onSettled: (_datos, _error, parametros) => {
+      quitarUsuarioEnAccion(parametros.usuario.id)
     },
   })
 
-  function usuarioEnAccion(userId: string): boolean {
+  function usuarioEnAccion(userId: number): boolean {
     return idsUsuarioEnAccion.has(userId)
   }
 
@@ -322,7 +304,11 @@ export function useCardAssignmentPage(): UseCardAssignmentPageReturn {
     void queryClient.invalidateQueries({ queryKey: [...QUERY_KEY_RAIZ] })
   }
 
-  function abrirModalAsignacion(usuario: CardAssignmentUser): void {
+  function abrirModalAsignacion(
+    usuario: CardAssignmentUser,
+    cardType: "VIATIC" | "FUEL"
+  ): void {
+    setTipoTarjetaModal(cardType)
     setUsuarioModalAsignacion(usuario)
   }
 
@@ -340,14 +326,21 @@ export function useCardAssignmentPage(): UseCardAssignmentPageReturn {
       usuario: usuarioModalAsignacion,
       digitosTarjeta: valores.digitosTarjeta,
       empresaTarjeta: valores.empresaTarjeta,
+      cardType: tipoTarjetaModal,
     })
   }
 
-  function onDesactivarTarjeta(usuario: CardAssignmentUser): void {
+  function onDesactivarTarjeta(
+    usuario: CardAssignmentUser,
+    cardType: "VIATIC" | "FUEL"
+  ): void {
     if (mutacionDesactivar.isPending) {
       return
     }
-    mutacionDesactivar.mutate(usuario)
+    mutacionDesactivar.mutate({
+      usuario,
+      cardType,
+    })
   }
 
   function onPaginaAnterior(): void {
@@ -376,6 +369,7 @@ export function useCardAssignmentPage(): UseCardAssignmentPageReturn {
     setFiltroArea,
     opcionesCompania,
     opcionesArea,
+    opcionesEmpresaModal,
     dropdownPillAbierto,
     setDropdownPillAbierto,
     usuariosFiltrados,
@@ -387,6 +381,7 @@ export function useCardAssignmentPage(): UseCardAssignmentPageReturn {
     onRefrescar,
     usuarioEnAccion,
     usuarioModalAsignacion,
+    tipoTarjetaModal,
     abrirModalAsignacion,
     cerrarModalAsignacion,
     confirmarAsignacionDesdeModal,

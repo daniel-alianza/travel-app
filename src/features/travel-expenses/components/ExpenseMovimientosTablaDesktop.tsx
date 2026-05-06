@@ -10,6 +10,8 @@ import { cn } from "@/lib/utils"
 
 export function ExpenseMovimientosTablaDesktop({
   movimientos,
+  comprobacionHabilitada,
+  etiquetaComprobacionBloqueada,
   onSolicitarComprobacion,
 }: ExpenseMovimientosTablaDesktopProps) {
   return (
@@ -86,15 +88,24 @@ export function ExpenseMovimientosTablaDesktop({
                     type="button"
                     size="sm"
                     variant={mov.estado === "comprobado" ? "secondary" : "default"}
-                    disabled={mov.estado === "comprobado"}
+                    disabled={mov.estado === "comprobado" || !comprobacionHabilitada}
+                    title={
+                      !comprobacionHabilitada
+                        ? etiquetaComprobacionBloqueada
+                        : undefined
+                    }
                     className="cursor-pointer rounded-xl whitespace-nowrap transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] disabled:cursor-not-allowed"
                     onClick={() => {
-                      if (mov.estado !== "comprobado") {
+                      if (mov.estado !== "comprobado" && comprobacionHabilitada) {
                         onSolicitarComprobacion(mov)
                       }
                     }}
                   >
-                    {mov.estado === "comprobado" ? "Comprobado" : "Comprobar"}
+                    {mov.estado === "comprobado"
+                      ? "Comprobado"
+                      : comprobacionHabilitada
+                        ? "Comprobar"
+                        : "Con contabilidad"}
                   </Button>
                 </div>
               </td>

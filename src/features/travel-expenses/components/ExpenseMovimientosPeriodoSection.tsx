@@ -30,6 +30,9 @@ export function ExpenseMovimientosPeriodoSection({
   pendientes,
   mostrarResumenMovimientos,
   panelMovimientosAbierto,
+  comprobacionHabilitada,
+  mensajeVentanaPlazoComprobacion,
+  etiquetaComprobacionBloqueada,
   onTogglePanelMovimientos,
   onReintentarMovimientos,
   onSolicitarComprobacion,
@@ -45,7 +48,7 @@ export function ExpenseMovimientosPeriodoSection({
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-lg font-semibold text-foreground sm:text-xl">
-              Movimientos en el periodo
+              Viajes
             </h2>
             {movimientosCargando ? (
               <Loader2
@@ -75,6 +78,11 @@ export function ExpenseMovimientosPeriodoSection({
             <span className="mx-1.5 text-border">·</span>
             <span>{textoDiasRestantes(viaje)}</span>
           </p>
+          {mensajeVentanaPlazoComprobacion ? (
+            <p className="mt-2 rounded-2xl border border-sky-500/30 bg-sky-500/10 px-3 py-2 text-xs leading-relaxed text-sky-950 dark:text-sky-100 sm:text-sm">
+              {mensajeVentanaPlazoComprobacion}
+            </p>
+          ) : null}
           <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
             {movimientosCargando ? (
               <span className="inline-flex items-center gap-2">
@@ -85,6 +93,7 @@ export function ExpenseMovimientosPeriodoSection({
               <span className="text-destructive">Error al cargar. Reintenta abajo.</span>
             ) : (
               <>
+                Movimientos del viaje seleccionado ·{" "}
                 {movimientosDelViaje.length} movimiento
                 {movimientosDelViaje.length === 1 ? "" : "s"}
                 {mostrarResumenMovimientos ? (
@@ -150,15 +159,18 @@ export function ExpenseMovimientosPeriodoSection({
                 <ExpenseMovimientosTablaSkeleton />
               </>
             ) : movimientosDelViaje.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 px-4 py-12 text-center">
-                <p className="text-sm font-medium text-foreground">
-                  No hay movimientos en este periodo
-                </p>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Cuando existan cargos entre las fechas del viaje, aparecerán aquí para
-                  comprobarlos.
-                </p>
-              </div>
+              <>
+                <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 px-4 py-12 text-center">
+                  <p className="text-sm font-medium text-foreground">
+                    Aún no han subido sus extractos bancarios a SAP
+                  </p>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Aún no han subido sus extractos (movimientos) bancarios a SAP en
+                    los rangos de fechas de este viaje.
+                  </p>
+                </div>
+
+              </>
             ) : (
               <>
                 <ul className="grid gap-4 lg:hidden" role="list">
@@ -166,6 +178,10 @@ export function ExpenseMovimientosPeriodoSection({
                     <li key={mov.id}>
                       <ExpenseMovimientoTarjetaMovil
                         movimiento={mov}
+                        comprobacionHabilitada={comprobacionHabilitada}
+                        etiquetaComprobacionBloqueada={
+                          etiquetaComprobacionBloqueada ?? undefined
+                        }
                         onSolicitarComprobacion={onSolicitarComprobacion}
                       />
                     </li>
@@ -174,6 +190,10 @@ export function ExpenseMovimientosPeriodoSection({
 
                 <ExpenseMovimientosTablaDesktop
                   movimientos={movimientosDelViaje}
+                  comprobacionHabilitada={comprobacionHabilitada}
+                  etiquetaComprobacionBloqueada={
+                    etiquetaComprobacionBloqueada ?? undefined
+                  }
                   onSolicitarComprobacion={onSolicitarComprobacion}
                 />
               </>

@@ -10,6 +10,8 @@ import { cn } from "@/lib/utils"
 
 export function ExpenseMovimientoTarjetaMovil({
   movimiento,
+  comprobacionHabilitada,
+  etiquetaComprobacionBloqueada,
   onSolicitarComprobacion,
 }: ExpenseMovimientoTarjetaMovilProps) {
   return (
@@ -66,17 +68,20 @@ export function ExpenseMovimientoTarjetaMovil({
         <Button
           type="button"
           variant={movimiento.estado === "comprobado" ? "secondary" : "default"}
-          disabled={movimiento.estado === "comprobado"}
+          disabled={movimiento.estado === "comprobado" || !comprobacionHabilitada}
+          title={!comprobacionHabilitada ? etiquetaComprobacionBloqueada : undefined}
           className="w-full cursor-pointer rounded-2xl transition-all duration-300 hover:scale-[1.01] active:scale-[0.99] disabled:cursor-not-allowed"
           onClick={() => {
-            if (movimiento.estado !== "comprobado") {
+            if (movimiento.estado !== "comprobado" && comprobacionHabilitada) {
               onSolicitarComprobacion(movimiento)
             }
           }}
         >
           {movimiento.estado === "comprobado"
             ? "Movimiento comprobado"
-            : "Adjuntar comprobante"}
+            : comprobacionHabilitada
+              ? "Adjuntar comprobante"
+              : "Con contabilidad"}
         </Button>
       </div>
     </article>

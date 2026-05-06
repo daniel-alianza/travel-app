@@ -17,6 +17,8 @@ export function TravelRequestCompanyCompactBanner({
     nombreEmpleado,
     numeroTarjeta,
     mounted,
+    viaticCards,
+    isFormDataLocked,
   } = model
 
   const tarjetaCorta =
@@ -86,10 +88,21 @@ export function TravelRequestCompanyCompactBanner({
         <span className="inline-flex cursor-default items-center gap-2 rounded-xl border border-border/60 bg-background/80 px-3 py-2 text-sm shadow-sm transition-shadow duration-300 hover:shadow-md">
           <CreditCard className="h-3.5 w-3.5 shrink-0 text-primary" />
           <span className="font-mono text-xs font-medium tracking-wide">
-            {tarjetaCorta}
+            {viaticCards.length === 0 ? "Sin tarjeta viático" : tarjetaCorta}
           </span>
         </span>
       </div>
+
+      {isFormDataLocked && viaticCards.length === 0 ? (
+        <p
+          className="mt-3 rounded-xl border border-amber-500/35 bg-amber-500/10 px-3 py-2 text-xs leading-relaxed text-amber-950 dark:text-amber-100"
+          role="alert"
+        >
+          No tienes tarjeta viático asignada: no puedes solicitar viáticos. Comunícate
+          con <span className="font-semibold">administración</span> o{" "}
+          <span className="font-semibold">contabilidad</span> para que te asignen una.
+        </p>
+      ) : null}
     </div>
   )
 }

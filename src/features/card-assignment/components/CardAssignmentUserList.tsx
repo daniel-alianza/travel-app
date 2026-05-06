@@ -216,9 +216,9 @@ export function CardAssignmentUserList({
                   type="button"
                   onClick={() => seleccionarTipo(usuario.id, "VIATIC")}
                   className={cn(
-                    "cursor-pointer flex w-full items-center gap-2 rounded-xl border bg-background/60 px-3 py-2 text-left transition-colors duration-300 group-hover:bg-background/90",
+                    "flex w-full cursor-pointer items-center gap-2 rounded-xl border bg-background/60 px-3 py-2 text-left transition-colors duration-300 group-hover:bg-background/90",
                     tipoSeleccionado === "VIATIC"
-                      ? "border-rose-500/70 bg-rose-500/10 ring-2 ring-rose-500/25 shadow-sm"
+                      ? "border-rose-500/70 bg-rose-500/10 shadow-sm ring-2 ring-rose-500/25"
                       : "border-border/60 group-hover:border-rose-500/35 group-hover:bg-rose-500/5"
                   )}
                 >
@@ -238,9 +238,9 @@ export function CardAssignmentUserList({
                   type="button"
                   onClick={() => seleccionarTipo(usuario.id, "FUEL")}
                   className={cn(
-                    "cursor-pointer flex w-full items-center gap-2 rounded-xl border bg-background/60 px-3 py-2 text-left transition-colors duration-300 group-hover:bg-background/90",
+                    "flex w-full cursor-pointer items-center gap-2 rounded-xl border bg-background/60 px-3 py-2 text-left transition-colors duration-300 group-hover:bg-background/90",
                     tipoSeleccionado === "FUEL"
-                      ? "border-amber-500/70 bg-amber-500/10 ring-2 ring-amber-500/25 shadow-sm"
+                      ? "border-amber-500/70 bg-amber-500/10 shadow-sm ring-2 ring-amber-500/25"
                       : "border-border/60 group-hover:border-amber-500/35 group-hover:bg-amber-500/5"
                   )}
                 >
@@ -264,7 +264,9 @@ export function CardAssignmentUserList({
                 type="button"
                 size="sm"
                 disabled={tarjetaSeleccionadaAsignada || accionEnEste}
-                onClick={() => onAbrirModalAsignacion(usuario, tipoSeleccionado)}
+                onClick={() =>
+                  onAbrirModalAsignacion(usuario, tipoSeleccionado)
+                }
                 className={cn(
                   "h-10 flex-1 cursor-pointer rounded-xl shadow-sm transition-all duration-300",
                   "hover:scale-[1.02] hover:shadow-md",

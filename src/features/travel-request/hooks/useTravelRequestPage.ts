@@ -47,7 +47,7 @@ export function useTravelRequestPage(): TravelRequestPageModel {
   const [sucursal, setSucursal] = useState("")
   const [area, setArea] = useState("")
   const [nombreEmpleado, setNombreEmpleado] = useState("")
-  const [numeroTarjeta, setNumeroTarjeta] = useState("5161020004149101")
+  const [numeroTarjeta, setNumeroTarjeta] = useState("")
   const [viaticCards, setViaticCards] = useState<
     Array<{ id: number; cardNumber: string }>
   >([])
@@ -414,6 +414,14 @@ export function useTravelRequestPage(): TravelRequestPageModel {
         })
         showAppToast("Viaje corregido y reenviado a revisión.", "success")
         navigate("/travel-request/solicitudes")
+        return
+      }
+
+      if (viaticCards.length === 0 || numeroTarjeta.trim().length === 0) {
+        showAppToast(
+          "No tienes tarjeta viático asignada: no puedes solicitar viáticos. Comunícate con administración o contabilidad para que te asignen una.",
+          "error"
+        )
         return
       }
 

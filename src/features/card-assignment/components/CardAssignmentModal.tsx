@@ -54,16 +54,6 @@ export function CardAssignmentModal({
     { value: "No Acumulativa", label: "No Acumulativa" },
     { value: "Acumulable", label: "Acumulable" },
   ] as const
-  const opcionesGrupoTarjeta = [
-    { value: "Tarjetas Base", label: "Tarjetas Base" },
-    { value: "Grupo Operativo", label: "Grupo Operativo" },
-  ] as const
-  const opcionesEstadoTarjeta = [
-    { value: "Activa", label: "Activa" },
-    { value: "Inactiva", label: "Inactiva" },
-    { value: "Bloqueada", label: "Bloqueada" },
-    { value: "Cancelada", label: "Cancelada" },
-  ] as const
 
   const [dropdownModalAbierto, setDropdownModalAbierto] = useState<
     string | null

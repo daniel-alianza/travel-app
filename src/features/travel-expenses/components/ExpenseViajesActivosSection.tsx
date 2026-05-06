@@ -1,21 +1,27 @@
 import { ExpenseViajeTarjeta } from "@/features/travel-expenses/components/ExpenseViajeTarjeta"
+import {
+  obtenerColorPlazoComprobacionTarjeta,
+  obtenerTextoPlazoComprobacionTarjeta,
+} from "@/features/travel-expenses/hooks/expense-page-helpers"
 import type { ExpenseViajesActivosSectionProps } from "@/features/travel-expenses/interfaces/expense-viajes-activos-section-props.interface"
 
 export function ExpenseViajesActivosSection({
   viajesActivos,
+  viajesReferencia,
   idViajeSeleccionado,
+  viajesIdsConComprobacionPendiente,
   onSeleccionarViaje,
 }: ExpenseViajesActivosSectionProps) {
   return (
     <section className="mb-10 space-y-4">
       <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
-        Viajes activos
+        Solicitudes activas
       </h2>
 
       {viajesActivos.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-border/70 bg-muted/15 px-4 py-10 text-center shadow-inner">
           <p className="text-sm font-medium text-foreground">
-            No tienes viajes activos en este momento
+            No tienes solicitudes activas en este momento
           </p>
           <p className="mt-2 text-xs text-muted-foreground">
             Cuando tengas un viaje vigente, aparecerá aquí arriba para comprobarlo primero.
@@ -29,6 +35,16 @@ export function ExpenseViajesActivosSection({
               viaje={v}
               variante="activo"
               seleccionado={v.id === idViajeSeleccionado}
+              plazoComprobacion={obtenerTextoPlazoComprobacionTarjeta(
+                v,
+                viajesReferencia,
+                viajesIdsConComprobacionPendiente.has(v.id)
+              )}
+              plazoComprobacionColor={obtenerColorPlazoComprobacionTarjeta(
+                v,
+                viajesReferencia,
+                viajesIdsConComprobacionPendiente.has(v.id)
+              )}
               onSeleccionar={onSeleccionarViaje}
             />
           ))}

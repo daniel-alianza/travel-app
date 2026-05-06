@@ -2,13 +2,19 @@ import { History } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { ExpenseViajeTarjeta } from "@/features/travel-expenses/components/ExpenseViajeTarjeta"
+import {
+  obtenerColorPlazoComprobacionTarjeta,
+  obtenerTextoPlazoComprobacionTarjeta,
+} from "@/features/travel-expenses/hooks/expense-page-helpers"
 import type { ExpenseHistorialViajesSectionProps } from "@/features/travel-expenses/interfaces/expense-historial-viajes-section-props.interface"
 
 export function ExpenseHistorialViajesSection({
   viajesFinalizados,
+  viajesReferencia,
   historialViajesVisible,
   onToggleHistorial,
   idViajeSeleccionado,
+  viajesIdsConComprobacionPendiente,
   onSeleccionarViaje,
 }: ExpenseHistorialViajesSectionProps) {
   if (viajesFinalizados.length === 0) {
@@ -38,6 +44,16 @@ export function ExpenseHistorialViajesSection({
               viaje={v}
               variante="finalizado"
               seleccionado={v.id === idViajeSeleccionado}
+              plazoComprobacion={obtenerTextoPlazoComprobacionTarjeta(
+                v,
+                viajesReferencia,
+                viajesIdsConComprobacionPendiente.has(v.id)
+              )}
+              plazoComprobacionColor={obtenerColorPlazoComprobacionTarjeta(
+                v,
+                viajesReferencia,
+                viajesIdsConComprobacionPendiente.has(v.id)
+              )}
               onSeleccionar={onSeleccionarViaje}
             />
           ))}

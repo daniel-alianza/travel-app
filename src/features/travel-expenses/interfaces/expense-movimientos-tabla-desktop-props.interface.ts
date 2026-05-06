@@ -2,5 +2,7 @@ import type { ExpenseMovimiento } from "@/features/travel-expenses/interfaces/ex
 
 export interface ExpenseMovimientosTablaDesktopProps {
   movimientos: ExpenseMovimiento[]
+  comprobacionHabilitada: boolean
+  etiquetaComprobacionBloqueada?: string
   onSolicitarComprobacion: (movimiento: ExpenseMovimiento) => void
 }

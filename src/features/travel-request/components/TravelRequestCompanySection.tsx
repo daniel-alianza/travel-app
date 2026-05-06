@@ -123,15 +123,40 @@ export function TravelRequestCompanySection({
           value={numeroTarjeta}
           options={viaticCards.map((card) => card.cardNumber)}
           onChange={setNumeroTarjeta}
-          placeholder="Seleccionar tarjeta viatic"
+          placeholder={
+            viaticCards.length === 0
+              ? "Sin tarjetas viático disponibles"
+              : "Seleccionar tarjeta viatic"
+          }
           icon={CreditCard}
           id="numero-tarjeta"
+          disabled={viaticCards.length === 0}
+          showChevron={viaticCards.length > 0}
           dropdownOpen={dropdownOpen}
           setDropdownOpen={setDropdownOpen}
           focusedField={focusedField}
           setFocusedField={setFocusedField}
         />
       </div>
+
+      {isFormDataLocked && viaticCards.length === 0 ? (
+        <div
+          className="mt-5 rounded-2xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm leading-relaxed text-amber-950 dark:text-amber-100"
+          role="alert"
+        >
+          <p className="font-medium text-amber-950 dark:text-amber-50">
+            Sin tarjeta viático asignada
+          </p>
+          <p className="mt-2 text-amber-900/95 dark:text-amber-100/90">
+            No tienes una tarjeta viático registrada en el sistema, por lo que{" "}
+            <span className="font-semibold">no puedes solicitar viáticos</span>.
+            Comunícate con el área de{" "}
+            <span className="font-semibold">administración</span> o{" "}
+            <span className="font-semibold">contabilidad</span> para que te asignen una
+            tarjeta y vuelve a intentar.
+          </p>
+        </div>
+      ) : null}
     </section>
   )
 }

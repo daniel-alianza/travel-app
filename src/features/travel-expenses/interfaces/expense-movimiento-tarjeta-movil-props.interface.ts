@@ -2,5 +2,7 @@ import type { ExpenseMovimiento } from "@/features/travel-expenses/interfaces/ex
 
 export interface ExpenseMovimientoTarjetaMovilProps {
   movimiento: ExpenseMovimiento
+  comprobacionHabilitada: boolean
+  etiquetaComprobacionBloqueada?: string
   onSolicitarComprobacion: (movimiento: ExpenseMovimiento) => void
 }

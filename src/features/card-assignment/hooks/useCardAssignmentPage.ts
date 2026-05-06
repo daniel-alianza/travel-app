@@ -140,6 +140,7 @@ interface UseCardAssignmentPageReturn {
 }
 
 export function useCardAssignmentPage(): UseCardAssignmentPageReturn {
+  const AUTHENTICATED_USER_ID = 1
   const queryClient = useQueryClient()
   const [mousePosition, setMousePosition] =
     useState<TravelRequestMousePosition>({ x: 0, y: 0 })
@@ -310,7 +311,12 @@ export function useCardAssignmentPage(): UseCardAssignmentPageReturn {
     mutationFn: (parametros: {
       readonly usuario: CardAssignmentUser
       readonly cardType: "VIATIC" | "FUEL"
-    }) => desactivarTarjetaUsuario(parametros.usuario.id, parametros.cardType),
+    }) =>
+      desactivarTarjetaUsuario(
+        parametros.usuario.id,
+        parametros.cardType,
+        AUTHENTICATED_USER_ID
+      ),
     onMutate: (parametros) => {
       agregarUsuarioEnAccion(parametros.usuario.id)
     },
@@ -366,6 +372,7 @@ export function useCardAssignmentPage(): UseCardAssignmentPageReturn {
     }
     const esGasolina = tipoTarjetaModal === "FUEL"
     mutacionAsignar.mutate({
+      actorUserId: AUTHENTICATED_USER_ID,
       usuario: usuarioModalAsignacion,
       digitosTarjeta: valores.digitosTarjeta,
       empresaTarjeta: valores.empresaTarjeta,

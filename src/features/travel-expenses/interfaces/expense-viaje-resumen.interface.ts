@@ -1,5 +1,6 @@
 export interface ExpenseViajeResumen {
   id: string
+  solicitudId: string
   titulo: string
   motivo: string
   emailSolicitante: string
@@ -9,4 +10,5 @@ export interface ExpenseViajeResumen {
   numeroTarjeta: string
   fechaSalida: string
   fechaRegreso: string
+  pendientesComprobacion: number
 }

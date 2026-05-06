@@ -13,6 +13,8 @@ export function ExpenseViajeTarjeta({
   viaje,
   seleccionado,
   variante,
+  plazoComprobacion = null,
+  plazoComprobacionColor = "neutral",
   onSeleccionar,
 }: ExpenseViajeTarjetaProps) {
   return (
@@ -69,6 +71,20 @@ export function ExpenseViajeTarjeta({
           <span className="rounded-full border border-border/60 bg-background/50 px-3 py-1 text-[0.65rem] font-semibold tracking-wide text-muted-foreground uppercase">
             {textoDiasRestantes(viaje)}
           </span>
+          {plazoComprobacion ? (
+            <span
+              className={cn(
+                "max-w-[14rem] text-right text-[0.65rem] leading-snug font-medium tracking-normal normal-case sm:max-w-[16rem]",
+                plazoComprobacionColor === "danger"
+                  ? "text-red-700 dark:text-red-300"
+                  : plazoComprobacionColor === "warning"
+                    ? "text-amber-700 dark:text-amber-300"
+                    : "text-sky-800 dark:text-sky-200"
+              )}
+            >
+              {plazoComprobacion}
+            </span>
+          ) : null}
           <span className="text-lg font-bold tabular-nums text-accent">
             {formatearMonedaViatico(viaje.montoSolicitado)}
           </span>

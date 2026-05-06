@@ -12,6 +12,9 @@ export interface ExpenseMovimientosPeriodoSectionProps {
   pendientes: ExpenseMovimiento[]
   mostrarResumenMovimientos: boolean
   panelMovimientosAbierto: boolean
+  comprobacionHabilitada: boolean
+  mensajeVentanaPlazoComprobacion: string | null
+  etiquetaComprobacionBloqueada: string | null
   onTogglePanelMovimientos: () => void
   onReintentarMovimientos: () => void
   onSolicitarComprobacion: (movimiento: ExpenseMovimiento) => void

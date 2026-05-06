@@ -4,5 +4,7 @@ export interface ExpenseViajeTarjetaProps {
   viaje: ExpenseViajeResumen
   seleccionado: boolean
   variante: "activo" | "finalizado"
+  plazoComprobacion?: string | null
+  plazoComprobacionColor?: "neutral" | "warning" | "danger"
   onSeleccionar: (id: string) => void
 }

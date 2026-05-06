@@ -27,6 +27,7 @@ export function TravelRequestForm({ model }: TravelRequestFormProps) {
     removeTrip,
     esModoCorreccionViaje,
     etiquetaBotonEnviar,
+    viaticCards,
   } = model
   const showEmpresa = trips.length === 1
 
@@ -249,7 +250,10 @@ export function TravelRequestForm({ model }: TravelRequestFormProps) {
       >
         <Button
           type="submit"
-          disabled={ocupado}
+          disabled={
+            ocupado ||
+            (!esModoCorreccionViaje && viaticCards.length === 0)
+          }
           className="group relative h-14 cursor-pointer overflow-hidden rounded-2xl bg-gradient-to-r from-primary to-primary/90 px-8 text-base font-medium text-primary-foreground shadow-lg shadow-primary/25 transition-all duration-500 hover:scale-105 hover:from-primary/90 hover:to-primary hover:shadow-xl hover:shadow-primary/30 disabled:opacity-70 disabled:hover:scale-100"
         >
           <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-1000 group-hover:translate-x-full" />

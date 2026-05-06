@@ -15,14 +15,15 @@ export type CardAssignmentFilterCatalog = {
 }
 
 export async function obtenerCatalogoFiltrosTarjeta(): Promise<CardAssignmentFilterCatalog> {
-  const respuesta = await travelApi.get<ApiEnvelope<CardAssignmentFilterCatalog>>(
-    "/card-assignment/filters"
-  )
+  const respuesta = await travelApi.get<
+    ApiEnvelope<CardAssignmentFilterCatalog>
+  >("/card-assignment/filters")
 
   return respuesta.data.data
 }
 
 export interface AsignarTarjetaParametros {
+  actorUserId?: number
   usuario: CardAssignmentUser
   digitosTarjeta: string
   empresaTarjeta: string
@@ -42,7 +43,9 @@ export interface CardAssignmentUsersListQuery {
   area: string
 }
 
-function metaEsValida(meta: unknown): meta is ListaPaginada<CardAssignmentUser>["meta"] {
+function metaEsValida(
+  meta: unknown
+): meta is ListaPaginada<CardAssignmentUser>["meta"] {
   if (meta === null || typeof meta !== "object") {
     return false
   }
@@ -101,10 +104,7 @@ export async function obtenerUsuariosAsignacionTarjeta(
       area: query.area,
     },
   })
-  const normalizado = normalizarRespuestaServidor(
-    respuesta.data.data,
-    query
-  )
+  const normalizado = normalizarRespuestaServidor(respuesta.data.data, query)
   if (normalizado !== null) {
     return normalizado
   }
@@ -115,6 +115,7 @@ export async function asignarTarjetaUsuario(
   parametros: AsignarTarjetaParametros
 ): Promise<CardAssignmentUser> {
   const {
+    actorUserId,
     usuario,
     digitosTarjeta,
     empresaTarjeta,
@@ -127,6 +128,7 @@ export async function asignarTarjetaUsuario(
   } = parametros
   const digitosNormalizados = normalizarDigitosTarjeta(digitosTarjeta)
   const cuerpo = {
+    actorUserId,
     cardNumber: digitosNormalizados,
     companyName: empresaTarjeta,
     cardType,
@@ -145,11 +147,12 @@ export async function asignarTarjetaUsuario(
 
 export async function desactivarTarjetaUsuario(
   userId: number,
-  cardType: "VIATIC" | "FUEL"
+  cardType: "VIATIC" | "FUEL",
+  actorUserId?: number
 ): Promise<CardAssignmentUser> {
   const respuesta = await travelApi.post<ApiEnvelope<CardAssignmentUser>>(
     `/card-assignment/users/${userId}/deactivate`,
-    { cardType }
+    { cardType, actorUserId }
   )
   return respuesta.data.data
 }

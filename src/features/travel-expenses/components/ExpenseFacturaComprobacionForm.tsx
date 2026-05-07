@@ -1,12 +1,14 @@
 import { useId, useState, type ReactElement } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { ArrowLeft, FileText, Trash2 } from "lucide-react"
+import { ArrowLeft, FileText, Loader2, Trash2 } from "lucide-react"
 
+import { showAppToast } from "@/components/app-toast"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { useAuthStore } from "@/features/auth/store/authStore"
 import { ExpenseComprobacionResumenDatos } from "@/features/travel-expenses/components/ExpenseComprobacionResumenDatos"
 import { ExpenseFileDropZone } from "@/features/travel-expenses/components/ExpenseFileDropZone"
 import { ExpenseViaticCategorySelect } from "@/features/travel-expenses/components/ExpenseViaticCategorySelect"
@@ -17,6 +19,10 @@ import {
 import { formatearMonedaViatico } from "@/features/travel-expenses/hooks/expense-page-helpers"
 import type { ExpenseMovimiento } from "@/features/travel-expenses/interfaces/expense-movimiento.interface"
 import type { ExpenseViajeResumen } from "@/features/travel-expenses/interfaces/expense-viaje-resumen.interface"
+import {
+  submitTripMovementProof,
+  uploadTripFilesToDms,
+} from "@/features/travel-expenses/services/travel-expenses-api"
 import {
   expenseFacturaComprobacionSchema,
   type ExpenseFacturaComprobacionFormValues,
@@ -170,6 +176,7 @@ interface ExpenseFacturaComprobacionFormProps {
   nombreResponsable: string
   onVolver: () => void
   onExito: () => void
+  onCambioSubiendo?: (subiendo: boolean) => void
 }
 
 export function ExpenseFacturaComprobacionForm({
@@ -178,13 +185,21 @@ export function ExpenseFacturaComprobacionForm({
   nombreResponsable,
   onVolver,
   onExito,
+  onCambioSubiendo,
 }: ExpenseFacturaComprobacionFormProps) {
   const idBase = useId()
+  const authenticatedUserId = useAuthStore((state) => state.userId)
   const [errorArchivos, setErrorArchivos] = useState<string | null>(null)
   const [cfdiSimple, setCfdiSimple] = useState<CfdiSimple>(CFDI_SIMPLE_VACIO)
   const { xml, pdf } = cfdiSimple
   const [cfdiAutobus, setCfdiAutobus] = useState<CfdiAutobus>(CFDI_AUTOBUS_VACIO)
   const { xmlIda, pdfIda, xmlVuelta, pdfVuelta } = cfdiAutobus
+  const [estadoCarga, setEstadoCarga] = useState<{
+    fileName: string
+    fileIndex: number
+    totalFiles: number
+    progressPercent: number
+  } | null>(null)
 
   const formulario = useForm<ExpenseFacturaComprobacionFormValues>({
     resolver: zodResolver(expenseFacturaComprobacionSchema),
@@ -263,23 +278,67 @@ export function ExpenseFacturaComprobacionForm({
     return null
   }
 
-  function enviarFactura(valores: ExpenseFacturaComprobacionFormValues): void {
+  async function enviarFactura(
+    valores: ExpenseFacturaComprobacionFormValues
+  ): Promise<void> {
     const err = validarArchivosFactura()
     if (err !== null) {
       setErrorArchivos(err)
       return
     }
+    if (typeof authenticatedUserId !== "number") {
+      setErrorArchivos("No se pudo identificar al usuario para subir archivos.")
+      return
+    }
     setErrorArchivos(null)
     void valores
-    if (modoAutobus) {
-      void xmlIda
-      void pdfIda
-      void xmlVuelta
-      void pdfVuelta
-    } else {
-      void xml
-      void pdf
+    const archivosConRol = modoAutobus
+      ? [
+          { file: xmlIda, fileRole: "invoice_xml_outbound" as const },
+          { file: pdfIda, fileRole: "invoice_pdf_outbound" as const },
+          { file: xmlVuelta, fileRole: "invoice_xml_return" as const },
+          { file: pdfVuelta, fileRole: "invoice_pdf_return" as const },
+        ]
+      : [
+          { file: xml, fileRole: "invoice_xml" as const },
+          { file: pdf, fileRole: "invoice_pdf" as const },
+        ]
+    const archivosFinales = archivosConRol.filter(
+      (item): item is { file: File; fileRole: typeof item.fileRole } => item.file !== null
+    )
+    onCambioSubiendo?.(true)
+    try {
+      const uploadedFiles = await uploadTripFilesToDms({
+        userId: authenticatedUserId,
+        tripId: Number(viaje.id),
+        fileType: "invoice",
+        files: archivosFinales.map((item) => item.file),
+        onProgress: (progress) => {
+          setEstadoCarga(progress)
+        },
+      })
+      await submitTripMovementProof({
+        userId: authenticatedUserId,
+        tripId: Number(viaje.id),
+        movementSequence: movimiento.numeroMovimiento,
+        proofType: "invoice",
+        comment: valores.comentario.trim(),
+        files: uploadedFiles.map((uploadedFile, index) => ({
+          tripFileId: uploadedFile.fileId,
+          fileRole: archivosFinales[index]?.fileRole ?? "invoice_pdf",
+        })),
+      })
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "No se pudo subir los archivos al bucket."
+      setErrorArchivos(errorMessage)
+      setEstadoCarga(null)
+      onCambioSubiendo?.(false)
+      return
     }
+    setEstadoCarga(null)
+    onCambioSubiendo?.(false)
+    showAppToast("Comprobantes CFDI subidos al bucket correctamente.", "success")
     onExito()
   }
 
@@ -292,6 +351,7 @@ export function ExpenseFacturaComprobacionForm({
           size="sm"
           className="cursor-pointer rounded-xl"
           onClick={onVolver}
+          disabled={formState.isSubmitting}
         >
           <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
           Volver
@@ -377,7 +437,11 @@ export function ExpenseFacturaComprobacionForm({
                 compacto={false}
                 multiple
                 onArchivosElegidos={
-                  modoAutobus ? aplicarArchivosFacturaAutobus : aplicarArchivosFacturaSimple
+                  formState.isSubmitting
+                    ? undefined
+                    : modoAutobus
+                      ? aplicarArchivosFacturaAutobus
+                      : aplicarArchivosFacturaSimple
                 }
               />
 
@@ -387,14 +451,18 @@ export function ExpenseFacturaComprobacionForm({
                     <FilaArchivoCfdi
                       etiqueta="XML"
                       nombre={xml.name}
-                      onQuitar={() => limpiarXml("simple")}
+                      onQuitar={
+                        formState.isSubmitting ? () => undefined : () => limpiarXml("simple")
+                      }
                     />
                   ) : null}
                   {pdf ? (
                     <FilaArchivoCfdi
                       etiqueta="PDF"
                       nombre={pdf.name}
-                      onQuitar={() => limpiarPdf("simple")}
+                      onQuitar={
+                        formState.isSubmitting ? () => undefined : () => limpiarPdf("simple")
+                      }
                     />
                   ) : null}
                 </div>
@@ -406,33 +474,49 @@ export function ExpenseFacturaComprobacionForm({
                     <FilaArchivoCfdi
                       etiqueta="XML — ida"
                       nombre={xmlIda.name}
-                      onQuitar={() => limpiarXml("ida")}
+                      onQuitar={
+                        formState.isSubmitting ? () => undefined : () => limpiarXml("ida")
+                      }
                     />
                   ) : null}
                   {pdfIda ? (
                     <FilaArchivoCfdi
                       etiqueta="PDF — ida"
                       nombre={pdfIda.name}
-                      onQuitar={() => limpiarPdf("ida")}
+                      onQuitar={
+                        formState.isSubmitting ? () => undefined : () => limpiarPdf("ida")
+                      }
                     />
                   ) : null}
                   {xmlVuelta ? (
                     <FilaArchivoCfdi
                       etiqueta="XML — vuelta"
                       nombre={xmlVuelta.name}
-                      onQuitar={() => limpiarXml("vuelta")}
+                      onQuitar={
+                        formState.isSubmitting ? () => undefined : () => limpiarXml("vuelta")
+                      }
                     />
                   ) : null}
                   {pdfVuelta ? (
                     <FilaArchivoCfdi
                       etiqueta="PDF — vuelta"
                       nombre={pdfVuelta.name}
-                      onQuitar={() => limpiarPdf("vuelta")}
+                      onQuitar={
+                        formState.isSubmitting ? () => undefined : () => limpiarPdf("vuelta")
+                      }
                     />
                   ) : null}
                 </div>
               ) : null}
             </div>
+            {estadoCarga ? (
+              <p className="mt-3 text-xs text-muted-foreground" role="status">
+                Subiendo archivo {String(estadoCarga.fileIndex)}/
+                {String(estadoCarga.totalFiles)} ({String(estadoCarga.progressPercent)}%):
+                {" "}
+                {estadoCarga.fileName}
+              </p>
+            ) : null}
             {errorArchivos ? (
               <p className="mt-3 text-sm text-destructive" role="alert">
                 {errorArchivos}
@@ -471,7 +555,14 @@ export function ExpenseFacturaComprobacionForm({
             className="w-full cursor-pointer rounded-2xl"
             disabled={formState.isSubmitting}
           >
-            Enviar comprobación
+            {formState.isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
+                Subiendo al bucket...
+              </>
+            ) : (
+              "Enviar comprobación"
+            )}
           </Button>
         </form>
       </div>

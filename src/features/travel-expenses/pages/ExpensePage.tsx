@@ -231,6 +231,7 @@ export function ExpensePage() {
         viaje={viaje}
         nombreResponsable={nombreResponsable}
         onCerrar={comprobacion.cerrarModalComprobacion}
+        onComprobacionRegistrada={page.reintentarMovimientos}
       />
       <ExpenseConciliacionOverlay
         visible={page.overlayConciliacionVisible}

@@ -23,6 +23,7 @@ interface ExpenseComprobacionModalProps {
   viaje: ExpenseViajeResumen | null
   nombreResponsable: string
   onCerrar: () => void
+  onComprobacionRegistrada: () => void
 }
 
 export function ExpenseComprobacionModal({
@@ -30,8 +31,10 @@ export function ExpenseComprobacionModal({
   viaje,
   nombreResponsable,
   onCerrar,
+  onComprobacionRegistrada,
 }: ExpenseComprobacionModalProps) {
   const [paso, setPaso] = useState<"tipo" | "ticket" | "factura">("tipo")
+  const [subiendoArchivos, setSubiendoArchivos] = useState(false)
   const [nonceVolverTipo, setNonceVolverTipo] = useState(0)
   const [entradaActiva, setEntradaActiva] = useState(false)
   const [saliendo, setSaliendo] = useState(false)
@@ -58,6 +61,9 @@ export function ExpenseComprobacionModal({
   }, [movimiento?.id, viaje?.id])
 
   const cerrarConAnimacion = useCallback((): void => {
+    if (subiendoArchivos) {
+      return
+    }
     setSaliendo((prev) => {
       if (prev) {
         return prev
@@ -65,7 +71,7 @@ export function ExpenseComprobacionModal({
       salidaCompletadaRef.current = false
       return true
     })
-  }, [])
+  }, [subiendoArchivos])
 
   function finalizarSalidaSiCorresponde(event: React.TransitionEvent<HTMLDivElement>): void {
     if (!saliendo || salidaCompletadaRef.current) {
@@ -89,6 +95,9 @@ export function ExpenseComprobacionModal({
       if (event.key !== "Escape") {
         return
       }
+      if (subiendoArchivos) {
+        return
+      }
       if (paso === "ticket" || paso === "factura") {
         setNonceVolverTipo((n) => n + 1)
         setPaso("tipo")
@@ -98,7 +107,7 @@ export function ExpenseComprobacionModal({
     }
     window.addEventListener("keydown", handleEscape)
     return () => window.removeEventListener("keydown", handleEscape)
-  }, [movimiento, paso, cerrarConAnimacion])
+  }, [movimiento, paso, cerrarConAnimacion, subiendoArchivos])
 
   useEffect(() => {
     if (!saliendo) {
@@ -143,6 +152,9 @@ export function ExpenseComprobacionModal({
       aria-labelledby={tituloAria}
       onTransitionEnd={finalizarSalidaSiCorresponde}
       onClick={() => {
+        if (subiendoArchivos) {
+          return
+        }
         if (paso === "ticket" || paso === "factura") {
           setNonceVolverTipo((n) => n + 1)
           setPaso("tipo")
@@ -193,6 +205,7 @@ export function ExpenseComprobacionModal({
                 className="h-9 w-9 shrink-0 rounded-xl"
                 onClick={cerrarConAnimacion}
                 aria-label="Cerrar"
+                disabled={subiendoArchivos}
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -221,6 +234,7 @@ export function ExpenseComprobacionModal({
               <button
                 type="button"
                 onClick={() => setPaso("factura")}
+                disabled={subiendoArchivos}
                 className={cn(
                   "group flex cursor-pointer flex-col items-center gap-2 rounded-2xl border-2 border-border/70 bg-linear-to-br from-card to-secondary/20 p-5 text-center shadow-md transition-all duration-300",
                   "hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
@@ -237,6 +251,7 @@ export function ExpenseComprobacionModal({
               <button
                 type="button"
                 onClick={() => setPaso("ticket")}
+                disabled={subiendoArchivos}
                 className={cn(
                   "group flex cursor-pointer flex-col items-center gap-2 rounded-2xl border-2 border-border/70 bg-linear-to-br from-card to-secondary/20 p-5 text-center shadow-md transition-all duration-300",
                   "hover:-translate-y-0.5 hover:border-accent/50 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30"
@@ -257,6 +272,7 @@ export function ExpenseComprobacionModal({
               variant="outline"
               className="mt-5 w-full cursor-pointer rounded-2xl"
               onClick={cerrarConAnimacion}
+              disabled={subiendoArchivos}
             >
               Cancelar
             </Button>
@@ -270,6 +286,7 @@ export function ExpenseComprobacionModal({
               className="absolute -top-1 -right-1 z-10 h-9 w-9 rounded-xl"
               onClick={cerrarConAnimacion}
               aria-label="Cerrar"
+              disabled={subiendoArchivos}
             >
               <X className="h-4 w-4" />
             </Button>
@@ -279,11 +296,16 @@ export function ExpenseComprobacionModal({
               viaje={viaje}
               nombreResponsable={nombre}
               onVolver={() => {
+                if (subiendoArchivos) {
+                  return
+                }
                 setNonceVolverTipo((n) => n + 1)
                 setPaso("tipo")
               }}
+              onCambioSubiendo={setSubiendoArchivos}
               onExito={() => {
                 showAppToast("Comprobación con ticket enviada correctamente.", "success")
+                onComprobacionRegistrada()
                 cerrarConAnimacion()
               }}
             />
@@ -297,6 +319,7 @@ export function ExpenseComprobacionModal({
               className="absolute -top-1 -right-1 z-10 h-9 w-9 rounded-xl"
               onClick={cerrarConAnimacion}
               aria-label="Cerrar"
+              disabled={subiendoArchivos}
             >
               <X className="h-4 w-4" />
             </Button>
@@ -306,11 +329,16 @@ export function ExpenseComprobacionModal({
               viaje={viaje}
               nombreResponsable={nombre}
               onVolver={() => {
+                if (subiendoArchivos) {
+                  return
+                }
                 setNonceVolverTipo((n) => n + 1)
                 setPaso("tipo")
               }}
+              onCambioSubiendo={setSubiendoArchivos}
               onExito={() => {
                 showAppToast("Comprobación con factura enviada correctamente.", "success")
+                onComprobacionRegistrada()
                 cerrarConAnimacion()
               }}
             />

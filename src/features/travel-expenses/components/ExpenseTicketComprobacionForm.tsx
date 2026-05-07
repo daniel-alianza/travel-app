@@ -1,18 +1,24 @@
 import { useId, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { ArrowLeft, Ticket } from "lucide-react"
+import { ArrowLeft, Loader2, Ticket } from "lucide-react"
 
+import { showAppToast } from "@/components/app-toast"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { useAuthStore } from "@/features/auth/store/authStore"
 import { ExpenseComprobacionResumenDatos } from "@/features/travel-expenses/components/ExpenseComprobacionResumenDatos"
 import { ExpenseFileDropZone } from "@/features/travel-expenses/components/ExpenseFileDropZone"
 import { ExpenseViaticCategorySelect } from "@/features/travel-expenses/components/ExpenseViaticCategorySelect"
 import { formatearMonedaViatico } from "@/features/travel-expenses/hooks/expense-page-helpers"
 import type { ExpenseMovimiento } from "@/features/travel-expenses/interfaces/expense-movimiento.interface"
 import type { ExpenseViajeResumen } from "@/features/travel-expenses/interfaces/expense-viaje-resumen.interface"
+import {
+  submitTripMovementProof,
+  uploadTripFilesToDms,
+} from "@/features/travel-expenses/services/travel-expenses-api"
 import {
   expenseTicketComprobacionSchema,
   type ExpenseTicketComprobacionFormValues,
@@ -46,6 +52,7 @@ interface ExpenseTicketComprobacionFormProps {
   nombreResponsable: string
   onVolver: () => void
   onExito: () => void
+  onCambioSubiendo?: (subiendo: boolean) => void
 }
 
 export function ExpenseTicketComprobacionForm({
@@ -54,11 +61,19 @@ export function ExpenseTicketComprobacionForm({
   nombreResponsable,
   onVolver,
   onExito,
+  onCambioSubiendo,
 }: ExpenseTicketComprobacionFormProps) {
   const idBase = useId()
-  const idArchivos = `${idBase}-archivos`
   const [errorArchivos, setErrorArchivos] = useState<string | null>(null)
   const [nombreArchivoTicket, setNombreArchivoTicket] = useState<string | null>(null)
+  const [archivoTicket, setArchivoTicket] = useState<File | null>(null)
+  const [estadoCarga, setEstadoCarga] = useState<{
+    fileName: string
+    fileIndex: number
+    totalFiles: number
+    progressPercent: number
+  } | null>(null)
+  const authenticatedUserId = useAuthStore((state) => state.userId)
 
   const formulario = useForm<ExpenseTicketComprobacionFormValues>({
     resolver: zodResolver(expenseTicketComprobacionSchema),
@@ -94,8 +109,10 @@ export function ExpenseTicketComprobacionForm({
     setErrorArchivos(mensaje)
     const primero = lista?.item(0)
     if (primero && mensaje === null) {
+      setArchivoTicket(primero)
       setNombreArchivoTicket(primero.name)
     } else {
+      setArchivoTicket(null)
       setNombreArchivoTicket(null)
     }
   }
@@ -108,22 +125,65 @@ export function ExpenseTicketComprobacionForm({
 
   function quitarArchivoTicket(): void {
     setErrorArchivos(null)
+    setArchivoTicket(null)
     setNombreArchivoTicket(null)
   }
 
-  function enviarComprobacionTicket(
+  async function enviarComprobacionTicket(
     valores: ExpenseTicketComprobacionFormValues
-  ): void {
-    const entrada = document.getElementById(idArchivos) as HTMLInputElement | null
-    const files = entrada?.files ?? null
-    const err = validarArchivoTicket(files)
+  ): Promise<void> {
+    const err = validarArchivoTicket(
+      archivoTicket
+        ? (() => {
+            const lista = new DataTransfer()
+            lista.items.add(archivoTicket)
+            return lista.files
+          })()
+        : null
+    )
     if (err !== null) {
       setErrorArchivos(err)
       return
     }
+    if (typeof authenticatedUserId !== "number" || archivoTicket === null) {
+      setErrorArchivos("No se pudo identificar al usuario para subir el archivo.")
+      return
+    }
     setErrorArchivos(null)
     void valores
-    void files
+    onCambioSubiendo?.(true)
+    try {
+      const uploadedFiles = await uploadTripFilesToDms({
+        userId: authenticatedUserId,
+        tripId: Number(viaje.id),
+        fileType: "ticket",
+        files: [archivoTicket],
+        onProgress: (progress) => {
+          setEstadoCarga(progress)
+        },
+      })
+      await submitTripMovementProof({
+        userId: authenticatedUserId,
+        tripId: Number(viaje.id),
+        movementSequence: movimiento.numeroMovimiento,
+        proofType: "ticket",
+        comment: valores.comentario.trim(),
+        files: uploadedFiles.map((file) => ({
+          tripFileId: file.fileId,
+          fileRole: "ticket" as const,
+        })),
+      })
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "No se pudo subir el archivo al bucket."
+      setErrorArchivos(errorMessage)
+      setEstadoCarga(null)
+      onCambioSubiendo?.(false)
+      return
+    }
+    setEstadoCarga(null)
+    onCambioSubiendo?.(false)
+    showAppToast("Archivo subido al bucket correctamente.", "success")
     onExito()
   }
 
@@ -136,6 +196,7 @@ export function ExpenseTicketComprobacionForm({
           size="sm"
           className="cursor-pointer rounded-xl"
           onClick={onVolver}
+          disabled={formState.isSubmitting}
         >
           <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
           Volver
@@ -236,23 +297,37 @@ export function ExpenseTicketComprobacionForm({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor={idArchivos} className="text-foreground">
+            <Label htmlFor={`${idBase}-archivos`} className="text-foreground">
               Comprobantes (imagen o PDF) <span className="text-destructive">*</span>
             </Label>
             <ExpenseFileDropZone
-              inputId={idArchivos}
+              inputId={`${idBase}-archivos`}
               accept="image/*,.pdf,application/pdf"
               textoArrastrar="Arrastra y suelta aquí tu archivo"
               textoAyuda="Un solo archivo: imagen (no WebP ni GIF) o PDF. También puedes elegirlo con el botón."
               etiquetaBoton="Elegir archivo"
               nombreArchivo={nombreArchivoTicket}
               error={Boolean(errorArchivos)}
-              onArchivoElegido={aplicarArchivoTicket}
-              onQuitarArchivo={quitarArchivoTicket}
+              onArchivoElegido={
+                formState.isSubmitting
+                  ? undefined
+                  : (archivo) => {
+                      aplicarArchivoTicket(archivo)
+                    }
+              }
+              onQuitarArchivo={formState.isSubmitting ? undefined : quitarArchivoTicket}
             />
             {errorArchivos ? (
               <p className="text-sm text-destructive" role="alert">
                 {errorArchivos}
+              </p>
+            ) : null}
+            {estadoCarga ? (
+              <p className="text-xs text-muted-foreground" role="status">
+                Subiendo archivo {String(estadoCarga.fileIndex)}/
+                {String(estadoCarga.totalFiles)} ({String(estadoCarga.progressPercent)}%):
+                {" "}
+                {estadoCarga.fileName}
               </p>
             ) : null}
           </div>
@@ -288,7 +363,14 @@ export function ExpenseTicketComprobacionForm({
             className="w-full cursor-pointer rounded-2xl"
             disabled={formState.isSubmitting}
           >
-            Comprobar movimiento
+            {formState.isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
+                Subiendo al bucket...
+              </>
+            ) : (
+              "Comprobar movimiento"
+            )}
           </Button>
         </form>
       </div>

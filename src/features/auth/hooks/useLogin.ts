@@ -1,6 +1,8 @@
 import type { FormEvent } from "react"
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { AxiosError } from "axios"
+import { travelApi } from "@/api/travel-api"
 import { useAuthStore } from "@/features/auth/store/authStore"
 import type {
   FocusedField,
@@ -12,6 +14,16 @@ import type {
 interface UseLoginPageReturn {
   state: LoginPageState
   actions: LoginPageActions
+}
+
+interface LoginApiResponse {
+  data: {
+    userId: number
+    accessToken: string
+    expiresInSeconds: number
+  }
+  message: string
+  error?: unknown
 }
 
 export function useLoginPage(): UseLoginPageReturn {
@@ -44,11 +56,35 @@ export function useLoginPage(): UseLoginPageReturn {
     event.preventDefault()
     const correo =
       event.currentTarget.querySelector<HTMLInputElement>("#email")?.value ?? ""
+    const password =
+      event.currentTarget.querySelector<HTMLInputElement>("#password")?.value ??
+      ""
+    const correoNormalizado = correo.trim().toLowerCase()
+
+    if (correoNormalizado.length === 0 || password.length === 0) {
+      return
+    }
+
     setIsLoading(true)
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-    setIsLoading(false)
-    login(correo)
-    navigate("/home")
+    try {
+      const response = await travelApi.post<LoginApiResponse>("/auth/login", {
+        email: correoNormalizado,
+        password,
+      })
+
+      login({
+        correo: correoNormalizado,
+        userId: response.data.data.userId,
+      })
+      navigate("/home")
+    } catch (error) {
+      if (error instanceof AxiosError && error.response?.status === 401) {
+        return
+      }
+      return
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   function handlePasswordVisibility(): void {

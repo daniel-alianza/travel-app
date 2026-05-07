@@ -34,13 +34,11 @@ interface UseExpensePageReturn {
   viajesActivos: ExpenseViajeResumen[]
   viajesFinalizados: ExpenseViajeResumen[]
   viajesTodos: ExpenseViajeResumen[]
-  avisoVigenciaSolicitud:
-    | {
-        solicitudId: string
-        mensaje: string
-        color: "warning" | "danger"
-      }
-    | null
+  avisoVigenciaSolicitud: {
+    solicitudId: string
+    mensaje: string
+    color: "warning" | "danger"
+  } | null
   viajesIdsConComprobacionPendiente: ReadonlySet<string>
   historialViajesVisible: boolean
   setHistorialViajesVisible: (visible: boolean) => void
@@ -388,7 +386,8 @@ export function useExpensePage(): UseExpensePageReturn {
         (anterior[viajeSeleccionado.solicitudId] ?? 0) + 1,
     }))
     const siguienteNumeroIntento =
-      (intentosSolicitudCodigoConciliacion[viajeSeleccionado.solicitudId] ?? 0) + 1
+      (intentosSolicitudCodigoConciliacion[viajeSeleccionado.solicitudId] ??
+        0) + 1
     const intentosRestantes =
       MAX_INTENTOS_SOLICITUD_CODIGO_CONCILIACION - siguienteNumeroIntento
     const sufijoIntentos =

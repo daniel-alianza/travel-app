@@ -154,7 +154,9 @@ export function textoDiasRestantes(viaje: ExpenseViajeResumen): string {
   return `${restantes} día${restantes === 1 ? "" : "s"} restantes`
 }
 
-export function totalGastosMovimientos(movimientos: ExpenseMovimiento[]): number {
+export function totalGastosMovimientos(
+  movimientos: ExpenseMovimiento[]
+): number {
   return movimientos.reduce((acc, mov) => acc + mov.gasto, 0)
 }
 
@@ -196,7 +198,11 @@ export function filtrarViajesPorMesesAnteriores(
 ): ExpenseViajeResumen[] {
   const llavesPermitidas = new Set<string>()
   for (let i = 0; i <= mesesAtras; i += 1) {
-    const fecha = new Date(referencia.getFullYear(), referencia.getMonth() - i, 1)
+    const fecha = new Date(
+      referencia.getFullYear(),
+      referencia.getMonth() - i,
+      1
+    )
     llavesPermitidas.add(`${fecha.getFullYear()}-${fecha.getMonth()}`)
   }
 
@@ -245,7 +251,9 @@ export function puedeComprobarMesAnterior(
   referencia: Date = new Date()
 ): boolean {
   const limite = calcularLimiteComprobacionMesAnterior(referencia)
-  return referencia.getTime() <= limite.getTime() && estaEnHorarioHabil(referencia)
+  return (
+    referencia.getTime() <= limite.getTime() && estaEnHorarioHabil(referencia)
+  )
 }
 
 export function viajeEsDelMesAnteriorAlActual(
@@ -261,7 +269,8 @@ export function viajeEsDelMesAnteriorAlActual(
   const mesAnterior = mesRef === 0 ? 11 : mesRef - 1
   const anioMesAnterior = mesRef === 0 ? anioRef - 1 : anioRef
   return (
-    salida.getMonth() === mesAnterior && salida.getFullYear() === anioMesAnterior
+    salida.getMonth() === mesAnterior &&
+    salida.getFullYear() === anioMesAnterior
   )
 }
 
@@ -273,7 +282,11 @@ export function ventanaComprobacionMesAnteriorSigueAbierta(
 }
 
 export function contarDiasHabilesInclusive(inicio: Date, fin: Date): number {
-  const cursor = new Date(inicio.getFullYear(), inicio.getMonth(), inicio.getDate())
+  const cursor = new Date(
+    inicio.getFullYear(),
+    inicio.getMonth(),
+    inicio.getDate()
+  )
   const finNorm = new Date(fin.getFullYear(), fin.getMonth(), fin.getDate())
   let total = 0
   while (cursor.getTime() <= finNorm.getTime()) {
@@ -297,8 +310,16 @@ export function obtenerMensajeVentanaComprobacionMesAnterior(
     return null
   }
   const limite = calcularLimiteComprobacionMesAnterior(referencia)
-  const hoy = new Date(referencia.getFullYear(), referencia.getMonth(), referencia.getDate())
-  const diaLimite = new Date(limite.getFullYear(), limite.getMonth(), limite.getDate())
+  const hoy = new Date(
+    referencia.getFullYear(),
+    referencia.getMonth(),
+    referencia.getDate()
+  )
+  const diaLimite = new Date(
+    limite.getFullYear(),
+    limite.getMonth(),
+    limite.getDate()
+  )
   const diasHabilesRestantes = contarDiasHabilesInclusive(hoy, diaLimite)
   const etiquetaLimite = new Intl.DateTimeFormat("es-MX", {
     day: "numeric",
@@ -354,7 +375,11 @@ export function obtenerColorPlazoComprobacionTarjeta(
   if (!tienePendientes) {
     return "neutral"
   }
-  const estado = obtenerEstadoVigenciaSolicitud(viaje, viajesReferencia, referencia)
+  const estado = obtenerEstadoVigenciaSolicitud(
+    viaje,
+    viajesReferencia,
+    referencia
+  )
   if (estado === "warning") {
     return "warning"
   }
@@ -391,7 +416,9 @@ export function obtenerEstadoVigenciaSolicitud(
   if (hoy.getTime() > finDiaLimite.getTime()) {
     return "expired"
   }
-  const diffDias = Math.ceil((finDiaLimite.getTime() - hoy.getTime()) / 86_400_000)
+  const diffDias = Math.ceil(
+    (finDiaLimite.getTime() - hoy.getTime()) / 86_400_000
+  )
   if (diffDias <= 0) {
     return "danger"
   }
@@ -430,7 +457,10 @@ function parseFechaIso(iso: string): Date | null {
   return new Date(y, m - 1, d, 12, 0, 0, 0)
 }
 
-function sumarDiasHabiles(fechaInicio: Date, cantidadDiasHabiles: number): Date {
+function sumarDiasHabiles(
+  fechaInicio: Date,
+  cantidadDiasHabiles: number
+): Date {
   let fecha = new Date(fechaInicio)
   let agregados = 0
   while (agregados < cantidadDiasHabiles) {

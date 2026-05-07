@@ -15,7 +15,11 @@ export function FinanacialPage() {
     <div className="flex min-h-screen flex-col bg-linear-to-br from-background via-background to-secondary/20">
       <TravelRequestBackground mousePosition={page.mousePosition} />
 
-      <AppHeader mounted={page.mounted} onBackToHome={() => navigate("/home")} />
+      <AppHeader
+        mounted={page.mounted}
+        onBackToHome={() => navigate("/menu-accounting")}
+        etiquetaBotonVolver="Volver al menú"
+      />
 
       <main className="relative z-10 flex-1">
         <div className="mx-auto w-full max-w-7xl px-4 pt-8 pb-28 sm:px-6 sm:py-12 lg:px-8">

@@ -31,10 +31,15 @@ export function ExpensePage() {
     return (
       <div className="flex min-h-screen flex-col bg-linear-to-br from-background via-background to-secondary/20">
         <TravelRequestBackground mousePosition={page.mousePosition} />
-        <AppHeader mounted={page.mounted} onBackToHome={() => navigate("/home")} />
+        <AppHeader
+          mounted={page.mounted}
+          onBackToHome={() => navigate("/home")}
+        />
         <main className="relative z-10 flex flex-1 flex-col items-center justify-center gap-4 px-4">
           <Loader2 className="h-10 w-10 animate-spin text-accent" aria-hidden />
-          <p className="text-sm text-muted-foreground">Cargando viajes dispersados…</p>
+          <p className="text-sm text-muted-foreground">
+            Cargando viajes dispersados…
+          </p>
         </main>
         <AppFooter mounted transitionDelayClass="delay-700" />
       </div>
@@ -45,7 +50,10 @@ export function ExpensePage() {
     return (
       <div className="flex min-h-screen flex-col bg-linear-to-br from-background via-background to-secondary/20">
         <TravelRequestBackground mousePosition={page.mousePosition} />
-        <AppHeader mounted={page.mounted} onBackToHome={() => navigate("/home")} />
+        <AppHeader
+          mounted={page.mounted}
+          onBackToHome={() => navigate("/home")}
+        />
         <main className="relative z-10 flex flex-1 flex-col items-center justify-center gap-4 px-4">
           <p className="text-center text-sm font-medium text-foreground">
             No se pudieron cargar los viajes
@@ -72,7 +80,10 @@ export function ExpensePage() {
     return (
       <div className="flex min-h-screen flex-col bg-linear-to-br from-background via-background to-secondary/20">
         <TravelRequestBackground mousePosition={page.mousePosition} />
-        <AppHeader mounted={page.mounted} onBackToHome={() => navigate("/home")} />
+        <AppHeader
+          mounted={page.mounted}
+          onBackToHome={() => navigate("/home")}
+        />
         <main className="relative z-10 mx-auto w-full max-w-384 flex-1 px-4 pt-8 pb-28 sm:px-6 sm:py-12 lg:px-8">
           <ExpensePageHero />
           <div className="mt-10 rounded-3xl border border-dashed border-border/70 bg-card/40 px-6 py-16 text-center">
@@ -80,7 +91,8 @@ export function ExpensePage() {
               No hay viajes dispersados para comprobar
             </p>
             <p className="mt-2 text-xs text-muted-foreground">
-              Cuando existan solicitudes dispersadas en tu usuario, aparecerán aquí.
+              Cuando existan solicitudes dispersadas en tu usuario, aparecerán
+              aquí.
             </p>
           </div>
         </main>
@@ -91,7 +103,9 @@ export function ExpensePage() {
 
   const viaje = page.viajeSeleccionado
   const totalMovimientos = totalGastosMovimientos(page.movimientosDelViaje)
-  const pendientes = page.movimientosDelViaje.filter((m) => m.estado === "pendiente")
+  const pendientes = page.movimientosDelViaje.filter(
+    (m) => m.estado === "pendiente"
+  )
   const viajeActivo = viajeEsActivo(viaje)
   const mostrarResumenMovimientos =
     !page.movimientosCargando && !page.movimientosError
@@ -100,7 +114,10 @@ export function ExpensePage() {
     <div className="flex min-h-screen flex-col bg-linear-to-br from-background via-background to-secondary/20">
       <TravelRequestBackground mousePosition={page.mousePosition} />
 
-      <AppHeader mounted={page.mounted} onBackToHome={() => navigate("/home")} />
+      <AppHeader
+        mounted={page.mounted}
+        onBackToHome={() => navigate("/home")}
+      />
 
       <main className="relative z-10 flex-1">
         <div className="mx-auto w-full max-w-384 px-4 pt-8 pb-28 sm:px-6 sm:py-12 lg:px-8">
@@ -157,7 +174,9 @@ export function ExpensePage() {
             viajesActivos={page.viajesActivos}
             viajesReferencia={page.viajesTodos}
             idViajeSeleccionado={page.idViajeSeleccionado}
-            viajesIdsConComprobacionPendiente={page.viajesIdsConComprobacionPendiente}
+            viajesIdsConComprobacionPendiente={
+              page.viajesIdsConComprobacionPendiente
+            }
             onSeleccionarViaje={page.setIdViajeSeleccionado}
           />
 
@@ -169,7 +188,9 @@ export function ExpensePage() {
               page.setHistorialViajesVisible(!page.historialViajesVisible)
             }
             idViajeSeleccionado={page.idViajeSeleccionado}
-            viajesIdsConComprobacionPendiente={page.viajesIdsConComprobacionPendiente}
+            viajesIdsConComprobacionPendiente={
+              page.viajesIdsConComprobacionPendiente
+            }
             onSeleccionarViaje={page.setIdViajeSeleccionado}
           />
 
@@ -185,7 +206,9 @@ export function ExpensePage() {
             mostrarResumenMovimientos={mostrarResumenMovimientos}
             panelMovimientosAbierto={page.panelMovimientosAbierto}
             comprobacionHabilitada={page.comprobacionHabilitada}
-            mensajeVentanaPlazoComprobacion={page.mensajeVentanaPlazoComprobacion}
+            mensajeVentanaPlazoComprobacion={
+              page.mensajeVentanaPlazoComprobacion
+            }
             etiquetaComprobacionBloqueada={page.etiquetaComprobacionBloqueada}
             onTogglePanelMovimientos={() =>
               page.setPanelMovimientosAbierto(!page.panelMovimientosAbierto)

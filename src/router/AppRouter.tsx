@@ -6,6 +6,7 @@ import { CardPage } from "@/features/card-assignment/page/CardPage"
 import { DispersionPage } from "@/features/dispersion-travel/pages/DispersionPage"
 import { ExpensePage } from "@/features/travel-expenses/pages/ExpensePage"
 import { FinanacialPage } from "@/features/financial-authorization/pages/FinanacialPage"
+import { MenuAccountingPage } from "@/features/financial-authorization/pages/MenuAccountingPage"
 import { ApprovalPage } from "@/features/travel-approval/pages/ApprovalPage"
 import { MyTravelRequestsPage } from "@/features/travel-request/pages/MyTravelRequestsPage"
 import { RequestPage } from "@/features/travel-request/pages/RequestPage"
@@ -34,10 +35,8 @@ export function AppRouter() {
         <Route path="/dispersion-travel" element={<DispersionPage />} />
         <Route path="/card-assignment" element={<CardPage />} />
         <Route path="/travel-expenses" element={<ExpensePage />} />
-        <Route
-          path="/financial-authorization"
-          element={<FinanacialPage />}
-        />
+        <Route path="/menu-accounting" element={<MenuAccountingPage />} />
+        <Route path="/financial-authorization" element={<FinanacialPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

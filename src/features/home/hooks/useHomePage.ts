@@ -62,7 +62,7 @@ const menuOptions: HomeMenuOption[] = [
     color: "from-violet-500 to-violet-600",
     shadowColor: "shadow-violet-500/25",
     delay: 250,
-    href: "/financial-authorization",
+    href: "/menu-accounting",
   },
   {
     id: 5,

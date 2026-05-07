@@ -21,6 +21,8 @@ import { useDaysUntilMonthEndQuery } from "@/hooks/useDaysUntilMonthEndQuery"
 type AppHeaderProps = {
   mounted?: boolean
   onBackToHome?: () => void
+  /** Texto del botón «Volver» en módulos; por defecto «Volver al inicio». */
+  etiquetaBotonVolver?: string
   /** En módulos con «Volver», muestra a la derecha el acceso rápido (p. ej. días fin de mes). */
   mostrarAccionesDerecha?: boolean
   /** Contenido opcional antes del botón «Días para fin de mes» (p. ej. enlace a mis solicitudes). */
@@ -30,6 +32,7 @@ type AppHeaderProps = {
 export function AppHeader({
   mounted = true,
   onBackToHome,
+  etiquetaBotonVolver = "Volver al inicio",
   mostrarAccionesDerecha = true,
   accionExtraDerecha,
 }: AppHeaderProps) {
@@ -113,7 +116,7 @@ export function AppHeader({
                 className="group/back h-9 min-w-0 max-w-full cursor-pointer rounded-2xl px-2 text-xs text-muted-foreground transition-all duration-500 hover:bg-primary/10 hover:text-foreground sm:h-10 sm:px-3 sm:text-sm"
               >
                 <ArrowLeft className="mr-1 h-4 w-4 shrink-0 transition-transform duration-300 group-hover/back:-translate-x-1 sm:mr-2 sm:h-5 sm:w-5" />
-                <span className="truncate">Volver al inicio</span>
+                <span className="truncate">{etiquetaBotonVolver}</span>
               </Button>
             </div>
             <div className="flex justify-center justify-self-center px-1">

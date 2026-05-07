@@ -35,7 +35,10 @@ export function ExpenseConciliacionOverlay({
       <div className="w-full max-w-xl rounded-3xl border border-border/60 bg-card p-6 shadow-2xl">
         {cargando ? (
           <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden />
+            <Loader2
+              className="h-8 w-8 animate-spin text-primary"
+              aria-hidden
+            />
             <p className="text-sm text-muted-foreground">
               Generando solicitud de conciliación...
             </p>
@@ -46,7 +49,9 @@ export function ExpenseConciliacionOverlay({
               <div className="rounded-2xl bg-primary/10 p-2.5">
                 <ShieldCheck className="h-5 w-5 text-primary" aria-hidden />
               </div>
-              <p className="text-sm leading-relaxed text-foreground">{mensaje}</p>
+              <p className="text-sm leading-relaxed text-foreground">
+                {mensaje}
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -71,11 +76,15 @@ export function ExpenseConciliacionOverlay({
               ) : (
                 <div className="space-y-1">
                   <p className="text-xs text-muted-foreground">
-                    El código tiene vigencia de 24 horas hábiles, contadas solo conforme a tu horario laboral (no son 24 horas corridas). Por viaje solo puedes solicitar dos códigos; al agotarlos, esta opción deja de estar disponible.
+                    El código tiene vigencia de 24 horas hábiles, contadas solo
+                    conforme a tu horario laboral (no son 24 horas corridas).
+                    Por viaje solo puedes solicitar dos códigos; al agotarlos,
+                    esta opción deja de estar disponible.
                   </p>
                   {codigoDemo ? (
                     <p className="text-xs text-muted-foreground">
-                      Simulación frontend: código demo <span className="font-semibold">{codigoDemo}</span>
+                      Simulación frontend: código demo{" "}
+                      <span className="font-semibold">{codigoDemo}</span>
                     </p>
                   ) : null}
                 </div>

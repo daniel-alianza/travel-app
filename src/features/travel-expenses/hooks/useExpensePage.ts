@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query"
 import { useEffect, useMemo, useState } from "react"
 
 import {
-  crearCodigoConciliacion,
   construirResumenMesVista,
   filtrarViajesPorMesesAnteriores,
   filtrarViajesMesActualYAnterior,
@@ -10,17 +9,20 @@ import {
   obtenerIdViajeInicial,
   obtenerMensajeVentanaComprobacionMesAnterior,
   puedeComprobarMesAnterior,
-  sumarHorasHabiles,
   type ExpenseResumenMesVista,
 } from "@/features/travel-expenses/hooks/expense-page-helpers"
 import { fetchMovimientosPorViajeId } from "@/features/travel-expenses/services/expense-movimientos-service"
-import { fetchExpenseDispersedTrips } from "@/features/travel-expenses/services/travel-expenses-api"
+import {
+  fetchExpenseDispersedTrips,
+  requestExpenseReconciliationCode,
+  verifyExpenseReconciliationCode,
+} from "@/features/travel-expenses/services/travel-expenses-api"
 import type { ExpenseMovimiento } from "@/features/travel-expenses/interfaces/expense-movimiento.interface"
 import type { ExpenseViajeResumen } from "@/features/travel-expenses/interfaces/expense-viaje-resumen.interface"
 import type { TravelRequestMousePosition } from "@/features/travel-request/interfaces/travel-request-mouse-position.interface"
+import { useAuthStore } from "@/features/auth/store/authStore"
 
 const MAX_INTENTOS_SOLICITUD_CODIGO_CONCILIACION = 2
-const AUTHENTICATED_USER_ID = 1
 
 interface UseExpensePageReturn {
   mounted: boolean
@@ -62,19 +64,13 @@ interface UseExpensePageReturn {
   codigoConciliacionIngresado: string
   setCodigoConciliacionIngresado: (codigo: string) => void
   errorCodigoConciliacion: string | null
-  codigoConciliacionDemo: string | null
   confirmarCodigoConciliacion: () => void
   cerrarOverlayConciliacion: () => void
   iniciarConciliacionContabilidad: () => Promise<void>
 }
 
-type EstadoCodigoConciliacion = {
-  readonly codigo: string
-  readonly expiracion: Date
-  readonly desbloqueado: boolean
-}
-
 export function useExpensePage(): UseExpensePageReturn {
+  const authenticatedUserId = useAuthStore((state) => state.userId)
   const mounted = true
   const [mousePosition, setMousePosition] =
     useState<TravelRequestMousePosition>({ x: 0, y: 0 })
@@ -83,9 +79,6 @@ export function useExpensePage(): UseExpensePageReturn {
     useState<boolean>(false)
   const [historialViajesVisible, setHistorialViajesVisible] =
     useState<boolean>(false)
-  const [estadoCodigosConciliacion, setEstadoCodigosConciliacion] = useState<
-    Record<string, EstadoCodigoConciliacion>
-  >({})
   const [overlayConciliacionVisible, setOverlayConciliacionVisible] =
     useState<boolean>(false)
   const [conciliacionCargando, setConciliacionCargando] =
@@ -100,10 +93,14 @@ export function useExpensePage(): UseExpensePageReturn {
     intentosSolicitudCodigoConciliacion,
     setIntentosSolicitudCodigoConciliacion,
   ] = useState<Record<string, number>>({})
+  const [solicitudesDesbloqueadas, setSolicitudesDesbloqueadas] = useState<
+    Record<string, boolean>
+  >({})
 
   const viajesQuery = useQuery({
-    queryKey: ["travel-expenses", "viajes", AUTHENTICATED_USER_ID],
-    queryFn: () => fetchExpenseDispersedTrips(AUTHENTICATED_USER_ID),
+    queryKey: ["travel-expenses", "viajes", authenticatedUserId],
+    queryFn: () => fetchExpenseDispersedTrips(authenticatedUserId ?? 0),
+    enabled: typeof authenticatedUserId === "number",
     staleTime: 30_000,
   })
 
@@ -246,12 +243,13 @@ export function useExpensePage(): UseExpensePageReturn {
     queryKey: [
       "travel-expenses",
       "movimientos",
-      AUTHENTICATED_USER_ID,
+      authenticatedUserId,
       idViajeSeleccionado,
     ],
     queryFn: () =>
-      fetchMovimientosPorViajeId(AUTHENTICATED_USER_ID, idViajeSeleccionado),
+      fetchMovimientosPorViajeId(authenticatedUserId ?? 0, idViajeSeleccionado),
     enabled:
+      typeof authenticatedUserId === "number" &&
       idViajeSeleccionado.length > 0 &&
       viajesDesdeApi !== undefined &&
       !viajesError,
@@ -278,13 +276,10 @@ export function useExpensePage(): UseExpensePageReturn {
     [viajeSeleccionado, viajesConPendientes]
   )
 
-  const codigoSeleccionado = viajeSeleccionado
-    ? estadoCodigosConciliacion[viajeSeleccionado.solicitudId]
-    : undefined
-  const codigoValido =
-    codigoSeleccionado !== undefined &&
-    codigoSeleccionado.desbloqueado &&
-    new Date().getTime() <= codigoSeleccionado.expiracion.getTime()
+  const codigoValido = viajeSeleccionado
+    ? (solicitudesDesbloqueadas[viajeSeleccionado.solicitudId] ?? false) ||
+      viajeSeleccionado.conciliacionVerificada
+    : false
   const estadoVigenciaSolicitudSeleccionada = useMemo(() => {
     if (viajeSeleccionado === null) {
       return "normal" as const
@@ -349,7 +344,7 @@ export function useExpensePage(): UseExpensePageReturn {
     if (solicitudConciliacionAgotada) {
       return "Ya utilizaste los 2 intentos permitidos para solicitar conciliación con contabilidad desde esta pantalla. No se enviarán más códigos a contabilidad ni podrás volver a usar esta opción aquí. Ponte en contacto de forma directa con contabilidad para continuar."
     }
-    return "El plazo para cargar comprobaciones de este viaje desde esta pantalla ya terminó según las reglas del periodo. Para seguir con los movimientos pendientes usa el botón «Conciliar con contabilidad» al final de este aviso: contabilidad valida la información y te habilita de nuevo el flujo. El código de verificación tendrá vigencia de 24 horas hábiles contadas solo conforme a tu horario laboral (no son 24 horas corridas). Solo se permiten dos solicitudes de código; al agotarlas, no se notificará de nuevo a contabilidad ni podrás usar de nuevo esta opción de conciliación en esta pantalla."
+    return "El plazo para cargar comprobaciones de este viaje desde esta pantalla ya terminó según las reglas del periodo. Para seguir con los movimientos pendientes usa el botón «Conciliar con contabilidad» al final de este aviso: contabilidad valida la información y te habilita de nuevo el flujo. Solo se permiten dos solicitudes de código; al agotarlas, no se notificará de nuevo a contabilidad ni podrás usar de nuevo esta opción de conciliación en esta pantalla."
   }, [
     comprobacionHabilitada,
     solicitudConciliacionAgotada,
@@ -357,7 +352,7 @@ export function useExpensePage(): UseExpensePageReturn {
   ])
 
   async function iniciarConciliacionContabilidad(): Promise<void> {
-    if (viajeSeleccionado === null) {
+    if (viajeSeleccionado === null || typeof authenticatedUserId !== "number") {
       return
     }
     const usados =
@@ -369,74 +364,63 @@ export function useExpensePage(): UseExpensePageReturn {
     setConciliacionCargando(true)
     setErrorCodigoConciliacion(null)
     setCodigoConciliacionIngresado("")
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-    const codigo = crearCodigoConciliacion()
-    const expiracion = sumarHorasHabiles(new Date(), 24)
-    setEstadoCodigosConciliacion((anterior) => ({
-      ...anterior,
-      [viajeSeleccionado.solicitudId]: {
-        codigo,
-        expiracion,
-        desbloqueado: false,
-      },
-    }))
-    setIntentosSolicitudCodigoConciliacion((anterior) => ({
-      ...anterior,
-      [viajeSeleccionado.solicitudId]:
-        (anterior[viajeSeleccionado.solicitudId] ?? 0) + 1,
-    }))
-    const siguienteNumeroIntento =
-      (intentosSolicitudCodigoConciliacion[viajeSeleccionado.solicitudId] ??
-        0) + 1
-    const intentosRestantes =
-      MAX_INTENTOS_SOLICITUD_CODIGO_CONCILIACION - siguienteNumeroIntento
+    try {
+      const response = await requestExpenseReconciliationCode({
+        tripId: Number(viajeSeleccionado.id),
+      })
+      setIntentosSolicitudCodigoConciliacion((anterior) => ({
+        ...anterior,
+        [viajeSeleccionado.solicitudId]:
+          MAX_INTENTOS_SOLICITUD_CODIGO_CONCILIACION - response.remainingAttempts,
+      }))
+      const intentosRestantes = response.remainingAttempts
+      const expiracionMensaje = new Intl.DateTimeFormat("es-MX", {
+        dateStyle: "medium",
+        timeStyle: "short",
+      }).format(new Date(response.codeExpiresAt))
     const sufijoIntentos =
       intentosRestantes > 0
         ? ` Te queda ${intentosRestantes === 1 ? "1 intento" : `${String(intentosRestantes)} intentos`} para solicitar un código nuevo.`
         : " Este era tu último intento de solicitud."
-    setMensajeConciliacion(
-      `A tu agente de contabilidad de ${viajeSeleccionado.compania} se le envió un código. Acércate con él para que pueda proporcionártelo y continuar con la verificación.${sufijoIntentos}`
-    )
-    setConciliacionCargando(false)
+      setMensajeConciliacion(
+        `A tu agente de contabilidad de ${response.companyName} se le envió un código. Acércate con él para que pueda proporcionártelo y continuar con la verificación. Estará disponible hasta el ${expiracionMensaje}.${sufijoIntentos}`
+      )
+    } catch (error) {
+      setErrorCodigoConciliacion(
+        error instanceof Error
+          ? error.message
+          : "No fue posible solicitar conciliación."
+      )
+    } finally {
+      setConciliacionCargando(false)
+    }
   }
 
-  function confirmarCodigoConciliacion(): void {
-    if (viajeSeleccionado === null) {
+  async function confirmarCodigoConciliacion(): Promise<void> {
+    if (viajeSeleccionado === null || typeof authenticatedUserId !== "number") {
       return
     }
-    const estado = estadoCodigosConciliacion[viajeSeleccionado.solicitudId]
-    if (!estado) {
-      setErrorCodigoConciliacion("Primero genera un código de conciliación.")
+    if (codigoConciliacionIngresado.trim().length === 0) {
+      setErrorCodigoConciliacion("Ingresa el código de verificación.")
       return
     }
-    if (new Date().getTime() > estado.expiracion.getTime()) {
-      const usados =
-        intentosSolicitudCodigoConciliacion[viajeSeleccionado.solicitudId] ?? 0
-      if (usados >= MAX_INTENTOS_SOLICITUD_CODIGO_CONCILIACION) {
-        setErrorCodigoConciliacion(
-          "El código expiró y ya no hay solicitudes disponibles desde esta pantalla. Contacta directamente a contabilidad."
-        )
-      } else {
-        setErrorCodigoConciliacion(
-          "El código ya expiró. Si aún tienes intentos, solicita uno nuevo con «Conciliar con contabilidad»."
-        )
-      }
-      return
+    try {
+      await verifyExpenseReconciliationCode({
+        travelRequestId: Number(viajeSeleccionado.solicitudId),
+        verificationCode: codigoConciliacionIngresado.trim(),
+      })
+      setSolicitudesDesbloqueadas((anterior) => ({
+        ...anterior,
+        [viajeSeleccionado.solicitudId]: true,
+      }))
+      setOverlayConciliacionVisible(false)
+      setErrorCodigoConciliacion(null)
+      setCodigoConciliacionIngresado("")
+    } catch (error) {
+      setErrorCodigoConciliacion(
+        error instanceof Error ? error.message : "Código inválido."
+      )
     }
-    if (codigoConciliacionIngresado.trim() !== estado.codigo) {
-      setErrorCodigoConciliacion("Código inválido. Verifica con contabilidad.")
-      return
-    }
-    setEstadoCodigosConciliacion((anterior) => ({
-      ...anterior,
-      [viajeSeleccionado.solicitudId]: {
-        ...estado,
-        desbloqueado: true,
-      },
-    }))
-    setOverlayConciliacionVisible(false)
-    setErrorCodigoConciliacion(null)
-    setCodigoConciliacionIngresado("")
   }
 
   function cerrarOverlayConciliacion(): void {
@@ -478,8 +462,10 @@ export function useExpensePage(): UseExpensePageReturn {
     mensajeVentanaPlazoComprobacion,
     etiquetaComprobacionBloqueada,
     mostrarBotonConciliacion:
+      viajeSeleccionado !== null &&
       !comprobacionHabilitada &&
       viajeSeleccionadoTienePendientes &&
+      !viajeSeleccionado.conciliacionVerificada &&
       !solicitudConciliacionAgotada,
     conciliacionCargando,
     overlayConciliacionVisible,
@@ -487,8 +473,9 @@ export function useExpensePage(): UseExpensePageReturn {
     codigoConciliacionIngresado,
     setCodigoConciliacionIngresado,
     errorCodigoConciliacion,
-    codigoConciliacionDemo: codigoSeleccionado?.codigo ?? null,
-    confirmarCodigoConciliacion,
+    confirmarCodigoConciliacion: () => {
+      void confirmarCodigoConciliacion()
+    },
     cerrarOverlayConciliacion,
     iniciarConciliacionContabilidad,
   }

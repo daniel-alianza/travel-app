@@ -9,7 +9,6 @@ interface ExpenseConciliacionOverlayProps {
   mensaje: string
   codigo: string
   error: string | null
-  codigoDemo: string | null
   onChangeCodigo: (codigo: string) => void
   onConfirmar: () => void
   onCerrar: () => void
@@ -21,7 +20,6 @@ export function ExpenseConciliacionOverlay({
   mensaje,
   codigo,
   error,
-  codigoDemo,
   onChangeCodigo,
   onConfirmar,
   onCerrar,
@@ -76,17 +74,10 @@ export function ExpenseConciliacionOverlay({
               ) : (
                 <div className="space-y-1">
                   <p className="text-xs text-muted-foreground">
-                    El código tiene vigencia de 24 horas hábiles, contadas solo
-                    conforme a tu horario laboral (no son 24 horas corridas).
-                    Por viaje solo puedes solicitar dos códigos; al agotarlos,
-                    esta opción deja de estar disponible.
+                    Ingresa el código que te comparta contabilidad. Por viaje
+                    solo puedes solicitar dos códigos; al agotarlos, esta opción
+                    deja de estar disponible.
                   </p>
-                  {codigoDemo ? (
-                    <p className="text-xs text-muted-foreground">
-                      Simulación frontend: código demo{" "}
-                      <span className="font-semibold">{codigoDemo}</span>
-                    </p>
-                  ) : null}
                 </div>
               )}
             </div>

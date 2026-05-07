@@ -68,7 +68,7 @@ function MenuAccountingPageInner() {
                 <button
                   type="button"
                   onClick={() =>
-                    navigate("/menu-accounting/conciliaciones-comprobaciones")
+                    navigate("/menu-accounting/reconciliation-checks")
                   }
                   className="group relative cursor-pointer rounded-3xl border-2 border-transparent bg-card p-6 text-left shadow-[0_4px_6px_-1px_rgba(0,0,0,0.06),0_2px_4px_-2px_rgba(0,0,0,0.05)] transition-all duration-500 ease-out hover:-translate-y-2 hover:scale-[1.02] hover:border-primary/30 hover:bg-card hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.18),0_0_0_1px_rgba(34,197,94,0.12),0_12px_40px_-8px_rgba(34,197,94,0.18)] active:scale-[0.99] active:duration-200 sm:p-7 dark:hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.45),0_0_0_1px_rgba(74,222,128,0.15)]"
                 >

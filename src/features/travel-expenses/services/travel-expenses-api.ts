@@ -16,6 +16,23 @@ interface ListExpenseTripMovementsApiResponse {
   message: string
 }
 
+interface RequestReconciliationCodeApiResponse {
+  data: {
+    reconciliationId: number
+    companyName: string
+    codeExpiresAt: string
+    remainingAttempts: number
+  }
+  message: string
+}
+
+interface VerifyReconciliationCodeApiResponse {
+  data: {
+    verified: boolean
+  }
+  message: string
+}
+
 export async function fetchExpenseDispersedTrips(
   userId: number
 ): Promise<ExpenseViajeResumen[]> {
@@ -33,4 +50,30 @@ export async function fetchExpenseTripMovements(
     `/travel-checks/expense-trips/${String(userId)}/trips/${tripId}/movements`
   )
   return response.data.data.movimientos
+}
+
+export async function requestExpenseReconciliationCode(input: {
+  tripId: number
+}): Promise<{
+  reconciliationId: number
+  companyName: string
+  codeExpiresAt: string
+  remainingAttempts: number
+}> {
+  const response = await travelApi.post<RequestReconciliationCodeApiResponse>(
+    "/travel-checks/reconciliations/request-code",
+    input
+  )
+  return response.data.data
+}
+
+export async function verifyExpenseReconciliationCode(input: {
+  travelRequestId: number
+  verificationCode: string
+}): Promise<boolean> {
+  const response = await travelApi.post<VerifyReconciliationCodeApiResponse>(
+    "/travel-checks/reconciliations/verify-code",
+    input
+  )
+  return response.data.data.verified
 }

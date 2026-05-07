@@ -7,6 +7,7 @@ import { DispersionPage } from "@/features/dispersion-travel/pages/DispersionPag
 import { ExpensePage } from "@/features/travel-expenses/pages/ExpensePage"
 import { FinanacialPage } from "@/features/financial-authorization/pages/FinanacialPage"
 import { MenuAccountingPage } from "@/features/financial-authorization/pages/MenuAccountingPage"
+import { TravelReconciliationPage } from "@/features/financial-authorization/pages/TravelReconciliationPage"
 import { ApprovalPage } from "@/features/travel-approval/pages/ApprovalPage"
 import { MyTravelRequestsPage } from "@/features/travel-request/pages/MyTravelRequestsPage"
 import { RequestPage } from "@/features/travel-request/pages/RequestPage"
@@ -36,6 +37,14 @@ export function AppRouter() {
         <Route path="/card-assignment" element={<CardPage />} />
         <Route path="/travel-expenses" element={<ExpensePage />} />
         <Route path="/menu-accounting" element={<MenuAccountingPage />} />
+        <Route
+          path="/menu-accounting/reconciliation-checks"
+          element={<TravelReconciliationPage />}
+        />
+        <Route
+          path="/menu-accounting/conciliaciones-comprobaciones"
+          element={<Navigate to="/menu-accounting/reconciliation-checks" replace />}
+        />
         <Route path="/financial-authorization" element={<FinanacialPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

@@ -11,4 +11,5 @@ export interface ExpenseViajeResumen {
   fechaSalida: string
   fechaRegreso: string
   pendientesComprobacion: number
+  conciliacionVerificada: boolean
 }

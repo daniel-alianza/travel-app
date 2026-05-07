@@ -238,7 +238,6 @@ export function ExpensePage() {
         mensaje={page.mensajeConciliacion}
         codigo={page.codigoConciliacionIngresado}
         error={page.errorCodigoConciliacion}
-        codigoDemo={page.codigoConciliacionDemo}
         onChangeCodigo={page.setCodigoConciliacionIngresado}
         onConfirmar={page.confirmarCodigoConciliacion}
         onCerrar={page.cerrarOverlayConciliacion}

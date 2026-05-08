@@ -23,12 +23,19 @@ export interface FinancialAuthorizationPageController {
   setDescargaEnCurso: Dispatch<SetStateAction<"xml" | "pdf" | null>>
   solicitudIdAbriendoRevision: string | null
   normaReparto: string
+  normasRepartoViaticos: Array<{
+    value: string
+    label: string
+    companyName: string
+  }>
   setNormaReparto: Dispatch<SetStateAction<string>>
   categoriaCfdiConcepto: string
   setCategoriaCfdiConcepto: Dispatch<SetStateAction<string>>
   indicadorImpCfdiConcepto: string
   setIndicadorImpCfdiConcepto: Dispatch<SetStateAction<string>>
   filtros: FiltrosAutorizacionFinanciera
+  companiasFiltro: string[]
+  areasFiltro: string[]
   setFiltros: Dispatch<SetStateAction<FiltrosAutorizacionFinanciera>>
   cargarSolicitudes: () => Promise<void>
   haySolicitudes: boolean
@@ -57,9 +64,10 @@ export interface FinancialAuthorizationPageController {
   cerrarRevision: () => void
   alternarMovimientoParaEnvio: (movId: string) => void
   seleccionarTodosMovimientosDelViaje: (
-    viaje: FinancialAuthorizationViajeEnSolicitud,
+    viaje: FinancialAuthorizationViajeEnSolicitud
   ) => void
   seleccionarTodosMovimientosDeSolicitud: () => void
   limpiarSeleccionEnvio: () => void
   enviarAprobacionMovimientosConjunta: () => void
+  cerrarContabilidadMock: () => void
 }

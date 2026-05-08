@@ -11,7 +11,6 @@ import type { FiltrosAutorizacionFinanciera } from "@/features/financial-authori
 import type { FinancialAuthorizationMovimientoComprobado } from "@/features/financial-authorization/interfaces/financial-authorization-movimiento.interface"
 import type { FinancialAuthorizationSolicitudPendienteRevision } from "@/features/financial-authorization/interfaces/financial-authorization-solicitud.interface"
 import type { FinancialAuthorizationViajeEnSolicitud } from "@/features/financial-authorization/interfaces/financial-authorization-viaje.interface"
-import { COMENTARIO_USUARIO_AL_COMPROBAR_MOCK } from "@/features/financial-authorization/hooks/financial-authorization-seed"
 import {
   CAMPOS_CFDI_YA_EN_UI,
   CAMPOS_EXTRA_GRUPO_CONCEPTO_XML,
@@ -21,22 +20,24 @@ import {
   selectFiltroClassName,
 } from "@/features/financial-authorization/hooks/financial-authorization-ui-constants"
 
+const COMENTARIO_USUARIO_AL_COMPROBAR_DEFAULT: Record<string, string> = {}
+
 export const selectCeldaCfdiClassName = cn(
   selectFiltroClassName,
-  "h-9 w-full min-w-0 py-1.5 text-xs",
+  "h-9 w-full min-w-0 py-1.5 text-xs"
 )
 
 export { pillCfdiBaseClassName }
 
 export function textoComentarioUsuarioAlComprobar(
-  mov: FinancialAuthorizationMovimientoComprobado,
+  mov: FinancialAuthorizationMovimientoComprobado
 ): string {
   const propio = mov.comentarioAlComprobar?.trim()
   if (propio) {
     return propio
   }
   return (
-    COMENTARIO_USUARIO_AL_COMPROBAR_MOCK[mov.id] ??
+    COMENTARIO_USUARIO_AL_COMPROBAR_DEFAULT[mov.id] ??
     "Sin comentario al enviar la comprobación."
   )
 }
@@ -59,28 +60,65 @@ export function formatearFechaCorta(iso: string): string {
 }
 
 export function totalMovimientosComprobados(
-  movimientos: FinancialAuthorizationMovimientoComprobado[],
+  movimientos: FinancialAuthorizationMovimientoComprobado[]
 ): number {
   return movimientos.reduce((acc, m) => acc + m.monto, 0)
 }
 
 export function movimientosComprobadosDeSolicitud(
-  solicitud: FinancialAuthorizationSolicitudPendienteRevision,
+  solicitud: FinancialAuthorizationSolicitudPendienteRevision
 ): FinancialAuthorizationMovimientoComprobado[] {
   return solicitud.viajes.flatMap((viaje) => viaje.movimientosComprobados)
 }
 
+export function movimientoTieneComprobacionUsuario(
+  mov: FinancialAuthorizationMovimientoComprobado
+): boolean {
+  return mov.comprobacionUsuarioHecha !== false
+}
+
+export function movimientosConComprobacionUsuarioColaborador(
+  solicitud: FinancialAuthorizationSolicitudPendienteRevision
+): FinancialAuthorizationMovimientoComprobado[] {
+  return movimientosComprobadosDeSolicitud(solicitud).filter(
+    movimientoTieneComprobacionUsuario
+  )
+}
+
+export function solicitudTieneAlMenosUnaComprobacionUsuario(
+  solicitud: FinancialAuthorizationSolicitudPendienteRevision
+): boolean {
+  return movimientosConComprobacionUsuarioColaborador(solicitud).length > 0
+}
+
+export function solicitudVisibleEnColaContabilidadMock(
+  solicitud: FinancialAuthorizationSolicitudPendienteRevision
+): boolean {
+  if (solicitud.contabilidadCerrada === true) {
+    return false
+  }
+  return solicitudTieneAlMenosUnaComprobacionUsuario(solicitud)
+}
+
+export function movimientoElegibleEnvioSapMock(
+  mov: FinancialAuthorizationMovimientoComprobado
+): boolean {
+  return (
+    movimientoTieneComprobacionUsuario(mov) && mov.facturadoSapMock !== true
+  )
+}
+
 export function totalComprobadoSolicitud(
-  solicitud: FinancialAuthorizationSolicitudPendienteRevision,
+  solicitud: FinancialAuthorizationSolicitudPendienteRevision
 ): number {
   return totalMovimientosComprobados(
-    movimientosComprobadosDeSolicitud(solicitud),
+    movimientosConComprobacionUsuarioColaborador(solicitud)
   )
 }
 
 export function montoTotalPorIdsMovimientos(
   solicitud: FinancialAuthorizationSolicitudPendienteRevision,
-  idsMovimiento: readonly string[],
+  idsMovimiento: readonly string[]
 ): number {
   if (idsMovimiento.length === 0) {
     return 0
@@ -112,7 +150,7 @@ function parseMontoFiltro(valor: string): number | null {
 
 export function solicitudCoincideFiltros(
   solicitud: FinancialAuthorizationSolicitudPendienteRevision,
-  filtros: FiltrosAutorizacionFinanciera,
+  filtros: FiltrosAutorizacionFinanciera
 ): boolean {
   const total = totalComprobadoSolicitud(solicitud)
   const qNombre = normalizarTextoBusqueda(filtros.textoNombre)
@@ -138,9 +176,14 @@ export function solicitudCoincideFiltros(
 
   const coincideArea = filtros.area === "" || solicitud.area === filtros.area
 
+  const qTarjeta = filtros.ultimos4Tarjeta.replace(/\D/g, "")
+  const coincideTarjeta =
+    qTarjeta === "" || solicitud.tarjetaUltimos4.includes(qTarjeta)
+
   return (
     coincideNombre &&
     coincideCorreo &&
+    coincideTarjeta &&
     coincideMontoMin &&
     coincideMontoMax &&
     coincideCompania &&
@@ -148,10 +191,13 @@ export function solicitudCoincideFiltros(
   )
 }
 
-export function filtrosTienenValor(filtros: FiltrosAutorizacionFinanciera): boolean {
+export function filtrosTienenValor(
+  filtros: FiltrosAutorizacionFinanciera
+): boolean {
   return (
     filtros.textoNombre.trim() !== "" ||
     filtros.textoCorreo.trim() !== "" ||
+    filtros.ultimos4Tarjeta.trim() !== "" ||
     filtros.montoMin.trim() !== "" ||
     filtros.montoMax.trim() !== "" ||
     filtros.compania !== "" ||
@@ -161,7 +207,7 @@ export function filtrosTienenValor(filtros: FiltrosAutorizacionFinanciera): bool
 
 export function indiceSolicitudEnLista(
   solicitud: FinancialAuthorizationSolicitudPendienteRevision,
-  todas: FinancialAuthorizationSolicitudPendienteRevision[],
+  todas: FinancialAuthorizationSolicitudPendienteRevision[]
 ): number {
   const i = todas.findIndex((s) => s.id === solicitud.id)
   return i >= 0 ? i : 0
@@ -169,7 +215,7 @@ export function indiceSolicitudEnLista(
 
 export function idViaticoParaViaje(
   indiceSolicitud: number,
-  indiceViaje: number,
+  indiceViaje: number
 ): number {
   return 1100 + indiceSolicitud * 15 + indiceViaje + 1
 }
@@ -177,7 +223,7 @@ export function idViaticoParaViaje(
 export function tarjetaMock(
   indiceSolicitud: number,
   indiceViaje: number,
-  indiceMovimiento: number,
+  indiceMovimiento: number
 ): string {
   const n = 9300 + indiceSolicitud * 17 + indiceViaje * 3 + indiceMovimiento
   const s = String(n % 10000).padStart(4, "0")
@@ -190,7 +236,7 @@ export function primerNombreCompleto(nombreCompleto: string): string {
 }
 
 export function rangoFechasSolicitud(
-  solicitud: FinancialAuthorizationSolicitudPendienteRevision,
+  solicitud: FinancialAuthorizationSolicitudPendienteRevision
 ): { salida: string; regreso: string } {
   if (solicitud.viajes.length === 0) {
     return { salida: "—", regreso: "—" }
@@ -224,7 +270,7 @@ export function generarXmlComprobanteCfdiMock(
   viaje: FinancialAuthorizationViajeEnSolicitud,
   mov: FinancialAuthorizationMovimientoComprobado,
   idViatico: number,
-  numeroTarjeta: string,
+  numeroTarjeta: string
 ): string {
   const totalNum = mov.monto
   const baseNum = redondearDosDecimales(totalNum / 1.16)
@@ -263,7 +309,7 @@ export function generarXmlComprobanteCfdiMock(
 export function descargarTextoComoArchivo(
   contenido: string,
   nombreArchivo: string,
-  tipoMime: string,
+  tipoMime: string
 ): void {
   const blob = new Blob([contenido], { type: tipoMime })
   const url = URL.createObjectURL(blob)
@@ -276,7 +322,7 @@ export function descargarTextoComoArchivo(
 
 export function construirVistaCfdiTabla(
   solicitud: FinancialAuthorizationSolicitudPendienteRevision,
-  mov: FinancialAuthorizationMovimientoComprobado,
+  mov: FinancialAuthorizationMovimientoComprobado
 ): FinancialAuthorizationCfdiVistaTabla {
   const total = mov.monto
   const baseImponible = redondearDosDecimales(total / 1.16)
@@ -361,17 +407,17 @@ export function construirVistaCfdiTabla(
 
 export function valorGeneralCfdi(
   generales: FinancialAuthorizationCfdiFilaGeneral[],
-  fragmento: string,
+  fragmento: string
 ): string {
   const f = generales.find((x) =>
-    x.etiqueta.toLowerCase().includes(fragmento.toLowerCase()),
+    x.etiqueta.toLowerCase().includes(fragmento.toLowerCase())
   )
   return f?.valor ?? "—"
 }
 
 function primerElementoLocal(
   padre: Document | Element,
-  local: string,
+  local: string
 ): Element | null {
   const nodos = padre.getElementsByTagName("*")
   for (let i = 0; i < nodos.length; i++) {
@@ -410,7 +456,7 @@ function impuestosTotalesDelComprobante(compr: Element): Element | null {
 }
 
 export function extraerCamposCfdiDesdeXml(
-  xml: string,
+  xml: string
 ): FinancialAuthorizationCfdiCampoXml[] {
   const parser = new DOMParser()
   const doc = parser.parseFromString(xml, "text/xml")
@@ -475,7 +521,7 @@ export function extraerCamposCfdiDesdeXml(
   agregar("Uso CFDI", attrXml(receptor, "UsoCFDI"))
   agregar(
     "Domicilio Fiscal Receptor",
-    attrXml(receptor, "DomicilioFiscalReceptor"),
+    attrXml(receptor, "DomicilioFiscalReceptor")
   )
   agregar("Cantidad", attrXml(concepto, "Cantidad"))
   agregar("Clave ProdServ", attrXml(concepto, "ClaveProdServ"))
@@ -493,7 +539,7 @@ export function extraerCamposCfdiDesdeXml(
   agregar("Importe Impuesto", attrXml(traslado, "Importe"))
   agregar(
     "Total impuestos trasladados",
-    attrXml(impTot, "TotalImpuestosTrasladados"),
+    attrXml(impTot, "TotalImpuestosTrasladados")
   )
   agregar("UUID", attrXml(timbre, "UUID"))
   agregar("Fecha Timbrado", attrXml(timbre, "FechaTimbrado"))
@@ -505,13 +551,13 @@ export function extraerCamposCfdiDesdeXml(
 }
 
 export function camposXmlExtrasRespectoAlaVista(
-  filas: FinancialAuthorizationCfdiCampoXml[],
+  filas: FinancialAuthorizationCfdiCampoXml[]
 ): FinancialAuthorizationCfdiCampoXml[] {
   return filas.filter((f) => !CAMPOS_CFDI_YA_EN_UI.has(f.campo))
 }
 
 export function particionarExtrasXmlParaVista(
-  filas: FinancialAuthorizationCfdiCampoXml[],
+  filas: FinancialAuthorizationCfdiCampoXml[]
 ): FinancialAuthorizationExtrasXmlPartidos {
   const comprobante: FinancialAuthorizationCfdiCampoXml[] = []
   const conceptoXml: FinancialAuthorizationCfdiCampoXml[] = []
@@ -529,7 +575,7 @@ export function particionarExtrasXmlParaVista(
 }
 
 export function pillCfdiClasePorCampo(
-  grupo: "pago" | "uuid" | "comprobante" | "concepto" | "timbre",
+  grupo: "pago" | "uuid" | "comprobante" | "concepto" | "timbre"
 ): string {
   switch (grupo) {
     case "pago":
@@ -549,7 +595,7 @@ export function pillCfdiClasePorCampo(
 
 export function encontrarMovimientoEnSolicitud(
   solicitud: FinancialAuthorizationSolicitudPendienteRevision,
-  movimientoId: string,
+  movimientoId: string
 ):
   | {
       viaje: FinancialAuthorizationViajeEnSolicitud

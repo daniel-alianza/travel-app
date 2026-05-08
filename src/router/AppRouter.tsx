@@ -46,6 +46,7 @@ export function AppRouter() {
           element={<Navigate to="/menu-accounting/reconciliation-checks" replace />}
         />
         <Route path="/financial-authorization" element={<FinanacialPage />} />
+        <Route path="/financial-authorization/:solicitudId" element={<FinanacialPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

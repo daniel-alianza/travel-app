@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useMemo, useState, type SetStateAction } from "react"
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type SetStateAction,
+} from "react"
 
 import { showAppToast } from "@/components/app-toast"
 import {
@@ -7,11 +13,19 @@ import {
   formatearMonto,
   indiceSolicitudEnLista,
   montoTotalPorIdsMovimientos,
+  movimientoElegibleEnvioSapMock,
   movimientosComprobadosDeSolicitud,
+  movimientosConComprobacionUsuarioColaborador,
   solicitudCoincideFiltros,
+  solicitudVisibleEnColaContabilidadMock,
   totalComprobadoSolicitud,
 } from "@/features/financial-authorization/hooks/financial-authorization-page-helpers"
-import { SOLICITUDES_SEMILLA } from "@/features/financial-authorization/hooks/financial-authorization-seed"
+import {
+  fetchFinancialAuthorizationFilterCatalog,
+  fetchFinancialAuthorizationRequests,
+  fetchViaticDistributionRules,
+  type ViaticDistributionRuleOption,
+} from "@/features/financial-authorization/services/financial-authorization-api"
 import type { FiltrosAutorizacionFinanciera } from "@/features/financial-authorization/interfaces/financial-authorization-filtros.interface"
 import type { FinancialAuthorizationPageController } from "@/features/financial-authorization/interfaces/financial-authorization-page-controller.interface"
 import type { FinancialAuthorizationSolicitudPendienteRevision } from "@/features/financial-authorization/interfaces/financial-authorization-solicitud.interface"
@@ -24,6 +38,8 @@ import {
 } from "@/lib/list-pagination-helpers"
 
 const TAMANOS_PAGINA_LISTADO_FIN = [4, 8, 12] as const
+
+const USUARIO_CIERRE_CONTABILIDAD_MOCK = "Laura Méndez — Contabilidad"
 
 export function useFinancialAuthorizationPage(): FinancialAuthorizationPageController {
   const [mounted, setMounted] = useState(false)
@@ -48,7 +64,7 @@ export function useFinancialAuthorizationPage(): FinancialAuthorizationPageContr
   const [detalleMovimientoTransicion, setDetalleMovimientoTransicion] =
     useState(false)
   const [descargaEnCurso, setDescargaEnCurso] = useState<"xml" | "pdf" | null>(
-    null,
+    null
   )
   const [solicitudIdAbriendoRevision, setSolicitudIdAbriendoRevision] =
     useState<string | null>(null)
@@ -58,6 +74,7 @@ export function useFinancialAuthorizationPage(): FinancialAuthorizationPageContr
   const [filtros, setFiltros] = useState<FiltrosAutorizacionFinanciera>({
     textoNombre: "",
     textoCorreo: "",
+    ultimos4Tarjeta: "",
     montoMin: "",
     montoMax: "",
     compania: "",
@@ -65,15 +82,33 @@ export function useFinancialAuthorizationPage(): FinancialAuthorizationPageContr
   })
   const [paginaListado, setPaginaListado] = useState(1)
   const [tamanoPaginaListado, setTamanoPaginaListado] = useState(8)
+  const [companiasFiltro, setCompaniasFiltro] = useState<string[]>([])
+  const [areasFiltro, setAreasFiltro] = useState<string[]>([])
+  const [normasRepartoViaticos, setNormasRepartoViaticos] = useState<
+    ViaticDistributionRuleOption[]
+  >([])
+  const [scrollListadoPrevioRevision, setScrollListadoPrevioRevision] =
+    useState<number | null>(null)
 
   const cargarSolicitudes = useCallback(async (): Promise<void> => {
     setCargando(true)
     setErrorCarga(null)
     try {
-      await esperar(1100)
-      setSolicitudes(SOLICITUDES_SEMILLA)
+      const [catalogo, solicitudesBackend, normasViaticos] = await Promise.all([
+        fetchFinancialAuthorizationFilterCatalog(),
+        fetchFinancialAuthorizationRequests(),
+        fetchViaticDistributionRules(),
+        esperar(500),
+      ])
+      setCompaniasFiltro(catalogo.companies.map((company) => company.name))
+      setAreasFiltro(catalogo.areas.map((area) => area.name))
+      setNormasRepartoViaticos(normasViaticos)
+      setSolicitudes(solicitudesBackend)
     } catch {
       setErrorCarga("No se pudieron cargar las solicitudes. Intenta de nuevo.")
+      setCompaniasFiltro([])
+      setAreasFiltro([])
+      setNormasRepartoViaticos([])
       setSolicitudes([])
     } finally {
       setCargando(false)
@@ -112,21 +147,28 @@ export function useFinancialAuthorizationPage(): FinancialAuthorizationPageContr
     return () => window.clearTimeout(idTimer)
   }, [movimientoSeleccionadoId, idSolicitudEnRevision])
 
-  const haySolicitudes = solicitudes.length > 0
+  const solicitudesEnColaContabilidad = useMemo(
+    () => solicitudes.filter(solicitudVisibleEnColaContabilidadMock),
+    [solicitudes]
+  )
+
+  const haySolicitudes = solicitudesEnColaContabilidad.length > 0
 
   const solicitudesFiltradas = useMemo(() => {
-    return solicitudes.filter((s) => solicitudCoincideFiltros(s, filtros))
-  }, [solicitudes, filtros])
+    return solicitudesEnColaContabilidad.filter((s) =>
+      solicitudCoincideFiltros(s, filtros)
+    )
+  }, [solicitudesEnColaContabilidad, filtros])
 
   const totalPaginasListado = useMemo(
     () =>
       calcularTotalPaginas(solicitudesFiltradas.length, tamanoPaginaListado),
-    [solicitudesFiltradas.length, tamanoPaginaListado],
+    [solicitudesFiltradas.length, tamanoPaginaListado]
   )
 
   const paginaListadoEfectiva = useMemo(
     () => limitarPagina(paginaListado, totalPaginasListado),
-    [paginaListado, totalPaginasListado],
+    [paginaListado, totalPaginasListado]
   )
 
   const solicitudesListadoPagina = useMemo(
@@ -134,17 +176,17 @@ export function useFinancialAuthorizationPage(): FinancialAuthorizationPageContr
       rebanarPagina(
         solicitudesFiltradas,
         paginaListadoEfectiva,
-        tamanoPaginaListado,
+        tamanoPaginaListado
       ),
-    [solicitudesFiltradas, paginaListadoEfectiva, tamanoPaginaListado],
+    [solicitudesFiltradas, paginaListadoEfectiva, tamanoPaginaListado]
   )
 
   const resumen = useMemo(() => {
     const lista = solicitudesFiltradas
     const total = lista.reduce((acc, s) => acc + totalComprobadoSolicitud(s), 0)
     const movs = lista.reduce(
-      (n, s) => n + movimientosComprobadosDeSolicitud(s).length,
-      0,
+      (n, s) => n + movimientosConComprobacionUsuarioColaborador(s).length,
+      0
     )
     const viajesEnCola = lista.reduce((n, s) => n + s.viajes.length, 0)
     return {
@@ -152,9 +194,9 @@ export function useFinancialAuthorizationPage(): FinancialAuthorizationPageContr
       movs,
       solicitudes: lista.length,
       viajesEnCola,
-      totalEnSistema: solicitudes.length,
+      totalEnSistema: solicitudesEnColaContabilidad.length,
     }
-  }, [solicitudes.length, solicitudesFiltradas])
+  }, [solicitudesFiltradas, solicitudesEnColaContabilidad.length])
 
   const filtrosActivos = filtrosTienenValor(filtros)
 
@@ -163,13 +205,14 @@ export function useFinancialAuthorizationPage(): FinancialAuthorizationPageContr
       setPaginaListado(1)
       setFiltros(accion)
     },
-    [],
+    []
   )
 
   function limpiarFiltros(): void {
     setFiltrosConReinicioPagina({
       textoNombre: "",
       textoCorreo: "",
+      ultimos4Tarjeta: "",
       montoMin: "",
       montoMax: "",
       compania: "",
@@ -204,8 +247,11 @@ export function useFinancialAuthorizationPage(): FinancialAuthorizationPageContr
     if (solicitudEnRevision === null) {
       return 0
     }
-    return indiceSolicitudEnLista(solicitudEnRevision, solicitudes)
-  }, [solicitudEnRevision, solicitudes])
+    return indiceSolicitudEnLista(
+      solicitudEnRevision,
+      solicitudesEnColaContabilidad
+    )
+  }, [solicitudEnRevision, solicitudesEnColaContabilidad])
 
   const resumenSeleccionEnvio = useMemo(() => {
     if (solicitudEnRevision === null || idsMovimientosParaEnvio.length === 0) {
@@ -215,7 +261,7 @@ export function useFinancialAuthorizationPage(): FinancialAuthorizationPageContr
       cantidad: idsMovimientosParaEnvio.length,
       total: montoTotalPorIdsMovimientos(
         solicitudEnRevision,
-        idsMovimientosParaEnvio,
+        idsMovimientosParaEnvio
       ),
     }
   }, [solicitudEnRevision, idsMovimientosParaEnvio])
@@ -225,22 +271,25 @@ export function useFinancialAuthorizationPage(): FinancialAuthorizationPageContr
       return
     }
     const indiceViajeDelMov = solicitudEnRevision.viajes.findIndex((v) =>
-      v.movimientosComprobados.some((m) => m.id === movimientoSeleccionadoId),
+      v.movimientosComprobados.some((m) => m.id === movimientoSeleccionadoId)
     )
     if (indiceViajeDelMov < 0) {
       return
     }
     setIndiceViajeActivo((prev) =>
-      prev === indiceViajeDelMov ? prev : indiceViajeDelMov,
+      prev === indiceViajeDelMov ? prev : indiceViajeDelMov
     )
   }, [solicitudEnRevision, movimientoSeleccionadoId])
 
   function abrirRevision(solicitudId: string): void {
     const solicitud = solicitudes.find((s) => s.id === solicitudId)
-    if (!solicitud) {
+    if (!solicitud || !solicitudVisibleEnColaContabilidadMock(solicitud)) {
       return
     }
-    const primerMov = movimientosComprobadosDeSolicitud(solicitud)[0]
+    setScrollListadoPrevioRevision(window.scrollY)
+    const primerMov =
+      movimientosConComprobacionUsuarioColaborador(solicitud)[0] ??
+      movimientosComprobadosDeSolicitud(solicitud)[0]
     setIdSolicitudEnRevision(solicitudId)
     setIndiceViajeActivo(0)
     setComentarioRevision("")
@@ -268,20 +317,40 @@ export function useFinancialAuthorizationPage(): FinancialAuthorizationPageContr
     setNormaReparto("")
     setCategoriaCfdiConcepto("")
     setIndicadorImpCfdiConcepto("")
+    const scrollDestino = scrollListadoPrevioRevision
+    if (scrollDestino !== null) {
+      window.requestAnimationFrame(() => {
+        window.scrollTo({
+          top: scrollDestino,
+          behavior: "smooth",
+        })
+      })
+    }
+    setScrollListadoPrevioRevision(null)
   }
 
   function alternarMovimientoParaEnvio(movId: string): void {
+    if (solicitudEnRevision !== null) {
+      const mov = movimientosComprobadosDeSolicitud(solicitudEnRevision).find(
+        (m) => m.id === movId
+      )
+      if (mov !== undefined && !movimientoElegibleEnvioSapMock(mov)) {
+        return
+      }
+    }
     setIdsMovimientosParaEnvio((prev) =>
       prev.includes(movId)
         ? prev.filter((id) => id !== movId)
-        : [...prev, movId],
+        : [...prev, movId]
     )
   }
 
   function seleccionarTodosMovimientosDelViaje(
-    viaje: FinancialAuthorizationViajeEnSolicitud,
+    viaje: FinancialAuthorizationViajeEnSolicitud
   ): void {
-    const ids = viaje.movimientosComprobados.map((m) => m.id)
+    const ids = viaje.movimientosComprobados
+      .filter((m) => movimientoElegibleEnvioSapMock(m))
+      .map((m) => m.id)
     setIdsMovimientosParaEnvio((prev) => Array.from(new Set([...prev, ...ids])))
   }
 
@@ -290,7 +359,9 @@ export function useFinancialAuthorizationPage(): FinancialAuthorizationPageContr
       return
     }
     setIdsMovimientosParaEnvio(
-      movimientosComprobadosDeSolicitud(solicitudEnRevision).map((m) => m.id),
+      movimientosComprobadosDeSolicitud(solicitudEnRevision)
+        .filter((m) => movimientoElegibleEnvioSapMock(m))
+        .map((m) => m.id)
     )
   }
 
@@ -303,23 +374,67 @@ export function useFinancialAuthorizationPage(): FinancialAuthorizationPageContr
       showAppToast("Selecciona al menos un movimiento para enviar.", "info")
       return
     }
-    if (normaReparto === "") {
-      showAppToast(
-        "Selecciona la norma de reparto antes de enviar la aprobación.",
-        "info",
-      )
-      return
-    }
+    const idSolicitud = solicitudEnRevision.id
+    const idsSet = new Set(idsMovimientosParaEnvio)
+    setSolicitudes((prev) =>
+      prev.map((s) => {
+        if (s.id !== idSolicitud) {
+          return s
+        }
+        return {
+          ...s,
+          viajes: s.viajes.map((v) => ({
+            ...v,
+            movimientosComprobados: v.movimientosComprobados.map((m) => {
+              if (!idsSet.has(m.id) || !movimientoElegibleEnvioSapMock(m)) {
+                return m
+              }
+              const docEntry = 8800000 + Math.floor(Math.random() * 99999)
+              return {
+                ...m,
+                facturadoSapMock: true,
+                sapDocEntryMock: String(docEntry),
+              }
+            }),
+          })),
+        }
+      })
+    )
     const total = montoTotalPorIdsMovimientos(
       solicitudEnRevision,
-      idsMovimientosParaEnvio,
+      idsMovimientosParaEnvio
     )
     const n = idsMovimientosParaEnvio.length
     showAppToast(
-      `Aprobación conjunta enviada: ${n} movimiento${n === 1 ? "" : "s"}, total ${formatearMonto(total)} (simulación).`,
-      "success",
+      `SAP: ${n} movimiento${n === 1 ? "" : "s"} marcado${n === 1 ? "" : "s"} como facturado. Total ${formatearMonto(total)}.`,
+      "success"
     )
     setIdsMovimientosParaEnvio([])
+  }
+
+  function cerrarContabilidadMock(): void {
+    if (solicitudEnRevision === null) {
+      return
+    }
+    const idSolicitud = solicitudEnRevision.id
+    const cierreEn = new Date().toISOString()
+    setSolicitudes((prev) =>
+      prev.map((s) =>
+        s.id === idSolicitud
+          ? {
+              ...s,
+              contabilidadCerrada: true,
+              contabilidadCerradaPor: USUARIO_CIERRE_CONTABILIDAD_MOCK,
+              contabilidadCerradaEn: cierreEn,
+            }
+          : s
+      )
+    )
+    showAppToast(
+      "Contabilidad cerrada. La solicitud sale de la cola; con una nueva comprobación volvería a entrar al recargar datos.",
+      "success"
+    )
+    cerrarRevision()
   }
 
   return {
@@ -341,12 +456,15 @@ export function useFinancialAuthorizationPage(): FinancialAuthorizationPageContr
     setDescargaEnCurso,
     solicitudIdAbriendoRevision,
     normaReparto,
+    normasRepartoViaticos,
     setNormaReparto,
     categoriaCfdiConcepto,
     setCategoriaCfdiConcepto,
     indicadorImpCfdiConcepto,
     setIndicadorImpCfdiConcepto,
     filtros,
+    companiasFiltro,
+    areasFiltro,
     setFiltros: setFiltrosConReinicioPagina,
     cargarSolicitudes,
     haySolicitudes,
@@ -372,5 +490,6 @@ export function useFinancialAuthorizationPage(): FinancialAuthorizationPageContr
     seleccionarTodosMovimientosDeSolicitud,
     limpiarSeleccionEnvio,
     enviarAprobacionMovimientosConjunta,
+    cerrarContabilidadMock,
   }
 }

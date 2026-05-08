@@ -1,19 +1,5 @@
 import { cn } from "@/lib/utils"
 
-export const COMPANIAS_FILTRO = [
-  "Alianza Eléctrica",
-  "Grupo FG Industrial",
-  "FG Servicios",
-] as const
-
-export const AREAS_FILTRO = [
-  "Tecnologías de la Información",
-  "Recursos Humanos",
-  "Operaciones",
-  "Ventas",
-  "Logística",
-] as const
-
 export const selectFiltroClassName = cn(
   "flex h-9 w-full cursor-pointer appearance-none rounded-md border border-input bg-background px-3 py-2 pr-9 text-sm shadow-xs outline-none",
   "transition-[color,box-shadow,border-color,transform] duration-200 ease-out",

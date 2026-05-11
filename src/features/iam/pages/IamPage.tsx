@@ -1,3 +1,5 @@
+import { Navigate } from "react-router-dom"
+
 import { AppFooter } from "@/components/app-footer"
 import { AppHeader } from "@/components/app-header"
 import { ListPaginationBar } from "@/components/list-pagination-bar"
@@ -7,12 +9,19 @@ import { IamUsersEmptyState } from "@/features/iam/components/IamUsersEmptyState
 import { IamUsersErrorState } from "@/features/iam/components/IamUsersErrorState"
 import { IamUsersLoadingSkeleton } from "@/features/iam/components/IamUsersLoadingSkeleton"
 import { IamUsuarioCard } from "@/features/iam/components/IamUsuarioCard"
+import { ROL_SUPER_ADMINISTRADOR } from "@/features/auth/constants/auth-roles"
+import { useAuthStore } from "@/features/auth/store/authStore"
 import { useIamPage } from "@/features/iam/hooks/useIamPage"
 import { OPCIONES_TAMANO_PAGINA } from "@/features/iam/interfaces/iam-constants"
 import { TravelRequestBackground } from "@/features/travel-request/components/TravelRequestBackground"
 
 export function IamPage() {
   const p = useIamPage()
+  const rolSesion = useAuthStore((state) => state.rolSesion ?? "")
+
+  if (rolSesion !== ROL_SUPER_ADMINISTRADOR) {
+    return <Navigate to="/home" replace />
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-linear-to-br from-background via-background to-secondary/20">

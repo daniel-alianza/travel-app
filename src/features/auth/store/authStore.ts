@@ -8,7 +8,8 @@ type AuthStore = {
   nombreResponsable: string
   correoSesion: string
   userId: number | null
-  login: (entrada: { correo: string; userId: number }) => void
+  rolSesion: string
+  login: (entrada: { correo: string; userId: number; rol: string }) => void
   logout: () => void
 }
 
@@ -19,13 +20,15 @@ export const useAuthStore = create<AuthStore>()(
       nombreResponsable: "",
       correoSesion: "",
       userId: null,
+      rolSesion: "",
       login: (entrada) => {
         if (
           entrada === undefined ||
           entrada === null ||
           typeof entrada.correo !== "string" ||
           typeof entrada.userId !== "number" ||
-          !Number.isFinite(entrada.userId)
+          !Number.isFinite(entrada.userId) ||
+          typeof entrada.rol !== "string"
         ) {
           return
         }
@@ -38,6 +41,7 @@ export const useAuthStore = create<AuthStore>()(
           nombreResponsable: nombreMostradoDesdeCorreo(normalizado),
           correoSesion: normalizado.toLowerCase(),
           userId: entrada.userId,
+          rolSesion: entrada.rol.trim(),
         })
       },
       logout: () => {
@@ -46,6 +50,7 @@ export const useAuthStore = create<AuthStore>()(
           nombreResponsable: "",
           correoSesion: "",
           userId: null,
+          rolSesion: "",
         })
       },
     }),
@@ -57,6 +62,7 @@ export const useAuthStore = create<AuthStore>()(
         nombreResponsable: state.nombreResponsable,
         correoSesion: state.correoSesion,
         userId: state.userId,
+        rolSesion: state.rolSesion,
       }),
     }
   )

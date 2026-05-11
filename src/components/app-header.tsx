@@ -15,6 +15,7 @@ import { DropdownMenu } from "radix-ui"
 
 import { Button } from "@/components/ui/button"
 import { GRUPO_FG_LOGO_URL } from "@/components/app-brand"
+import { ROL_SUPER_ADMINISTRADOR } from "@/features/auth/constants/auth-roles"
 import { useAuthStore } from "@/features/auth/store/authStore"
 import { useDaysUntilMonthEndQuery } from "@/hooks/useDaysUntilMonthEndQuery"
 
@@ -39,6 +40,8 @@ export function AppHeader({
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const logout = useAuthStore((state) => state.logout)
+  const rolSesion = useAuthStore((state) => state.rolSesion ?? "")
+  const puedeVerConfiguracion = rolSesion === ROL_SUPER_ADMINISTRADOR
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [mobileConfigSubmenuOpen, setMobileConfigSubmenuOpen] =
     useState<boolean>(false)
@@ -141,41 +144,43 @@ export function AppHeader({
             {mostrarCuentaYsesion ? (
               <>
                 <nav className="hidden items-center gap-2 md:flex">
-                  <DropdownMenu.Root
-                    onOpenChange={setConfiguracionMenuAbierto}
-                  >
-                    <DropdownMenu.Trigger asChild>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        className="group h-11 cursor-pointer rounded-2xl px-4 transition-all duration-500 hover:scale-105 hover:bg-primary/10 data-[state=open]:bg-primary/10"
-                      >
-                        <Settings className="mr-2 h-5 w-5 transition-all duration-300 group-hover:rotate-90" />
-                        Configuración
-                        <ChevronDown
-                          className={`ml-1 h-4 w-4 shrink-0 opacity-70 transition-transform duration-300 ${configuracionMenuAbierto ? "rotate-180" : ""}`}
-                          aria-hidden
-                        />
-                      </Button>
-                    </DropdownMenu.Trigger>
-                    <DropdownMenu.Portal>
-                      <DropdownMenu.Content
-                        align="end"
-                        sideOffset={8}
-                        className="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 z-50 min-w-[17rem] rounded-2xl border border-border/60 bg-popover p-1.5 text-popover-foreground shadow-xl"
-                      >
-                        <DropdownMenu.Item
-                          className="group/item relative flex cursor-pointer select-none items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground"
-                          onSelect={() => {
-                            navigate("/settings/usuarios-permisos")
-                          }}
+                  {puedeVerConfiguracion ? (
+                    <DropdownMenu.Root
+                      onOpenChange={setConfiguracionMenuAbierto}
+                    >
+                      <DropdownMenu.Trigger asChild>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          className="group h-11 cursor-pointer rounded-2xl px-4 transition-all duration-500 hover:scale-105 hover:bg-primary/10 data-[state=open]:bg-primary/10"
                         >
-                          <Users className="h-4 w-4 shrink-0 text-primary transition-transform duration-200 group-hover/item:scale-110" />
-                          Gestión de usuarios y permisos
-                        </DropdownMenu.Item>
-                      </DropdownMenu.Content>
-                    </DropdownMenu.Portal>
-                  </DropdownMenu.Root>
+                          <Settings className="mr-2 h-5 w-5 transition-all duration-300 group-hover:rotate-90" />
+                          Configuración
+                          <ChevronDown
+                            className={`ml-1 h-4 w-4 shrink-0 opacity-70 transition-transform duration-300 ${configuracionMenuAbierto ? "rotate-180" : ""}`}
+                            aria-hidden
+                          />
+                        </Button>
+                      </DropdownMenu.Trigger>
+                      <DropdownMenu.Portal>
+                        <DropdownMenu.Content
+                          align="end"
+                          sideOffset={8}
+                          className="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 z-50 min-w-[17rem] rounded-2xl border border-border/60 bg-popover p-1.5 text-popover-foreground shadow-xl"
+                        >
+                          <DropdownMenu.Item
+                            className="group/item relative flex cursor-pointer select-none items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground"
+                            onSelect={() => {
+                              navigate("/settings/usuarios-permisos")
+                            }}
+                          >
+                            <Users className="h-4 w-4 shrink-0 text-primary transition-transform duration-200 group-hover/item:scale-110" />
+                            Gestión de usuarios y permisos
+                          </DropdownMenu.Item>
+                        </DropdownMenu.Content>
+                      </DropdownMenu.Portal>
+                    </DropdownMenu.Root>
+                  ) : null}
                   <Button
                     type="button"
                     variant="ghost"
@@ -224,44 +229,46 @@ export function AppHeader({
           className={`overflow-hidden transition-all duration-500 ease-out md:hidden ${mobileMenuOpen ? "max-h-80 opacity-100" : "max-h-0 opacity-0"}`}
         >
           <div className="space-y-2 border-t border-border/50 bg-background/95 px-4 py-4 backdrop-blur-xl">
-            <div className="overflow-hidden rounded-2xl border border-border/40 bg-muted/20">
-              <button
-                type="button"
-                onClick={() =>
-                  setMobileConfigSubmenuOpen(!mobileConfigSubmenuOpen)
-                }
-                className="flex h-12 w-full cursor-pointer items-center justify-between rounded-2xl px-3 text-left text-sm font-medium transition-colors hover:bg-primary/10"
-                aria-expanded={mobileConfigSubmenuOpen}
-              >
-                <span className="flex items-center">
-                  <Settings className="mr-3 h-5 w-5 shrink-0" />
-                  Configuración
-                </span>
-                <ChevronDown
-                  className={`h-5 w-5 shrink-0 opacity-70 transition-transform duration-300 ${mobileConfigSubmenuOpen ? "rotate-180" : ""}`}
-                  aria-hidden
-                />
-              </button>
-              <div
-                className={`grid transition-[grid-template-rows] duration-300 ease-out ${mobileConfigSubmenuOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
-              >
-                <div className="min-h-0 overflow-hidden">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() => {
-                      navigate("/settings/usuarios-permisos")
-                      setMobileMenuOpen(false)
-                      setMobileConfigSubmenuOpen(false)
-                    }}
-                    className="mb-2 h-11 w-full cursor-pointer justify-start rounded-xl pl-10 text-sm transition-all duration-300 hover:bg-primary/10"
-                  >
-                    <Users className="mr-2 h-4 w-4 shrink-0 text-primary" />
-                    Gestión de usuarios y permisos
-                  </Button>
+            {puedeVerConfiguracion ? (
+              <div className="overflow-hidden rounded-2xl border border-border/40 bg-muted/20">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setMobileConfigSubmenuOpen(!mobileConfigSubmenuOpen)
+                  }
+                  className="flex h-12 w-full cursor-pointer items-center justify-between rounded-2xl px-3 text-left text-sm font-medium transition-colors hover:bg-primary/10"
+                  aria-expanded={mobileConfigSubmenuOpen}
+                >
+                  <span className="flex items-center">
+                    <Settings className="mr-3 h-5 w-5 shrink-0" />
+                    Configuración
+                  </span>
+                  <ChevronDown
+                    className={`h-5 w-5 shrink-0 opacity-70 transition-transform duration-300 ${mobileConfigSubmenuOpen ? "rotate-180" : ""}`}
+                    aria-hidden
+                  />
+                </button>
+                <div
+                  className={`grid transition-[grid-template-rows] duration-300 ease-out ${mobileConfigSubmenuOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
+                >
+                  <div className="min-h-0 overflow-hidden">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() => {
+                        navigate("/settings/usuarios-permisos")
+                        setMobileMenuOpen(false)
+                        setMobileConfigSubmenuOpen(false)
+                      }}
+                      className="mb-2 h-11 w-full cursor-pointer justify-start rounded-xl pl-10 text-sm transition-all duration-300 hover:bg-primary/10"
+                    >
+                      <Users className="mr-2 h-4 w-4 shrink-0 text-primary" />
+                      Gestión de usuarios y permisos
+                    </Button>
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : null}
             <Button
               type="button"
               variant="ghost"

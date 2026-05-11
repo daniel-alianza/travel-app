@@ -21,6 +21,7 @@ interface LoginApiResponse {
     userId: number
     accessToken: string
     expiresInSeconds: number
+    role: string
   }
   message: string
   error?: unknown
@@ -75,6 +76,7 @@ export function useLoginPage(): UseLoginPageReturn {
       login({
         correo: correoNormalizado,
         userId: response.data.data.userId,
+        rol: response.data.data.role,
       })
       navigate("/home")
     } catch (error) {

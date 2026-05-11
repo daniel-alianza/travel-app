@@ -5,4 +5,5 @@ export type PerfilLaboralVista = {
   sucursal: string | null
   departamento: string
   jefeDirecto: string
+  tieneJefeDirectoAsignado: boolean
 }

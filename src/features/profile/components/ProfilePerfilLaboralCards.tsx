@@ -7,12 +7,14 @@ import { cn } from "@/lib/utils"
 type ProfilePerfilLaboralCardsProps = {
   perfil: PerfilLaboralVista
   jefeDirectoActual: string
+  etiquetaBotonJefeDirecto: string
   onSolicitarCambioJefe: () => void
 }
 
 export function ProfilePerfilLaboralCards({
   perfil,
   jefeDirectoActual,
+  etiquetaBotonJefeDirecto,
   onSolicitarCambioJefe,
 }: ProfilePerfilLaboralCardsProps) {
   return (
@@ -88,7 +90,7 @@ export function ProfilePerfilLaboralCards({
               "active:translate-y-0"
             )}
           >
-            Solicitar cambio de jefe directo
+            {etiquetaBotonJefeDirecto}
           </Button>
         </div>
       </article>

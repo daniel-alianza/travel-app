@@ -1,3 +1,4 @@
+import { ProfileCambioContrasenaModal } from "./ProfileCambioContrasenaModal"
 import { ProfileCambioJefeDirectoModal } from "./ProfileCambioJefeDirectoModal"
 import { ProfilePerfilHeroSection } from "./ProfilePerfilHeroSection"
 import { ProfilePerfilLaboralCards } from "./ProfilePerfilLaboralCards"
@@ -5,14 +6,8 @@ import { ProfilePerfilSeguridadSection } from "./ProfilePerfilSeguridadSection"
 import { ProfilePerfilSkeleton } from "./ProfilePerfilSkeleton"
 import { useProfilePerfilContenido } from "@/features/profile/hooks/useProfilePerfilContenido"
 
-type ProfilePerfilContenidoProps = {
-  nombreSesion: string
-}
-
-export function ProfilePerfilContenido({
-  nombreSesion,
-}: ProfilePerfilContenidoProps) {
-  const perfilState = useProfilePerfilContenido(nombreSesion)
+export function ProfilePerfilContenido() {
+  const perfilState = useProfilePerfilContenido()
 
   if (perfilState.cargandoPerfil) {
     return <ProfilePerfilSkeleton />
@@ -21,7 +16,9 @@ export function ProfilePerfilContenido({
   if (perfilState.perfil === null) {
     return (
       <p className="text-sm text-muted-foreground">
-        No se pudo cargar el perfil. Vuelve a iniciar sesión.
+        {perfilState.errorCargaPerfil
+          ? "No se pudo cargar el perfil desde el servidor. Comprueba tu conexión o vuelve a iniciar sesión."
+          : "No se pudo cargar el perfil. Vuelve a iniciar sesión."}
       </p>
     )
   }
@@ -36,6 +33,7 @@ export function ProfilePerfilContenido({
       <ProfilePerfilLaboralCards
         perfil={perfilState.perfil}
         jefeDirectoActual={perfilState.jefeDirectoActual}
+        etiquetaBotonJefeDirecto={perfilState.textoBotonJefeDirecto}
         onSolicitarCambioJefe={perfilState.handleAbrirModalCambioJefe}
       />
 
@@ -49,9 +47,18 @@ export function ProfilePerfilContenido({
         busquedaCandidatoJefe={perfilState.busquedaCandidatoJefe}
         onBusquedaCandidatoJefeChange={perfilState.setBusquedaCandidatoJefe}
         candidatosJefeFiltrados={perfilState.candidatosJefeFiltrados}
+        candidatosCargando={perfilState.cargandoCandidatosJefe}
+        candidatosError={perfilState.errorCandidatosJefe}
         candidatoJefeSeleccionado={perfilState.candidatoJefeSeleccionado}
         onSeleccionarCandidato={perfilState.setCandidatoJefeSeleccionado}
         onConfirmarSeleccion={perfilState.handleConfirmarCambioJefe}
+      />
+
+      <ProfileCambioContrasenaModal
+        abierto={perfilState.modalContrasenaAbierto}
+        onAbiertoChange={perfilState.setModalContrasenaAbierto}
+        enviando={perfilState.enviandoCambioContrasena}
+        onConfirmar={perfilState.handleConfirmarCambioContrasena}
       />
     </div>
   )

@@ -1,85 +1,148 @@
+import { useMutation, useQuery } from "@tanstack/react-query"
+import { AxiosError } from "axios"
 import { useEffect, useMemo, useState } from "react"
 
 import { showAppToast } from "@/components/app-toast"
-import { CANDIDATOS_JEFE_DIRECTO } from "@/features/profile/hooks/profile-jefe-directo-candidatos"
+import { useAuthStore } from "@/features/auth/store/authStore"
 import type { PerfilLaboralVista } from "@/features/profile/interfaces/perfil-laboral-vista.interface"
 import type { UsuarioCandidatoJefe } from "@/features/profile/interfaces/usuario-candidato-jefe.interface"
+import type { CambioContrasenaPerfilFormValues } from "@/features/profile/schemas/cambio-contrasena-perfil.schema"
 import {
-  construirPerfilVista,
+  fetchCurrentUserProfile,
+  fetchManagerCandidates,
+  postCambioContrasenaPerfil,
+} from "@/features/profile/services/profile-travel-api"
+import {
   inicialesDesdeNombre,
   textoNormalizadoParaBusqueda,
 } from "@/features/profile/hooks/profile-perfil-helpers"
 
+type ApiErrorBody = {
+  message?: string
+}
+
+function mensajeDesdeErrorAxios(error: unknown): string {
+  if (error instanceof AxiosError) {
+    const cuerpo = error.response?.data as ApiErrorBody | undefined
+    if (
+      typeof cuerpo?.message === "string" &&
+      cuerpo.message.trim().length > 0
+    ) {
+      return cuerpo.message
+    }
+  }
+  return "No se pudo completar la acción. Intenta de nuevo."
+}
+
 interface UseProfilePerfilContenidoReturn {
   cargandoPerfil: boolean
   perfil: PerfilLaboralVista | null
+  errorCargaPerfil: boolean
   jefeDirectoActual: string
+  textoBotonJefeDirecto: string
   modalCambioJefeAbierto: boolean
   setModalCambioJefeAbierto: (abierto: boolean) => void
+  modalContrasenaAbierto: boolean
+  setModalContrasenaAbierto: (abierto: boolean) => void
   busquedaCandidatoJefe: string
   setBusquedaCandidatoJefe: (valor: string) => void
   candidatoJefeSeleccionado: UsuarioCandidatoJefe | null
   setCandidatoJefeSeleccionado: (candidato: UsuarioCandidatoJefe | null) => void
   candidatosJefeFiltrados: ReadonlyArray<UsuarioCandidatoJefe>
+  cargandoCandidatosJefe: boolean
+  errorCandidatosJefe: boolean
   handleCambiarContrasena: () => void
+  handleConfirmarCambioContrasena: (
+    valores: CambioContrasenaPerfilFormValues
+  ) => Promise<void>
+  enviandoCambioContrasena: boolean
   handleAbrirModalCambioJefe: () => void
   handleConfirmarCambioJefe: () => void
   iniciales: string
 }
 
-export function useProfilePerfilContenido(
-  nombreSesion: string
-): UseProfilePerfilContenidoReturn {
-  const [cargandoPerfil, setCargandoPerfil] = useState<boolean>(true)
-  const [perfil, setPerfil] = useState<PerfilLaboralVista | null>(null)
+export function useProfilePerfilContenido(): UseProfilePerfilContenidoReturn {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+
+  const perfilQuery = useQuery({
+    queryKey: ["auth", "profile", "me"],
+    queryFn: fetchCurrentUserProfile,
+    enabled: isAuthenticated,
+  })
+
+  const candidatosJefeQuery = useQuery({
+    queryKey: ["auth", "manager-candidates"],
+    queryFn: fetchManagerCandidates,
+    enabled: isAuthenticated && perfilQuery.isSuccess,
+  })
+
+  const cambioContrasenaMutation = useMutation({
+    mutationFn: postCambioContrasenaPerfil,
+  })
+
+  const perfil = perfilQuery.data ?? null
+  const cargandoPerfil = isAuthenticated && perfilQuery.isLoading
+  const errorCargaPerfil = perfilQuery.isError
+
+  const candidatosJefeLista = candidatosJefeQuery.data ?? []
+  const cargandoCandidatosJefe = candidatosJefeQuery.isLoading
+  const errorCandidatosJefe = candidatosJefeQuery.isError
+
+  const textoBotonJefeDirecto =
+    perfil !== null && perfil.tieneJefeDirectoAsignado
+      ? "Solicitar cambio de jefe directo"
+      : "Escoger uno"
+
   const [jefeDirectoActual, setJefeDirectoActual] = useState<string>("")
   const [modalCambioJefeAbierto, setModalCambioJefeAbierto] =
+    useState<boolean>(false)
+  const [modalContrasenaAbierto, setModalContrasenaAbierto] =
     useState<boolean>(false)
   const [busquedaCandidatoJefe, setBusquedaCandidatoJefe] = useState<string>("")
   const [candidatoJefeSeleccionado, setCandidatoJefeSeleccionado] =
     useState<UsuarioCandidatoJefe | null>(null)
 
   useEffect(() => {
-    let cancelado = false
-    const temporizador = window.setTimeout(() => {
-      if (cancelado) {
-        return
-      }
-      const datos = construirPerfilVista(nombreSesion)
-      setPerfil(datos)
-      setJefeDirectoActual(datos.jefeDirecto)
-      setCargandoPerfil(false)
-    }, 780)
-
-    return () => {
-      cancelado = true
-      window.clearTimeout(temporizador)
+    if (perfil !== null) {
+      setJefeDirectoActual(perfil.jefeDirecto)
     }
-  }, [nombreSesion])
+  }, [perfil])
 
   const candidatosJefeFiltrados = useMemo(() => {
     const q = textoNormalizadoParaBusqueda(busquedaCandidatoJefe.trim())
     if (q === "") {
-      return [...CANDIDATOS_JEFE_DIRECTO]
+      return [...candidatosJefeLista]
     }
-    return CANDIDATOS_JEFE_DIRECTO.filter((candidato) => {
+    return candidatosJefeLista.filter((candidato) => {
       const blob = textoNormalizadoParaBusqueda(
         `${candidato.nombreCompleto} ${candidato.correo} ${candidato.area}`
       )
       return blob.includes(q)
     })
-  }, [busquedaCandidatoJefe])
+  }, [busquedaCandidatoJefe, candidatosJefeLista])
 
   function handleCambiarContrasena(): void {
-    showAppToast(
-      "El cambio de contraseña estará disponible próximamente.",
-      "info"
-    )
+    setModalContrasenaAbierto(true)
+  }
+
+  async function handleConfirmarCambioContrasena(
+    valores: CambioContrasenaPerfilFormValues
+  ): Promise<void> {
+    try {
+      await cambioContrasenaMutation.mutateAsync({
+        currentPassword: valores.contrasenaActual,
+        newPassword: valores.contrasenaNueva,
+      })
+      showAppToast("Contraseña actualizada correctamente.", "success")
+      setModalContrasenaAbierto(false)
+    } catch (error) {
+      showAppToast(mensajeDesdeErrorAxios(error), "error")
+    }
   }
 
   function handleAbrirModalCambioJefe(): void {
     const actual = jefeDirectoActual
-    const coincide = CANDIDATOS_JEFE_DIRECTO.find(
+    const coincide = candidatosJefeLista.find(
       (c) => c.nombreCompleto === actual
     )
     setCandidatoJefeSeleccionado(coincide ?? null)
@@ -106,15 +169,23 @@ export function useProfilePerfilContenido(
   return {
     cargandoPerfil,
     perfil,
+    errorCargaPerfil,
     jefeDirectoActual,
+    textoBotonJefeDirecto,
     modalCambioJefeAbierto,
     setModalCambioJefeAbierto,
+    modalContrasenaAbierto,
+    setModalContrasenaAbierto,
     busquedaCandidatoJefe,
     setBusquedaCandidatoJefe,
     candidatoJefeSeleccionado,
     setCandidatoJefeSeleccionado,
     candidatosJefeFiltrados,
+    cargandoCandidatosJefe,
+    errorCandidatosJefe,
     handleCambiarContrasena,
+    handleConfirmarCambioContrasena,
+    enviandoCambioContrasena: cambioContrasenaMutation.isPending,
     handleAbrirModalCambioJefe,
     handleConfirmarCambioJefe,
     iniciales,

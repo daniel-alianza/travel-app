@@ -1,4 +1,4 @@
-import { Search, X } from "lucide-react"
+import { Loader2, Search, X } from "lucide-react"
 import { Dialog } from "radix-ui"
 
 import { Button } from "@/components/ui/button"
@@ -13,6 +13,8 @@ type ProfileCambioJefeDirectoModalProps = {
   busquedaCandidatoJefe: string
   onBusquedaCandidatoJefeChange: (valor: string) => void
   candidatosJefeFiltrados: ReadonlyArray<UsuarioCandidatoJefe>
+  candidatosCargando: boolean
+  candidatosError: boolean
   candidatoJefeSeleccionado: UsuarioCandidatoJefe | null
   onSeleccionarCandidato: (candidato: UsuarioCandidatoJefe) => void
   onConfirmarSeleccion: () => void
@@ -24,6 +26,8 @@ export function ProfileCambioJefeDirectoModal({
   busquedaCandidatoJefe,
   onBusquedaCandidatoJefeChange,
   candidatosJefeFiltrados,
+  candidatosCargando,
+  candidatosError,
   candidatoJefeSeleccionado,
   onSeleccionarCandidato,
   onConfirmarSeleccion,
@@ -94,9 +98,20 @@ export function ProfileCambioJefeDirectoModal({
 
           <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-2 sm:px-6">
             <ul className="space-y-2 pb-2" role="listbox">
-              {candidatosJefeFiltrados.length === 0 ? (
+              {candidatosCargando ? (
+                <li className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-border/60 bg-muted/20 px-4 py-12 text-sm text-muted-foreground">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <span>Cargando responsables…</span>
+                </li>
+              ) : candidatosError ? (
                 <li className="rounded-2xl border border-dashed border-border/60 bg-muted/20 px-4 py-8 text-center text-sm text-muted-foreground">
-                  No hay resultados para tu búsqueda.
+                  No se pudo cargar la lista. Cierra e intenta de nuevo.
+                </li>
+              ) : candidatosJefeFiltrados.length === 0 ? (
+                <li className="rounded-2xl border border-dashed border-border/60 bg-muted/20 px-4 py-8 text-center text-sm text-muted-foreground">
+                  {busquedaCandidatoJefe.trim().length > 0
+                    ? "No hay resultados para tu búsqueda."
+                    : "No hay responsables disponibles con rol administrador o líder/gerente."}
                 </li>
               ) : (
                 candidatosJefeFiltrados.map((candidato) => {

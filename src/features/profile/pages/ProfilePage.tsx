@@ -2,7 +2,6 @@ import { useNavigate } from "react-router-dom"
 
 import { AppFooter } from "@/components/app-footer"
 import { AppHeader } from "@/components/app-header"
-import { useAuthStore } from "@/features/auth/store/authStore"
 import { ProfilePerfilContenido } from "@/features/profile/components/ProfilePerfilContenido"
 import { useProfilePage } from "@/features/profile/hooks/useProfilePage"
 import { TravelRequestBackground } from "@/features/travel-request/components/TravelRequestBackground"
@@ -10,7 +9,6 @@ import { cn } from "@/lib/utils"
 
 export function ProfilePage() {
   const navigate = useNavigate()
-  const nombreResponsable = useAuthStore((state) => state.nombreResponsable)
   const page = useProfilePage()
 
   return (
@@ -35,15 +33,12 @@ export function ProfilePage() {
               Mi perfil
             </h1>
             <p className="mt-2 max-w-xl text-pretty text-sm text-muted-foreground sm:text-base">
-              Consulta tus datos laborales y opciones de seguridad. La
-              información se sincroniza al iniciar sesión.
+              Consulta tus datos laborales y opciones de seguridad. Los datos
+              se obtienen del servidor al abrir esta pantalla.
             </p>
           </header>
 
-          <ProfilePerfilContenido
-            key={nombreResponsable}
-            nombreSesion={nombreResponsable}
-          />
+          <ProfilePerfilContenido />
         </div>
       </main>
 

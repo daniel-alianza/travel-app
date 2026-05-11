@@ -9,6 +9,7 @@ interface TravelRequestGastoInputProps {
   onChange: (value: string) => void
   icon: ComponentType<{ className?: string }>
   disabled?: boolean
+  error?: string | null
 }
 
 export function TravelRequestGastoInput({
@@ -17,6 +18,7 @@ export function TravelRequestGastoInput({
   onChange,
   icon: Icon,
   disabled = false,
+  error = null,
 }: TravelRequestGastoInputProps) {
   return (
     <div className="space-y-2">
@@ -36,9 +38,13 @@ export function TravelRequestGastoInput({
           onChange={(e) => onChange(e.target.value)}
           placeholder="0.00"
           disabled={disabled}
-          className="h-12 rounded-2xl border-2 pl-8 transition-all duration-500 focus:scale-[1.02] focus:border-primary focus:shadow-lg focus:shadow-primary/20"
+          aria-invalid={Boolean(error)}
+          className={`h-12 rounded-2xl border-2 pl-8 transition-all duration-500 focus:scale-[1.02] focus:border-primary focus:shadow-lg focus:shadow-primary/20 ${error ? "border-destructive/70 focus:border-destructive focus:shadow-destructive/20" : ""}`}
         />
       </div>
+      {error ? (
+        <span className="block text-xs text-destructive">{error}</span>
+      ) : null}
     </div>
   )
 }

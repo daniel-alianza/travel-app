@@ -19,6 +19,7 @@ export function TravelRequestObjectivesSection({
     handleRemoveObjetivo,
     handleObjetivoChange,
     tripSoloLectura,
+    getTripSubmitFieldError,
   } = model
   const trip = trips[tripIndex]
   if (!trip) {
@@ -26,6 +27,7 @@ export function TravelRequestObjectivesSection({
   }
   const { objetivos } = trip
   const soloLectura = tripSoloLectura(tripIndex)
+  const errorObjetivos = getTripSubmitFieldError(tripIndex, "objetivos")
 
   return (
     <section
@@ -39,33 +41,48 @@ export function TravelRequestObjectivesSection({
       </h2>
 
       <div className="space-y-3">
-        {objetivos.map((obj, idx) => (
-          <div key={idx} className="group flex items-center gap-3">
-            <span className="min-w-[2rem] font-medium text-muted-foreground">
-              {idx + 1}.-
-            </span>
-            <Input
-              value={obj}
-              onChange={(e) =>
-                handleObjetivoChange(tripIndex, idx, e.target.value)
-              }
-              placeholder={`Escribe el objetivo ${idx + 1}...`}
-              disabled={soloLectura}
-              className="h-12 flex-1 rounded-2xl border-2 transition-all duration-500 focus:scale-[1.01] focus:shadow-lg focus:shadow-primary/20"
-            />
-            {objetivos.length > 3 && !soloLectura && (
-              <button
-                type="button"
-                onClick={() => handleRemoveObjetivo(tripIndex, idx)}
-                className="flex h-10 w-10 items-center justify-center rounded-xl bg-destructive/10 text-destructive opacity-0 transition-all duration-300 group-hover:opacity-100 hover:bg-destructive hover:text-white"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-        ))}
+        {objetivos.map((obj, idx) => {
+          const vacio = obj.trim().length === 0
+          const marcarObjetivo = Boolean(errorObjetivos && vacio)
+          return (
+            <div key={idx} className="group flex flex-col gap-1">
+              <div className="flex items-center gap-3">
+                <span className="min-w-[2rem] font-medium text-muted-foreground">
+                  {idx + 1}.-
+                </span>
+                <Input
+                  value={obj}
+                  onChange={(e) =>
+                    handleObjetivoChange(tripIndex, idx, e.target.value)
+                  }
+                  placeholder={`Escribe el objetivo ${idx + 1}...`}
+                  disabled={soloLectura}
+                  aria-invalid={marcarObjetivo}
+                  className={`h-12 flex-1 rounded-2xl border-2 transition-all duration-500 focus:scale-[1.01] focus:shadow-lg focus:shadow-primary/20 ${marcarObjetivo ? "border-destructive/70" : ""}`}
+                />
+                {objetivos.length > 3 && !soloLectura && (
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveObjetivo(tripIndex, idx)}
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-destructive/10 text-destructive opacity-0 transition-all duration-300 group-hover:opacity-100 hover:bg-destructive hover:text-white"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+              {marcarObjetivo ? (
+                <p className="text-xs text-destructive pl-[2.75rem]">
+                  Falta la descripción de este objetivo.
+                </p>
+              ) : null}
+            </div>
+          )
+        })}
       </div>
 
+      {errorObjetivos ? (
+        <p className="mt-3 text-xs text-destructive">{errorObjetivos}</p>
+      ) : null}
       <div className="mt-4 flex items-center justify-between">
         <p className="text-xs text-muted-foreground">
           Mínimo 3 y máximo 5 objetivos. Usa el botón + para agregar otro

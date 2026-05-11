@@ -18,6 +18,7 @@ interface TravelRequestSelectDropdownProps {
   setFocusedField: (value: string | null) => void
   showChevron?: boolean
   onOpen?: () => void
+  error?: string | null
 }
 
 export function TravelRequestSelectDropdown({
@@ -35,6 +36,7 @@ export function TravelRequestSelectDropdown({
   setFocusedField,
   showChevron = true,
   onOpen,
+  error = null,
 }: TravelRequestSelectDropdownProps) {
   const safeOptions = options ?? []
 
@@ -61,12 +63,15 @@ export function TravelRequestSelectDropdown({
             setFocusedField(null)
             setTimeout(() => setDropdownOpen(null), 200)
           }}
+          aria-invalid={Boolean(error)}
           className={`group flex h-12 w-full items-center justify-between rounded-2xl border-2 bg-card px-4 text-left transition-all duration-500 ${
             disabled
               ? "cursor-not-allowed border-border opacity-50"
-              : focusedField === id
-                ? "scale-[1.01] border-primary shadow-lg shadow-primary/20"
-                : "border-border hover:border-primary/50 hover:shadow-md"
+              : error
+                ? "border-destructive/70 shadow-md shadow-destructive/10"
+                : focusedField === id
+                  ? "scale-[1.01] border-primary shadow-lg shadow-primary/20"
+                  : "border-border hover:border-primary/50 hover:shadow-md"
           }`}
         >
           <span className={value ? "text-foreground" : "text-muted-foreground"}>
@@ -108,6 +113,9 @@ export function TravelRequestSelectDropdown({
           </div>
         </div>
       </div>
+      {error ? (
+        <span className="block text-xs text-destructive">{error}</span>
+      ) : null}
     </div>
   )
 }

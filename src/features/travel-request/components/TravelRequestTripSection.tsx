@@ -14,13 +14,22 @@ export function TravelRequestTripSection({
   model,
   tripIndex,
 }: TravelRequestTripSectionProps) {
-  const { mounted, trips, updateTrip, tripSoloLectura } = model
+  const { mounted, trips, updateTrip, tripSoloLectura, getTripSubmitFieldError } =
+    model
   const trip = trips[tripIndex]
   if (!trip) {
     return null
   }
 
   const soloLectura = tripSoloLectura(tripIndex)
+  const errorDestino = getTripSubmitFieldError(tripIndex, "destinoViaje")
+  const errorMotivo = getTripSubmitFieldError(tripIndex, "motivoViaje")
+  const errorFechaSalida = getTripSubmitFieldError(tripIndex, "fechaSalida")
+  const errorFechaRegreso = getTripSubmitFieldError(tripIndex, "fechaRegreso")
+  const errorFechaDispersion = getTripSubmitFieldError(
+    tripIndex,
+    "fechaDispersion"
+  )
 
   return (
     <section
@@ -46,8 +55,14 @@ export function TravelRequestTripSection({
                 }
                 placeholder="Ej: Monterrey, planta Querétaro, cliente en Puebla…"
                 disabled={soloLectura}
-                className="h-12 rounded-2xl border-2 transition-all duration-500 focus:shadow-lg focus:shadow-primary/20"
+                aria-invalid={Boolean(errorDestino)}
+                className={`h-12 rounded-2xl border-2 transition-all duration-500 focus:shadow-lg focus:shadow-primary/20 ${errorDestino ? "border-destructive/70 focus-visible:ring-destructive/30" : ""}`}
               />
+              {errorDestino ? (
+                <span className="block text-xs text-destructive">
+                  {errorDestino}
+                </span>
+              ) : null}
               <p className="text-xs text-muted-foreground">
                 Este dato es el mismo que verán operaciones en gasolina y TAG
                 para alinear la ruta.
@@ -68,8 +83,12 @@ export function TravelRequestTripSection({
               }
               placeholder="Resumen opcional: reuniones, instalación, cobranza, etc."
               disabled={soloLectura}
-              className="min-h-[100px] resize-none rounded-2xl border-2 transition-all duration-500 focus:shadow-lg focus:shadow-primary/20"
+              aria-invalid={Boolean(errorMotivo)}
+              className={`min-h-[100px] resize-none rounded-2xl border-2 transition-all duration-500 focus:shadow-lg focus:shadow-primary/20 ${errorMotivo ? "border-destructive/70 focus-visible:ring-destructive/30" : ""}`}
             />
+            {errorMotivo ? (
+              <span className="block text-xs text-destructive">{errorMotivo}</span>
+            ) : null}
           </div>
         </div>
 
@@ -92,8 +111,14 @@ export function TravelRequestTripSection({
                   updateTrip(tripIndex, { fechaSalida: e.target.value })
                 }
                 disabled={soloLectura}
-                className="h-12 rounded-2xl border-2 transition-all duration-500 focus:scale-[1.02] focus:shadow-lg focus:shadow-primary/20"
+                aria-invalid={Boolean(errorFechaSalida)}
+                className={`h-12 rounded-2xl border-2 transition-all duration-500 focus:scale-[1.02] focus:shadow-lg focus:shadow-primary/20 ${errorFechaSalida ? "border-destructive/70" : ""}`}
               />
+              {errorFechaSalida ? (
+                <span className="block text-xs text-destructive">
+                  {errorFechaSalida}
+                </span>
+              ) : null}
             </div>
             <div className="space-y-2">
               <Label className="text-sm text-muted-foreground">
@@ -106,8 +131,14 @@ export function TravelRequestTripSection({
                   updateTrip(tripIndex, { fechaRegreso: e.target.value })
                 }
                 disabled={soloLectura}
-                className="h-12 rounded-2xl border-2 transition-all duration-500 focus:scale-[1.02] focus:shadow-lg focus:shadow-primary/20"
+                aria-invalid={Boolean(errorFechaRegreso)}
+                className={`h-12 rounded-2xl border-2 transition-all duration-500 focus:scale-[1.02] focus:shadow-lg focus:shadow-primary/20 ${errorFechaRegreso ? "border-destructive/70" : ""}`}
               />
+              {errorFechaRegreso ? (
+                <span className="block text-xs text-destructive">
+                  {errorFechaRegreso}
+                </span>
+              ) : null}
             </div>
             <div className="space-y-2">
               <Label className="text-sm text-muted-foreground">
@@ -120,8 +151,14 @@ export function TravelRequestTripSection({
                   updateTrip(tripIndex, { fechaDispersion: e.target.value })
                 }
                 disabled={soloLectura}
-                className="h-12 rounded-2xl border-2 transition-all duration-500 focus:scale-[1.02] focus:shadow-lg focus:shadow-primary/20"
+                aria-invalid={Boolean(errorFechaDispersion)}
+                className={`h-12 rounded-2xl border-2 transition-all duration-500 focus:scale-[1.02] focus:shadow-lg focus:shadow-primary/20 ${errorFechaDispersion ? "border-destructive/70" : ""}`}
               />
+              {errorFechaDispersion ? (
+                <span className="block text-xs text-destructive">
+                  {errorFechaDispersion}
+                </span>
+              ) : null}
             </div>
           </div>
         </div>

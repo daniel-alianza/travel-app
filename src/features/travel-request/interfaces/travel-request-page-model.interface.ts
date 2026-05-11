@@ -3,6 +3,7 @@ import { type ChangeEvent } from "react"
 import type { TravelRequestGastos } from "./travel-request-gastos.interface"
 import type { TravelRequestMousePosition } from "./travel-request-mouse-position.interface"
 import type { TravelRequestTripData } from "./travel-request-trip-data.interface"
+import type { TravelRequestTripSubmitFieldErrorKey } from "./travel-request-trip-submit-field-errors.interface"
 
 export interface TravelRequestPolicyNotice {
   id: string
@@ -55,6 +56,14 @@ export interface TravelRequestPageModel {
     field: keyof TravelRequestGastos,
     value: string
   ) => void
+  getTripGastoError: (
+    tripIndex: number,
+    field: keyof TravelRequestGastos
+  ) => string | null
+  getTripSubmitFieldError: (
+    tripIndex: number,
+    field: TravelRequestTripSubmitFieldErrorKey
+  ) => string | null
   addTrip: () => void
   removeTrip: (tripIndex: number) => void
   dropdownOpen: string | null

@@ -15,13 +15,15 @@ export function TravelRequestTagSection({
   model,
   tripIndex,
 }: TravelRequestTagSectionProps) {
-  const { mounted, trips, updateTrip, tripSoloLectura } = model
+  const { mounted, trips, updateTrip, tripSoloLectura, getTripSubmitFieldError } =
+    model
   const trip = trips[tripIndex]
   if (!trip) {
     return null
   }
 
   const soloLectura = tripSoloLectura(tripIndex)
+  const errorTagMonto = getTripSubmitFieldError(tripIndex, "tagMonto")
 
   return (
     <section
@@ -83,9 +85,15 @@ export function TravelRequestTagSection({
                     }
                     placeholder="0.00"
                     disabled={soloLectura}
-                    className="h-12 rounded-2xl border-2 pl-8 transition-all duration-500 focus:scale-[1.01] focus:border-cyan-500 focus:shadow-lg focus:shadow-cyan-500/20"
+                    aria-invalid={Boolean(errorTagMonto)}
+                    className={`h-12 rounded-2xl border-2 pl-8 transition-all duration-500 focus:scale-[1.01] focus:border-cyan-500 focus:shadow-lg focus:shadow-cyan-500/20 ${errorTagMonto ? "border-destructive/70" : ""}`}
                   />
                 </div>
+                {errorTagMonto ? (
+                  <span className="block text-xs text-destructive">
+                    {errorTagMonto}
+                  </span>
+                ) : null}
                 <p className="text-xs text-muted-foreground">
                   Monto total de saldo TAG que necesitas para el trayecto
                 </p>

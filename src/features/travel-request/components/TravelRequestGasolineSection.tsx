@@ -37,6 +37,7 @@ export function TravelRequestGasolineSection({
     focusedField,
     setFocusedField,
     tripSoloLectura,
+    getTripSubmitFieldError,
   } = model
   const trip = trips[tripIndex]
   if (!trip) {
@@ -45,6 +46,17 @@ export function TravelRequestGasolineSection({
 
   const soloLectura = tripSoloLectura(tripIndex)
   const tarjetaGasolinaId = `tarjetaGasolina-${tripIndex}`
+  const errorTarjeta = getTripSubmitFieldError(tripIndex, "gasolinaTarjeta")
+  const errorPlaca = getTripSubmitFieldError(tripIndex, "gasolinaPlaca")
+  const errorKilometraje = getTripSubmitFieldError(
+    tripIndex,
+    "gasolinaKilometraje"
+  )
+  const errorMonto = getTripSubmitFieldError(tripIndex, "gasolinaMonto")
+  const errorDistancia = getTripSubmitFieldError(
+    tripIndex,
+    "gasolinaDistancia"
+  )
 
   return (
     <section
@@ -98,6 +110,7 @@ export function TravelRequestGasolineSection({
               setDropdownOpen={setDropdownOpen}
               focusedField={focusedField}
               setFocusedField={setFocusedField}
+              error={errorTarjeta}
             />
           </div>
 
@@ -110,6 +123,10 @@ export function TravelRequestGasolineSection({
               <div className="space-y-2">
                 <Label className="text-sm text-muted-foreground">
                   Matrícula / Placa
+                  <span className="text-destructive" aria-hidden>
+                    {" "}
+                    *
+                  </span>
                 </Label>
                 <Input
                   value={trip.placa}
@@ -118,12 +135,22 @@ export function TravelRequestGasolineSection({
                   }
                   placeholder="Buscar placa..."
                   disabled={soloLectura}
-                  className="h-12 rounded-2xl border-2 transition-all duration-500 focus:scale-[1.01] focus:border-accent focus:shadow-lg focus:shadow-accent/20"
+                  aria-invalid={Boolean(errorPlaca)}
+                  className={`h-12 rounded-2xl border-2 transition-all duration-500 focus:scale-[1.01] focus:border-accent focus:shadow-lg focus:shadow-accent/20 ${errorPlaca ? "border-destructive/70" : ""}`}
                 />
+                {errorPlaca ? (
+                  <span className="block text-xs text-destructive">
+                    {errorPlaca}
+                  </span>
+                ) : null}
               </div>
               <div className="space-y-2">
                 <Label className="text-sm text-muted-foreground">
                   Kilometraje Actual (Odómetro)
+                  <span className="text-destructive" aria-hidden>
+                    {" "}
+                    *
+                  </span>
                 </Label>
                 <div className="relative">
                   <Gauge className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
@@ -135,9 +162,15 @@ export function TravelRequestGasolineSection({
                     }
                     placeholder="Ej: 45000"
                     disabled={soloLectura}
-                    className="h-12 rounded-2xl border-2 pl-12 transition-all duration-500 focus:scale-[1.01] focus:border-accent focus:shadow-lg focus:shadow-accent/20"
+                    aria-invalid={Boolean(errorKilometraje)}
+                    className={`h-12 rounded-2xl border-2 pl-12 transition-all duration-500 focus:scale-[1.01] focus:border-accent focus:shadow-lg focus:shadow-accent/20 ${errorKilometraje ? "border-destructive/70" : ""}`}
                   />
                 </div>
+                {errorKilometraje ? (
+                  <span className="block text-xs text-destructive">
+                    {errorKilometraje}
+                  </span>
+                ) : null}
               </div>
             </div>
           </div>
@@ -150,6 +183,10 @@ export function TravelRequestGasolineSection({
               <div className="space-y-2">
                 <Label className="text-sm text-muted-foreground">
                   Monto Solicitado ($)
+                  <span className="text-destructive" aria-hidden>
+                    {" "}
+                    *
+                  </span>
                 </Label>
                 <div className="relative">
                   <span className="absolute top-1/2 left-4 -translate-y-1/2 font-medium text-muted-foreground">
@@ -164,13 +201,23 @@ export function TravelRequestGasolineSection({
                     }
                     placeholder="0.00"
                     disabled={soloLectura}
-                    className="h-12 rounded-2xl border-2 pl-8 transition-all duration-500 focus:scale-[1.01] focus:border-accent focus:shadow-lg focus:shadow-accent/20"
+                    aria-invalid={Boolean(errorMonto)}
+                    className={`h-12 rounded-2xl border-2 pl-8 transition-all duration-500 focus:scale-[1.01] focus:border-accent focus:shadow-lg focus:shadow-accent/20 ${errorMonto ? "border-destructive/70" : ""}`}
                   />
                 </div>
+                {errorMonto ? (
+                  <span className="block text-xs text-destructive">
+                    {errorMonto}
+                  </span>
+                ) : null}
               </div>
               <div className="space-y-2">
                 <Label className="text-sm text-muted-foreground">
                   Distancia a Recorrer (km)
+                  <span className="text-destructive" aria-hidden>
+                    {" "}
+                    *
+                  </span>
                 </Label>
                 <div className="relative">
                   <Route className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
@@ -182,9 +229,15 @@ export function TravelRequestGasolineSection({
                     }
                     placeholder="Ej: 150"
                     disabled={soloLectura}
-                    className="h-12 rounded-2xl border-2 pl-12 transition-all duration-500 focus:scale-[1.01] focus:border-accent focus:shadow-lg focus:shadow-accent/20"
+                    aria-invalid={Boolean(errorDistancia)}
+                    className={`h-12 rounded-2xl border-2 pl-12 transition-all duration-500 focus:scale-[1.01] focus:border-accent focus:shadow-lg focus:shadow-accent/20 ${errorDistancia ? "border-destructive/70" : ""}`}
                   />
                 </div>
+                {errorDistancia ? (
+                  <span className="block text-xs text-destructive">
+                    {errorDistancia}
+                  </span>
+                ) : null}
               </div>
             </div>
 
@@ -212,7 +265,7 @@ export function TravelRequestGasolineSection({
 
               <div className="space-y-2">
                 <Label className="text-sm text-muted-foreground">
-                  Comentarios (Opcional)
+                  Comentarios adicionales (opcional)
                 </Label>
                 <Textarea
                   value={trip.comentariosGasolina}
@@ -221,7 +274,7 @@ export function TravelRequestGasolineSection({
                       comentariosGasolina: e.target.value,
                     })
                   }
-                  placeholder="Comentarios adicionales sobre la solicitud"
+                  placeholder="Ej. ruta, casetas o contexto del uso de combustible"
                   disabled={soloLectura}
                   className="min-h-[80px] resize-none rounded-2xl border-2 transition-all duration-500 focus:border-accent focus:shadow-lg focus:shadow-accent/20"
                 />

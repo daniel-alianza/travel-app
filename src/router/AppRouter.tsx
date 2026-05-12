@@ -22,7 +22,11 @@ export function AppRouter() {
       <Route element={<ProtectedRouter />}>
         <Route path="/home" element={<HomePage />} />
         <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/settings/usuarios-permisos" element={<IamPage />} />
+        <Route
+          path="/settings/usuarios-permisos"
+          element={<Navigate to="/settings/users-permissions" replace />}
+        />
+        <Route path="/settings/users-permissions" element={<IamPage />} />
         <Route path="/travel-request" element={<RequestPage />} />
         <Route
           path="/travel-request/mis-solicitudes"

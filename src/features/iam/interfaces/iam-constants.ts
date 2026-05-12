@@ -77,6 +77,11 @@ export const ROLES_IAM: readonly RolIam[] = [
   "Colaborador",
 ]
 
+export const ROLES_ELEGIBLES_JEFE_DIRECTO: readonly RolIam[] = [
+  "Administrador",
+  "Supervisor",
+]
+
 export const VALOR_FILTRO_TODOS = ""
 
 export const OPCIONES_TAMANO_PAGINA = [6, 12, 18] as const

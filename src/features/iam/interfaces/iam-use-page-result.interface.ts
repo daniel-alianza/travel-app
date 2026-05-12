@@ -20,23 +20,24 @@ export type IamUsePageResult = {
   actualizandoContrasenaId: string | null
   filtroArea: string
   setFiltroArea: Dispatch<SetStateAction<string>>
-  filtroDepartamento: string
-  setFiltroDepartamento: Dispatch<SetStateAction<string>>
+  filtroSucursal: string
+  setFiltroSucursal: Dispatch<SetStateAction<string>>
   filtroRol: string
   setFiltroRol: Dispatch<SetStateAction<string>>
   dropdownPillAbierto: string | null
   setDropdownPillAbierto: Dispatch<SetStateAction<string | null>>
   cargarUsuarios: (esRefresco: boolean) => Promise<void>
   opcionesArea: OpcionFiltroIam[]
-  opcionesDepartamento: OpcionFiltroIam[]
+  opcionesSucursal: OpcionFiltroIam[]
   opcionesRol: OpcionFiltroIam[]
   metaLista: ListaPaginadaMeta
   usuariosPagina: UsuarioIam[]
+  candidatosJefeDirecto: UsuarioIam[]
   listaVacia: boolean
   actualizarUsuario: (
     id: string,
     parcial: Partial<
-      Omit<UsuarioIam, "id" | "permisos" | "aceptacionesPoliticas">
+      Omit<UsuarioIam, "id" | "permisos" | "permisosPorDefectoRol" | "aceptacionesPoliticas">
     > & {
       permisos?: string[]
     },

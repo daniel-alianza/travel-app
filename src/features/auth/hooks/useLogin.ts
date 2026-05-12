@@ -22,6 +22,7 @@ interface LoginApiResponse {
     accessToken: string
     expiresInSeconds: number
     role: string
+    permisos?: readonly string[]
   }
   message: string
   error?: unknown
@@ -77,6 +78,7 @@ export function useLoginPage(): UseLoginPageReturn {
         correo: correoNormalizado,
         userId: response.data.data.userId,
         rol: response.data.data.role,
+        permisos: response.data.data.permisos ?? [],
       })
       navigate("/home")
     } catch (error) {

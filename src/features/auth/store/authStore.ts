@@ -9,7 +9,13 @@ type AuthStore = {
   correoSesion: string
   userId: number | null
   rolSesion: string
-  login: (entrada: { correo: string; userId: number; rol: string }) => void
+  permisosSesion: string[]
+  login: (entrada: {
+    correo: string
+    userId: number
+    rol: string
+    permisos?: readonly string[]
+  }) => void
   logout: () => void
 }
 
@@ -21,6 +27,7 @@ export const useAuthStore = create<AuthStore>()(
       correoSesion: "",
       userId: null,
       rolSesion: "",
+      permisosSesion: [],
       login: (entrada) => {
         if (
           entrada === undefined ||
@@ -36,12 +43,17 @@ export const useAuthStore = create<AuthStore>()(
         if (normalizado.length === 0) {
           return
         }
+        const permisos =
+          Array.isArray(entrada.permisos) && entrada.permisos.length > 0
+            ? entrada.permisos.map((p) => String(p).trim()).filter((p) => p.length > 0)
+            : []
         set({
           isAuthenticated: true,
           nombreResponsable: nombreMostradoDesdeCorreo(normalizado),
           correoSesion: normalizado.toLowerCase(),
           userId: entrada.userId,
           rolSesion: entrada.rol.trim(),
+          permisosSesion: permisos,
         })
       },
       logout: () => {
@@ -51,6 +63,7 @@ export const useAuthStore = create<AuthStore>()(
           correoSesion: "",
           userId: null,
           rolSesion: "",
+          permisosSesion: [],
         })
       },
     }),
@@ -63,6 +76,7 @@ export const useAuthStore = create<AuthStore>()(
         correoSesion: state.correoSesion,
         userId: state.userId,
         rolSesion: state.rolSesion,
+        permisosSesion: state.permisosSesion,
       }),
     }
   )

@@ -1,18 +1,24 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import axios from "axios"
 import { useNavigate } from "react-router-dom"
 
 import { showAppToast } from "@/components/app-toast"
 import type { TravelRequestMousePosition } from "@/features/travel-request/interfaces/travel-request-mouse-position.interface"
-import { USUARIOS_SEMILLA } from "@/features/iam/hooks/iam-usuarios-semilla"
 import {
   construirOpcionesFiltroDesdeValores,
-  esperar,
+  esRolElegibleJefeDirecto,
   nombreCompletoDesdePartes,
-  textoNormalizadoParaBusqueda,
+  ordenarPermisosSegunDefinicionesIam,
 } from "@/features/iam/hooks/iam-page-helpers"
 import type { IamUsePageResult } from "@/features/iam/interfaces/iam-use-page-result.interface"
-import { ROLES_IAM, VALOR_FILTRO_TODOS } from "@/features/iam/interfaces/iam-constants"
 import type { OpcionFiltroIam, UsuarioIam } from "@/features/iam/interfaces/iam-domain.interface"
+import {
+  fetchIamFilterCatalog,
+  fetchIamUsers,
+  putIamUserExtraPermissions,
+  putIamUsuarioContrasena,
+  type IamFilterCatalogApi,
+} from "@/features/iam/services/iam-travel-api"
 import {
   construirMetaDesdeTotal,
   limitarPagina,
@@ -25,6 +31,8 @@ export function useIamPage(): IamUsePageResult {
   const [mousePosition, setMousePosition] =
     useState<TravelRequestMousePosition>({ x: 0, y: 0 })
   const [usuarios, setUsuarios] = useState<UsuarioIam[]>([])
+  const [catalogoFiltros, setCatalogoFiltros] =
+    useState<IamFilterCatalogApi | null>(null)
   const [cargandoInicial, setCargandoInicial] = useState(true)
   const [actualizandoLista, setActualizandoLista] = useState(false)
   const [errorCarga, setErrorCarga] = useState<string | null>(null)
@@ -39,11 +47,15 @@ export function useIamPage(): IamUsePageResult {
     string | null
   >(null)
   const [filtroArea, setFiltroArea] = useState("")
-  const [filtroDepartamento, setFiltroDepartamento] = useState("")
+  const [filtroSucursal, setFiltroSucursal] = useState("")
   const [filtroRol, setFiltroRol] = useState("")
   const [dropdownPillAbierto, setDropdownPillAbierto] = useState<string | null>(
     null,
   )
+
+  const textoBusquedaRef = useRef<string>(textoBusqueda)
+  textoBusquedaRef.current = textoBusqueda
+  const omitirPrimeraBusquedaDebounced = useRef<boolean>(true)
 
   useEffect(() => {
     setMounted(true)
@@ -62,21 +74,15 @@ export function useIamPage(): IamUsePageResult {
     }
     setErrorCarga(null)
     try {
-      await esperar(esRefresco ? 650 : 950)
-      setUsuarios(
-        USUARIOS_SEMILLA.map((u) => ({
-          ...u,
-          permisos: [...u.permisos],
-          aceptacionesPoliticas: Object.fromEntries(
-            Object.entries(u.aceptacionesPoliticas).map(([k, v]) => [
-              k,
-              { ...v },
-            ]),
-          ),
-        })),
-      )
+      const [catalogo, lista] = await Promise.all([
+        fetchIamFilterCatalog(),
+        fetchIamUsers({ search: textoBusquedaRef.current.trim() }),
+      ])
+      setCatalogoFiltros(catalogo)
+      setUsuarios(lista)
     } catch {
       setErrorCarga("No se pudieron cargar los usuarios. Intenta de nuevo.")
+      setCatalogoFiltros(null)
       setUsuarios([])
     } finally {
       setCargandoInicial(false)
@@ -88,55 +94,86 @@ export function useIamPage(): IamUsePageResult {
     void cargarUsuarios(false)
   }, [cargarUsuarios])
 
-  const opcionesArea = useMemo(() => {
-    return construirOpcionesFiltroDesdeValores(
-      usuarios.map((u) => u.area),
-      "Todas las áreas",
-    )
-  }, [usuarios])
+  useEffect(() => {
+    if (omitirPrimeraBusquedaDebounced.current) {
+      omitirPrimeraBusquedaDebounced.current = false
+      return
+    }
+    const temporizador = window.setTimeout(() => {
+      void (async (): Promise<void> => {
+        setActualizandoLista(true)
+        try {
+          const lista = await fetchIamUsers({
+            search: textoBusqueda.trim(),
+          })
+          setUsuarios(lista)
+        } catch {
+          showAppToast(
+            "No se pudieron actualizar los resultados de búsqueda.",
+            "error",
+          )
+        } finally {
+          setActualizandoLista(false)
+        }
+      })()
+    }, 400)
+    return () => {
+      window.clearTimeout(temporizador)
+    }
+  }, [textoBusqueda])
 
-  const opcionesDepartamento = useMemo(() => {
+  const opcionesArea = useMemo(() => {
+    const valores =
+      catalogoFiltros !== null && catalogoFiltros.areas.length > 0
+        ? catalogoFiltros.areas
+        : usuarios.map((u) => u.area)
+    return construirOpcionesFiltroDesdeValores(valores, "Todas las áreas")
+  }, [catalogoFiltros, usuarios])
+
+  const opcionesSucursal = useMemo(() => {
+    const valores =
+      catalogoFiltros !== null && catalogoFiltros.sucursales.length > 0
+        ? catalogoFiltros.sucursales
+        : usuarios.map((u) => u.sucursal)
     return construirOpcionesFiltroDesdeValores(
-      usuarios.map((u) => u.departamento),
-      "Todos los departamentos",
+      valores,
+      "Todas las sucursales",
     )
-  }, [usuarios])
+  }, [catalogoFiltros, usuarios])
 
   const opcionesRol: OpcionFiltroIam[] = useMemo(() => {
-    return [
-      { value: VALOR_FILTRO_TODOS, label: "Todos los roles" },
-      ...ROLES_IAM.map((r) => ({ value: r, label: r })),
-    ]
-  }, [])
+    const valores =
+      catalogoFiltros !== null && catalogoFiltros.rolesEtiqueta.length > 0
+        ? catalogoFiltros.rolesEtiqueta
+        : usuarios.map((u) => u.rol)
+    return construirOpcionesFiltroDesdeValores(valores, "Todos los roles")
+  }, [catalogoFiltros, usuarios])
+
+  const candidatosJefeDirecto = useMemo(() => {
+    return [...usuarios]
+      .filter((u) => esRolElegibleJefeDirecto(u.rol))
+      .sort((a, b) =>
+        nombreCompletoDesdePartes(a).localeCompare(
+          nombreCompletoDesdePartes(b),
+          "es",
+          { sensitivity: "base" },
+        ),
+      )
+  }, [usuarios])
 
   const usuariosFiltrados = useMemo(() => {
-    const q = textoNormalizadoParaBusqueda(textoBusqueda.trim())
     let lista = usuarios
-    if (q.length > 0) {
-      lista = lista.filter((u) => {
-        const blob = textoNormalizadoParaBusqueda(
-          `${nombreCompletoDesdePartes(u)} ${u.jefeDirecto} ${u.correoElectronico} ${u.area} ${u.departamento} ${u.rol} ${u.telefono}`,
-        )
-        return blob.includes(q)
-      })
-    }
     if (filtroArea.length > 0) {
       lista = lista.filter((u) => u.area === filtroArea)
     }
-    if (filtroDepartamento.length > 0) {
-      lista = lista.filter((u) => u.departamento === filtroDepartamento)
+    if (filtroSucursal.length > 0) {
+      lista = lista.filter((u) => u.sucursal === filtroSucursal)
     }
     if (filtroRol.length > 0) {
       lista = lista.filter((u) => u.rol === filtroRol)
     }
     return lista
-  }, [
-    usuarios,
-    textoBusqueda,
-    filtroArea,
-    filtroDepartamento,
-    filtroRol,
-  ])
+  }, [usuarios, filtroArea, filtroSucursal, filtroRol])
 
   const metaLista = useMemo(() => {
     return construirMetaDesdeTotal(
@@ -164,13 +201,15 @@ export function useIamPage(): IamUsePageResult {
     textoBusqueda,
     tamanoPagina,
     filtroArea,
-    filtroDepartamento,
+    filtroSucursal,
     filtroRol,
   ])
 
   function actualizarUsuario(
     id: string,
-    parcial: Partial<Omit<UsuarioIam, "id" | "permisos" | "aceptacionesPoliticas">> & {
+    parcial: Partial<
+      Omit<UsuarioIam, "id" | "permisos" | "permisosPorDefectoRol" | "aceptacionesPoliticas">
+    > & {
       permisos?: string[]
     },
   ): void {
@@ -195,13 +234,22 @@ export function useIamPage(): IamUsePageResult {
         if (u.id !== idUsuario) {
           return u
         }
+        if (u.permisosPorDefectoRol.includes(idPermiso)) {
+          return u
+        }
         const set = new Set(u.permisos)
         if (marcado) {
           set.add(idPermiso)
         } else {
           set.delete(idPermiso)
         }
-        return { ...u, permisos: [...set] }
+        for (const p of u.permisosPorDefectoRol) {
+          set.add(p)
+        }
+        return {
+          ...u,
+          permisos: ordenarPermisosSegunDefinicionesIam(set),
+        }
       }),
     )
   }
@@ -240,12 +288,24 @@ export function useIamPage(): IamUsePageResult {
     }
     setActualizandoContrasenaId(usuario.id)
     try {
-      await esperar(520)
+      await putIamUsuarioContrasena(usuario.id, campos.nueva)
       showAppToast(
         `Contraseña actualizada para ${nombreCompletoDesdePartes(usuario)}.`,
         "success",
       )
       establecerCamposContrasena(usuario.id, { nueva: "", confirmar: "" })
+    } catch (error) {
+      let mensaje = "No se pudo actualizar la contraseña. Intenta de nuevo."
+      if (axios.isAxiosError(error)) {
+        const cuerpo = error.response?.data as { message?: string } | undefined
+        if (
+          typeof cuerpo?.message === "string" &&
+          cuerpo.message.trim().length > 0
+        ) {
+          mensaje = cuerpo.message.trim()
+        }
+      }
+      showAppToast(mensaje, "error")
     } finally {
       setActualizandoContrasenaId(null)
     }
@@ -254,11 +314,26 @@ export function useIamPage(): IamUsePageResult {
   async function guardarUsuario(usuario: UsuarioIam): Promise<void> {
     setGuardandoId(usuario.id)
     try {
-      await esperar(480)
+      const extras = usuario.permisos.filter(
+        (p) => !usuario.permisosPorDefectoRol.includes(p),
+      )
+      await putIamUserExtraPermissions(usuario.id, extras)
       showAppToast(
-        `Cambios guardados: ${nombreCompletoDesdePartes(usuario)}.`,
+        `Permisos guardados: ${nombreCompletoDesdePartes(usuario)}.`,
         "success",
       )
+    } catch (error) {
+      let mensaje = "No se pudieron guardar los permisos. Intenta de nuevo."
+      if (axios.isAxiosError(error)) {
+        const cuerpo = error.response?.data as { message?: string | string[] } | undefined
+        const raw = cuerpo?.message
+        const texto =
+          Array.isArray(raw) ? raw.join(" ") : typeof raw === "string" ? raw : ""
+        if (texto.trim().length > 0) {
+          mensaje = texto.trim()
+        }
+      }
+      showAppToast(mensaje, "error")
     } finally {
       setGuardandoId(null)
     }
@@ -287,18 +362,19 @@ export function useIamPage(): IamUsePageResult {
     actualizandoContrasenaId,
     filtroArea,
     setFiltroArea,
-    filtroDepartamento,
-    setFiltroDepartamento,
+    filtroSucursal,
+    setFiltroSucursal,
     filtroRol,
     setFiltroRol,
     dropdownPillAbierto,
     setDropdownPillAbierto,
     cargarUsuarios,
     opcionesArea,
-    opcionesDepartamento,
+    opcionesSucursal,
     opcionesRol,
     metaLista,
     usuariosPagina,
+    candidatosJefeDirecto,
     listaVacia,
     actualizarUsuario,
     alternarPermiso,

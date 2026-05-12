@@ -10,6 +10,7 @@ import { IamUsersErrorState } from "@/features/iam/components/IamUsersErrorState
 import { IamUsersLoadingSkeleton } from "@/features/iam/components/IamUsersLoadingSkeleton"
 import { IamUsuarioCard } from "@/features/iam/components/IamUsuarioCard"
 import { ROL_SUPER_ADMINISTRADOR } from "@/features/auth/constants/auth-roles"
+import { PERMISO_IAM_USUARIOS } from "@/features/auth/constants/auth-permissions"
 import { useAuthStore } from "@/features/auth/store/authStore"
 import { useIamPage } from "@/features/iam/hooks/useIamPage"
 import { OPCIONES_TAMANO_PAGINA } from "@/features/iam/interfaces/iam-constants"
@@ -18,8 +19,12 @@ import { TravelRequestBackground } from "@/features/travel-request/components/Tr
 export function IamPage() {
   const p = useIamPage()
   const rolSesion = useAuthStore((state) => state.rolSesion ?? "")
+  const permisosSesion = useAuthStore((state) => state.permisosSesion ?? [])
+  const puedeAccederIam =
+    rolSesion === ROL_SUPER_ADMINISTRADOR ||
+    permisosSesion.includes(PERMISO_IAM_USUARIOS)
 
-  if (rolSesion !== ROL_SUPER_ADMINISTRADOR) {
+  if (!puedeAccederIam) {
     return <Navigate to="/home" replace />
   }
 
@@ -47,9 +52,9 @@ export function IamPage() {
             filtroArea={p.filtroArea}
             setFiltroArea={p.setFiltroArea}
             opcionesArea={p.opcionesArea}
-            filtroDepartamento={p.filtroDepartamento}
-            setFiltroDepartamento={p.setFiltroDepartamento}
-            opcionesDepartamento={p.opcionesDepartamento}
+            filtroSucursal={p.filtroSucursal}
+            setFiltroSucursal={p.setFiltroSucursal}
+            opcionesSucursal={p.opcionesSucursal}
             filtroRol={p.filtroRol}
             setFiltroRol={p.setFiltroRol}
             opcionesRol={p.opcionesRol}
@@ -75,19 +80,22 @@ export function IamPage() {
               onLimpiarFiltros={() => {
                 p.setTextoBusqueda("")
                 p.setFiltroArea("")
-                p.setFiltroDepartamento("")
+                p.setFiltroSucursal("")
                 p.setFiltroRol("")
               }}
             />
           ) : null}
 
           {!p.cargandoInicial && p.errorCarga === null && !p.listaVacia ? (
-            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="relative z-0 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
               {p.usuariosPagina.map((usuario, index) => (
                 <IamUsuarioCard
                   key={usuario.id}
                   usuario={usuario}
                   index={index}
+                  candidatosJefeDirecto={p.candidatosJefeDirecto}
+                  dropdownPillAbierto={p.dropdownPillAbierto}
+                  setDropdownPillAbierto={p.setDropdownPillAbierto}
                   guardandoId={p.guardandoId}
                   actualizandoContrasenaId={p.actualizandoContrasenaId}
                   actualizandoLista={p.actualizandoLista}

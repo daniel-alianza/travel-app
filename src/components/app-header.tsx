@@ -16,6 +16,7 @@ import { DropdownMenu } from "radix-ui"
 import { Button } from "@/components/ui/button"
 import { GRUPO_FG_LOGO_URL } from "@/components/app-brand"
 import { ROL_SUPER_ADMINISTRADOR } from "@/features/auth/constants/auth-roles"
+import { PERMISO_IAM_USUARIOS } from "@/features/auth/constants/auth-permissions"
 import { useAuthStore } from "@/features/auth/store/authStore"
 import { useDaysUntilMonthEndQuery } from "@/hooks/useDaysUntilMonthEndQuery"
 
@@ -41,7 +42,10 @@ export function AppHeader({
   const { pathname } = useLocation()
   const logout = useAuthStore((state) => state.logout)
   const rolSesion = useAuthStore((state) => state.rolSesion ?? "")
-  const puedeVerConfiguracion = rolSesion === ROL_SUPER_ADMINISTRADOR
+  const permisosSesion = useAuthStore((state) => state.permisosSesion ?? [])
+  const puedeVerConfiguracion =
+    rolSesion === ROL_SUPER_ADMINISTRADOR ||
+    permisosSesion.includes(PERMISO_IAM_USUARIOS)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [mobileConfigSubmenuOpen, setMobileConfigSubmenuOpen] =
     useState<boolean>(false)
@@ -171,7 +175,7 @@ export function AppHeader({
                           <DropdownMenu.Item
                             className="group/item relative flex cursor-pointer select-none items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground"
                             onSelect={() => {
-                              navigate("/settings/usuarios-permisos")
+                              navigate("/settings/users-permissions")
                             }}
                           >
                             <Users className="h-4 w-4 shrink-0 text-primary transition-transform duration-200 group-hover/item:scale-110" />
@@ -256,7 +260,7 @@ export function AppHeader({
                       type="button"
                       variant="ghost"
                       onClick={() => {
-                        navigate("/settings/usuarios-permisos")
+                        navigate("/settings/users-permissions")
                         setMobileMenuOpen(false)
                         setMobileConfigSubmenuOpen(false)
                       }}

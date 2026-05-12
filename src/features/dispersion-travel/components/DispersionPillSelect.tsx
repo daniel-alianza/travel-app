@@ -122,7 +122,7 @@ export function DispersionPillSelect({
                   setDropdownOpen(null)
                 }}
                 className={cn(
-                  "flex w-full items-center justify-center px-6 py-3.5 text-sm transition-colors duration-200",
+                  "flex w-full cursor-pointer items-center justify-center px-6 py-3.5 text-sm transition-colors duration-200",
                   "text-foreground hover:bg-muted/60",
                   seleccionada && "bg-primary/8 font-medium text-primary"
                 )}

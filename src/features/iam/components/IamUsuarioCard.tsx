@@ -1,3 +1,4 @@
+import { useMemo, type Dispatch, type SetStateAction } from "react"
 import {
   AlertCircle,
   BookOpen,
@@ -20,18 +21,55 @@ import {
   POLITICAS_CORPORATIVAS,
   ROLES_IAM,
 } from "@/features/iam/interfaces/iam-constants"
-import type { UsuarioIam } from "@/features/iam/interfaces/iam-domain.interface"
+import type {
+  OpcionFiltroIam,
+  UsuarioIam,
+} from "@/features/iam/interfaces/iam-domain.interface"
+import { DispersionPillSelect } from "@/features/dispersion-travel/components/DispersionPillSelect"
 import {
   esRolIam,
+  estadoLineaCoincidenciaContrasena,
   formatearFechaPoliticas,
   inicialesDesdeUsuario,
   nombreCompletoDesdePartes,
+  resolverValorSelectJefeDirecto,
+  type EstadoLineaCoincidenciaContrasenaIam,
 } from "@/features/iam/hooks/iam-page-helpers"
 import { cn } from "@/lib/utils"
+
+function mensajeCoincidenciaContrasenaIam(
+  estado: EstadoLineaCoincidenciaContrasenaIam,
+): string | null {
+  if (estado === "verde") {
+    return "Las contraseñas coinciden."
+  }
+  if (estado === "rojo") {
+    return "Las contraseñas no coinciden."
+  }
+  return null
+}
+
+function clasesBarraCoincidenciaContrasena(
+  estado: EstadoLineaCoincidenciaContrasenaIam,
+): string {
+  switch (estado) {
+    case "neutro":
+      return "bg-muted/70"
+    case "amarillo":
+      return "bg-amber-400 dark:bg-amber-500"
+    case "rojo":
+      return "bg-red-500 dark:bg-red-500"
+    case "verde":
+      return "bg-emerald-500 dark:bg-emerald-400"
+    default:
+      return "bg-muted/70"
+  }
+}
 
 export type IamUsuarioCardProps = {
   usuario: UsuarioIam
   index: number
+  candidatosJefeDirecto: UsuarioIam[]
   guardandoId: string | null
   actualizandoContrasenaId: string | null
   actualizandoLista: boolean
@@ -45,7 +83,7 @@ export type IamUsuarioCardProps = {
   actualizarUsuario: (
     id: string,
     parcial: Partial<
-      Omit<UsuarioIam, "id" | "permisos" | "aceptacionesPoliticas">
+      Omit<UsuarioIam, "id" | "permisos" | "permisosPorDefectoRol" | "aceptacionesPoliticas">
     > & {
       permisos?: string[]
     },
@@ -57,11 +95,14 @@ export type IamUsuarioCardProps = {
   ) => void
   aplicarActualizacionContrasena: (usuario: UsuarioIam) => Promise<void>
   guardarUsuario: (usuario: UsuarioIam) => Promise<void>
+  dropdownPillAbierto: string | null
+  setDropdownPillAbierto: Dispatch<SetStateAction<string | null>>
 }
 
 export function IamUsuarioCard({
   usuario,
   index,
+  candidatosJefeDirecto,
   guardandoId,
   actualizandoContrasenaId,
   actualizandoLista,
@@ -71,7 +112,35 @@ export function IamUsuarioCard({
   alternarPermiso,
   aplicarActualizacionContrasena,
   guardarUsuario,
+  dropdownPillAbierto,
+  setDropdownPillAbierto,
 }: IamUsuarioCardProps) {
+  const candidatosJefeSinPropio = useMemo(
+    () => candidatosJefeDirecto.filter((c) => c.id !== usuario.id),
+    [candidatosJefeDirecto, usuario.id],
+  )
+  const valorSelectJefeDirecto = resolverValorSelectJefeDirecto(
+    usuario.jefeDirecto,
+    candidatosJefeSinPropio,
+  )
+  const opcionesJefePill: OpcionFiltroIam[] = useMemo(() => {
+    return [
+      { value: "", label: "Sin jefe directo asignado" },
+      ...candidatosJefeSinPropio.map((c) => ({
+        value: c.id,
+        label: nombreCompletoDesdePartes(c),
+      })),
+    ]
+  }, [candidatosJefeSinPropio])
+
+  const camposContrasena = obtenerCamposContrasena(usuario.id)
+  const estadoLineaContrasena = estadoLineaCoincidenciaContrasena(
+    camposContrasena.nueva,
+    camposContrasena.confirmar,
+  )
+  const textoCoincidenciaContrasena =
+    mensajeCoincidenciaContrasenaIam(estadoLineaContrasena)
+
   return (
     <article
       style={{ animationDelay: `${Math.min(index, 8) * 45}ms` }}
@@ -178,56 +247,41 @@ export function IamUsuarioCard({
         </div>
         <div className="grid gap-1.5">
           <Label
-            htmlFor={`iam-jefe-${usuario.id}`}
+            id={`iam-jefe-label-${usuario.id}`}
             className="flex items-center gap-2 text-xs"
           >
             <UserCog className="size-3.5 text-muted-foreground" aria-hidden />
             Jefe directo
           </Label>
-          <Input
-            id={`iam-jefe-${usuario.id}`}
-            value={usuario.jefeDirecto}
-            onChange={(e) => {
-              actualizarUsuario(usuario.id, {
-                jefeDirecto: e.target.value,
-              })
+          <DispersionPillSelect
+            instanceId={`iam-jefe-${usuario.id}`}
+            value={valorSelectJefeDirecto}
+            options={opcionesJefePill}
+            onChange={(v) => {
+              actualizarUsuario(usuario.id, { jefeDirecto: v })
             }}
-            placeholder="Nombre del responsable inmediato"
-            className="h-10 cursor-text rounded-xl border-border/70 bg-background/80 shadow-sm"
+            placeholder="Sin jefe directo asignado"
+            disabled={actualizandoLista}
+            dropdownOpen={dropdownPillAbierto}
+            setDropdownOpen={setDropdownPillAbierto}
+            ariaLabel={`Jefe directo de ${nombreCompletoDesdePartes(usuario)}`}
           />
         </div>
-        <div className="grid gap-1.5 sm:grid-cols-2 sm:gap-3">
-          <div className="grid gap-1.5">
-            <Label htmlFor={`iam-correo-${usuario.id}`} className="text-xs">
-              Correo
-            </Label>
-            <Input
-              id={`iam-correo-${usuario.id}`}
-              type="email"
-              value={usuario.correoElectronico}
-              onChange={(e) => {
-                actualizarUsuario(usuario.id, {
-                  correoElectronico: e.target.value,
-                })
-              }}
-              className="h-10 cursor-text rounded-xl border-border/70 bg-background/80 text-sm shadow-sm"
-            />
-          </div>
-          <div className="grid gap-1.5">
-            <Label htmlFor={`iam-tel-${usuario.id}`} className="text-xs">
-              Teléfono
-            </Label>
-            <Input
-              id={`iam-tel-${usuario.id}`}
-              value={usuario.telefono}
-              onChange={(e) => {
-                actualizarUsuario(usuario.id, {
-                  telefono: e.target.value,
-                })
-              }}
-              className="h-10 cursor-text rounded-xl border-border/70 bg-background/80 text-sm shadow-sm"
-            />
-          </div>
+        <div className="grid gap-1.5">
+          <Label htmlFor={`iam-correo-${usuario.id}`} className="text-xs">
+            Correo
+          </Label>
+          <Input
+            id={`iam-correo-${usuario.id}`}
+            type="email"
+            value={usuario.correoElectronico}
+            onChange={(e) => {
+              actualizarUsuario(usuario.id, {
+                correoElectronico: e.target.value,
+              })
+            }}
+            className="h-10 cursor-text rounded-xl border-border/70 bg-background/80 text-sm shadow-sm"
+          />
         </div>
         <div className="grid gap-1.5 sm:grid-cols-2 sm:gap-3">
           <div className="grid gap-1.5">
@@ -244,15 +298,15 @@ export function IamUsuarioCard({
             />
           </div>
           <div className="grid gap-1.5">
-            <Label htmlFor={`iam-depto-${usuario.id}`} className="text-xs">
-              Departamento
+            <Label htmlFor={`iam-sucursal-${usuario.id}`} className="text-xs">
+              Sucursal
             </Label>
             <Input
-              id={`iam-depto-${usuario.id}`}
-              value={usuario.departamento}
+              id={`iam-sucursal-${usuario.id}`}
+              value={usuario.sucursal}
               onChange={(e) => {
                 actualizarUsuario(usuario.id, {
-                  departamento: e.target.value,
+                  sucursal: e.target.value,
                 })
               }}
               className="h-10 cursor-text rounded-xl border-border/70 bg-background/80 text-sm shadow-sm"
@@ -309,13 +363,21 @@ export function IamUsuarioCard({
               id={`iam-pw-nueva-${usuario.id}`}
               type="password"
               autoComplete="new-password"
-              value={obtenerCamposContrasena(usuario.id).nueva}
+              value={camposContrasena.nueva}
               onChange={(e) => {
                 establecerCamposContrasena(usuario.id, {
                   nueva: e.target.value,
                 })
               }}
               className="h-9 cursor-text rounded-lg border-border/70 bg-background/80 text-sm"
+            />
+            <div
+              id={`iam-pw-linea-nueva-${usuario.id}`}
+              className={cn(
+                "mt-1 h-1 w-full rounded-full transition-colors duration-300",
+                clasesBarraCoincidenciaContrasena(estadoLineaContrasena),
+              )}
+              role="presentation"
             />
           </div>
           <div className="grid gap-1">
@@ -329,7 +391,7 @@ export function IamUsuarioCard({
               id={`iam-pw-conf-${usuario.id}`}
               type="password"
               autoComplete="new-password"
-              value={obtenerCamposContrasena(usuario.id).confirmar}
+              value={camposContrasena.confirmar}
               onChange={(e) => {
                 establecerCamposContrasena(usuario.id, {
                   confirmar: e.target.value,
@@ -337,8 +399,28 @@ export function IamUsuarioCard({
               }}
               className="h-9 cursor-text rounded-lg border-border/70 bg-background/80 text-sm"
             />
+            <div
+              id={`iam-pw-linea-conf-${usuario.id}`}
+              className={cn(
+                "mt-1 h-1 w-full rounded-full transition-colors duration-300",
+                clasesBarraCoincidenciaContrasena(estadoLineaContrasena),
+              )}
+              role="presentation"
+            />
           </div>
         </div>
+        {textoCoincidenciaContrasena !== null ? (
+          <p
+            className={cn(
+              "mt-2 w-full text-center text-[11px] font-medium",
+              estadoLineaContrasena === "verde" &&
+                "text-emerald-600 dark:text-emerald-400",
+              estadoLineaContrasena === "rojo" && "text-destructive",
+            )}
+          >
+            {textoCoincidenciaContrasena}
+          </p>
+        ) : null}
         <Button
           type="button"
           variant="secondary"
@@ -346,7 +428,7 @@ export function IamUsuarioCard({
           disabled={
             actualizandoContrasenaId === usuario.id ||
             actualizandoLista ||
-            obtenerCamposContrasena(usuario.id).nueva.length === 0
+            estadoLineaContrasena !== "verde"
           }
           className="mt-3 w-full cursor-pointer rounded-xl shadow-sm transition-all hover:scale-[1.01] sm:w-auto"
           onClick={() => {
@@ -455,23 +537,27 @@ export function IamUsuarioCard({
         <div className="grid max-h-48 gap-2 overflow-y-auto pr-1 [scrollbar-width:thin]">
           {DEFINICIONES_PERMISOS.map((def) => {
             const marcado = usuario.permisos.includes(def.id)
+            const heredaRol = usuario.permisosPorDefectoRol.includes(def.id)
             return (
               <label
                 key={def.id}
                 htmlFor={`perm-${usuario.id}-${def.id}`}
                 className={cn(
-                  "flex cursor-pointer items-start gap-2 rounded-lg border border-transparent px-2 py-1.5 transition-all duration-200",
-                  "hover:border-primary/20 hover:bg-primary/5 hover:shadow-sm",
+                  "flex items-start gap-2 rounded-lg border border-transparent px-2 py-1.5 transition-all duration-200",
+                  heredaRol
+                    ? "cursor-default opacity-95"
+                    : "cursor-pointer hover:border-primary/20 hover:bg-primary/5 hover:shadow-sm",
                   marcado && "border-primary/15 bg-primary/5",
                 )}
               >
                 <Checkbox
                   id={`perm-${usuario.id}-${def.id}`}
                   checked={marcado}
+                  disabled={heredaRol}
                   onChange={(e) => {
                     alternarPermiso(usuario.id, def.id, e.target.checked)
                   }}
-                  className="mt-0.5 cursor-pointer"
+                  className="mt-0.5 cursor-pointer disabled:cursor-not-allowed"
                 />
                 <span className="min-w-0">
                   <span className="block text-xs font-medium text-foreground">

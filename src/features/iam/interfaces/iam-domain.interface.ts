@@ -28,12 +28,13 @@ export type UsuarioIam = {
   apellidoMaterno: string
   jefeDirecto: string
   correoElectronico: string
-  telefono: string
   area: string
-  departamento: string
+  sucursal: string
   rol: RolIam
   activo: boolean
   permisos: string[]
+  /** Códigos que vienen del rol en BD; los checkboxes quedan marcados y bloqueados. */
+  permisosPorDefectoRol: string[]
   aceptacionesPoliticas: Record<string, AceptacionPoliticaRegistro>
 }
 

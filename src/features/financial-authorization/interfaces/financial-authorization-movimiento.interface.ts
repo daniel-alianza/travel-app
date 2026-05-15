@@ -11,4 +11,7 @@ export interface FinancialAuthorizationMovimientoComprobado {
   /** Mock: envío a SAP / facturación ya registrado para este movimiento. */
   facturadoSapMock?: boolean
   sapDocEntryMock?: string
+  tripMovementProofId?: number
+  proofStatus?: "submitted" | "approved" | "rejected"
+  proofType?: "ticket" | "invoice"
 }

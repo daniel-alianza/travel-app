@@ -10,7 +10,6 @@ import { showAppToast } from "@/components/app-toast"
 import {
   esperar,
   filtrosTienenValor,
-  formatearMonto,
   indiceSolicitudEnLista,
   montoTotalPorIdsMovimientos,
   movimientoElegibleEnvioSapMock,
@@ -24,6 +23,7 @@ import {
   fetchFinancialAuthorizationFilterCatalog,
   fetchFinancialAuthorizationRequests,
   fetchViaticDistributionRules,
+  postTripMovementProofAccountingApprove,
   type ViaticDistributionRuleOption,
 } from "@/features/financial-authorization/services/financial-authorization-api"
 import type { FiltrosAutorizacionFinanciera } from "@/features/financial-authorization/interfaces/financial-authorization-filtros.interface"
@@ -374,43 +374,48 @@ export function useFinancialAuthorizationPage(): FinancialAuthorizationPageContr
       showAppToast("Selecciona al menos un movimiento para enviar.", "info")
       return
     }
-    const idSolicitud = solicitudEnRevision.id
-    const idsSet = new Set(idsMovimientosParaEnvio)
-    setSolicitudes((prev) =>
-      prev.map((s) => {
-        if (s.id !== idSolicitud) {
-          return s
-        }
-        return {
+    showAppToast(
+      "Para registrar en SAP abre cada factura en el detalle, elige categoría e indicador de impuesto y pulsa Aprobar.",
+      "info"
+    )
+  }
+
+  const aprobarMovimientoFacturaSap = useCallback(
+    async (input: {
+      movimientoId: string
+      tripMovementProofId: number
+      accountCode: string
+      taxCode: string
+      reviewerNotes?: string
+    }): Promise<{ docEntry: number }> => {
+      const resultado = await postTripMovementProofAccountingApprove({
+        tripMovementProofId: input.tripMovementProofId,
+        accountCode: input.accountCode,
+        taxCode: input.taxCode,
+        reviewerNotes: input.reviewerNotes,
+      })
+      setSolicitudes((prev) =>
+        prev.map((s) => ({
           ...s,
           viajes: s.viajes.map((v) => ({
             ...v,
-            movimientosComprobados: v.movimientosComprobados.map((m) => {
-              if (!idsSet.has(m.id) || !movimientoElegibleEnvioSapMock(m)) {
-                return m
-              }
-              const docEntry = 8800000 + Math.floor(Math.random() * 99999)
-              return {
-                ...m,
-                facturadoSapMock: true,
-                sapDocEntryMock: String(docEntry),
-              }
-            }),
+            movimientosComprobados: v.movimientosComprobados.map((m) =>
+              m.id === input.movimientoId
+                ? {
+                    ...m,
+                    facturadoSapMock: true,
+                    sapDocEntryMock: String(resultado.sap.docEntry),
+                    proofStatus: "approved" as const,
+                  }
+                : m
+            ),
           })),
-        }
-      })
-    )
-    const total = montoTotalPorIdsMovimientos(
-      solicitudEnRevision,
-      idsMovimientosParaEnvio
-    )
-    const n = idsMovimientosParaEnvio.length
-    showAppToast(
-      `SAP: ${n} movimiento${n === 1 ? "" : "s"} marcado${n === 1 ? "" : "s"} como facturado. Total ${formatearMonto(total)}.`,
-      "success"
-    )
-    setIdsMovimientosParaEnvio([])
-  }
+        }))
+      )
+      return { docEntry: resultado.sap.docEntry }
+    },
+    []
+  )
 
   function cerrarContabilidadMock(): void {
     if (solicitudEnRevision === null) {
@@ -491,5 +496,6 @@ export function useFinancialAuthorizationPage(): FinancialAuthorizationPageContr
     limpiarSeleccionEnvio,
     enviarAprobacionMovimientosConjunta,
     cerrarContabilidadMock,
+    aprobarMovimientoFacturaSap,
   }
 }

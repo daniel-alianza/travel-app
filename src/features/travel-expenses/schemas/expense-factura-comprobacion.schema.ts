@@ -5,9 +5,10 @@ export const expenseFacturaComprobacionSchema = z.object({
   comentario: z
     .string()
     .trim()
+    .min(1, "Escribe un comentario describiendo el gasto.")
     .min(
       10,
-      "Obligatorio: indica de qué es el gasto (alimentos, hospedaje, servicios, etc.)."
+      "El comentario debe tener al menos 10 caracteres y ser concreto. Ejemplos: «desayuno con el cliente», «hospedaje una noche en Monterrey», «gasolina ruta CDMX–Querétaro».",
     ),
 })
 

@@ -7,6 +7,8 @@ export interface FinancialAuthorizationSolicitudPendienteRevision {
   solicitante: string
   correoElectronico: string
   companyId: number
+  /** CompanyId de la solicitud (empresa del viaje); catálogos SAP de gasto usan `expenseCatalogCompanyId` si difiere. */
+  expenseCatalogCompanyId: number
   empresa: string
   area: string
   fechaCierreComprobacion: string

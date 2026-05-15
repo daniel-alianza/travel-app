@@ -106,6 +106,7 @@ type DispersedTravelChecksApiResponse = ApiEnvelope<{
     tarjetaCorporativaEnmascarada: string
     dispersadoEn: string | null
     montoDispersado: number | null
+    expenseCatalogCompanyId: number
     usuario: {
       id: number
       nombre: string
@@ -136,11 +137,14 @@ type DispersedTravelChecksApiResponse = ApiEnvelope<{
       movimientosComprobados: number
       totalComprobadoMovimientos: number
       movimientosComprobadosDetalle: Array<{
+        tripMovementProofId: number
         movementSequence: number
         movementDate: string
         movementAmount: number
         movementMemo: string | null
         movementComment: string | null
+        proofStatus: "submitted" | "approved" | "rejected"
+        proofType: "ticket" | "invoice"
       }>
     }>
   }>
@@ -216,6 +220,7 @@ export async function fetchFinancialAuthorizationRequests(): Promise<
     solicitante: solicitud.nombreEmpleado,
     correoElectronico: solicitud.usuario.correo,
     companyId: solicitud.compania.id,
+    expenseCatalogCompanyId: solicitud.expenseCatalogCompanyId,
     empresa: solicitud.compania.nombre,
     area: solicitud.area.nombre,
     fechaCierreComprobacion: fechaIsoSoloDia(solicitud.dispersadoEn),
@@ -239,6 +244,10 @@ export async function fetchFinancialAuthorizationRequests(): Promise<
           monto: movimiento.movementAmount,
           comentarioAlComprobar: movimiento.movementComment ?? undefined,
           comprobacionUsuarioHecha: true,
+          tripMovementProofId: movimiento.tripMovementProofId,
+          proofStatus: movimiento.proofStatus,
+          proofType: movimiento.proofType,
+          facturadoSapMock: movimiento.proofStatus === "approved",
         })
       ),
     })),
@@ -269,12 +278,57 @@ export async function fetchCompanyExpenseCatalogs(
   return {
     companyId: data.companyId,
     vatIndicators: data.vatIndicators.map((item) => ({
-      value: String(item.id),
+      value: item.code,
       label: `${item.code} - ${item.name}`,
     })),
     viaticCategories: data.viaticCategories.map((item) => ({
-      value: String(item.id),
+      value: item.code,
       label: `${item.code} - ${item.name}`,
     })),
   }
+}
+
+export interface ApproveTripMovementProofSapPayload {
+  readonly docEntry: number
+  readonly docNum?: number
+  readonly potentialDiscountRisk: boolean
+  readonly docTotalDiff: number
+  readonly sapSessionCompanyId: number
+}
+
+type ApproveTripMovementProofApiEnvelope = ApiEnvelope<{
+  tripMovementProofId: number
+  status: "approved"
+  sap: ApproveTripMovementProofSapPayload
+}>
+
+export async function postTripMovementProofAccountingApprove(input: {
+  readonly tripMovementProofId: number
+  readonly accountCode: string
+  readonly taxCode: string
+  readonly costingCode?: string
+  readonly reviewerNotes?: string
+  readonly sapCardCode?: string
+}): Promise<{
+  tripMovementProofId: number
+  status: "approved"
+  sap: ApproveTripMovementProofSapPayload
+}> {
+  const response = await travelApi.post<ApproveTripMovementProofApiEnvelope>(
+    `/accounting-invoice/trip-movement-proofs/${String(input.tripMovementProofId)}/approve`,
+    {
+      accountCode: input.accountCode,
+      taxCode: input.taxCode,
+      ...(input.costingCode !== undefined && input.costingCode.length > 0
+        ? { costingCode: input.costingCode }
+        : {}),
+      ...(input.reviewerNotes !== undefined && input.reviewerNotes.length > 0
+        ? { reviewerNotes: input.reviewerNotes }
+        : {}),
+      ...(input.sapCardCode !== undefined && input.sapCardCode.length > 0
+        ? { sapCardCode: input.sapCardCode }
+        : {}),
+    }
+  )
+  return response.data.data
 }

@@ -10,6 +10,10 @@ import {
   MessageSquareQuote,
   XCircle,
 } from "lucide-react"
+import {
+  logTravelAxiosError,
+  userMessageFromTravelAxiosError,
+} from "@/lib/travel-api-axios-error"
 import { useEffect, useMemo, useState } from "react"
 
 import { showAppToast } from "@/components/app-toast"
@@ -103,6 +107,7 @@ export function FinancialAuthorizationReview(props: {
     limpiarSeleccionEnvio,
     enviarAprobacionMovimientosConjunta,
     cerrarContabilidadMock,
+    aprobarMovimientoFacturaSap,
   } = props.page
 
   if (solicitudEnRevision === null) {
@@ -113,7 +118,10 @@ export function FinancialAuthorizationReview(props: {
     movimientosConComprobacionUsuarioColaborador(solicitudEnRevision)
   const todosFacturadosSapMock =
     movsColaboradorRevision.length > 0 &&
-    movsColaboradorRevision.every((m) => m.facturadoSapMock === true)
+    movsColaboradorRevision.every(
+      (m) =>
+        m.facturadoSapMock === true || m.proofStatus === "approved"
+    )
   const movimientoSeleccionadoHallado = useMemo(() => {
     if (movimientoSeleccionadoId === null || solicitudEnRevision === null) {
       return null
@@ -147,6 +155,7 @@ export function FinancialAuthorizationReview(props: {
     useState(false)
   const [forzarVerDetalleConjuntoMock, setForzarVerDetalleConjuntoMock] =
     useState(false)
+  const [aprobacionSapEnCurso, setAprobacionSapEnCurso] = useState(false)
   const modoEnvioConjunto = idsMovimientosParaEnvio.length > 1
   const ocultarDetallesMovimiento =
     detallesMovimientoColapsados ||
@@ -156,7 +165,9 @@ export function FinancialAuthorizationReview(props: {
     setCatalogsError(null)
     setCategoriaOptions([])
     setIndicadorImpuestoOptions([])
-    void fetchCompanyExpenseCatalogs(solicitudEnRevision.companyId)
+    void fetchCompanyExpenseCatalogs(
+      solicitudEnRevision.expenseCatalogCompanyId
+    )
       .then((catalogs) => {
         if (!activo) {
           return
@@ -175,7 +186,7 @@ export function FinancialAuthorizationReview(props: {
     return () => {
       activo = false
     }
-  }, [solicitudEnRevision.companyId])
+  }, [solicitudEnRevision.expenseCatalogCompanyId])
   useEffect(() => {
     if (movimientoSeleccionadoHallado === null) {
       setCfdiMovimiento(null)
@@ -566,7 +577,8 @@ export function FinancialAuthorizationReview(props: {
                                   Sin comprobación colaborador
                                 </span>
                               ) : null}
-                              {mov.facturadoSapMock === true ? (
+                              {mov.facturadoSapMock === true ||
+                              mov.proofStatus === "approved" ? (
                                 <span className="inline-flex rounded-lg border border-emerald-500/40 bg-emerald-500/15 px-2 py-1 text-[10px] font-semibold text-emerald-900 dark:text-emerald-100">
                                   Facturado SAP
                                   {mov.sapDocEntryMock
@@ -1151,15 +1163,93 @@ Descripción: ${movimiento.descripcion}`
                 </Button>
                 <Button
                   type="button"
-                  className="group cursor-pointer gap-2 bg-emerald-600 shadow-md shadow-emerald-500/25 transition-all duration-300 hover:scale-[1.03] hover:bg-emerald-700 hover:shadow-lg hover:shadow-emerald-500/35 active:scale-[0.98]"
+                  disabled={
+                    aprobacionSapEnCurso ||
+                    movimiento.facturadoSapMock === true ||
+                    movimiento.proofStatus === "approved" ||
+                    descargaEnCurso !== null
+                  }
+                  className="group cursor-pointer gap-2 bg-emerald-600 shadow-md shadow-emerald-500/25 transition-all duration-300 hover:scale-[1.03] hover:bg-emerald-700 hover:shadow-lg hover:shadow-emerald-500/35 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-55"
                   onClick={() => {
-                    showAppToast("Movimiento aprobado.", "success")
+                    void (async () => {
+                      if (movimiento.tripMovementProofId === undefined) {
+                        showAppToast(
+                          "Este movimiento no tiene comprobación vinculada para enviar a SAP.",
+                          "info"
+                        )
+                        return
+                      }
+                      if (
+                        movimiento.proofType !== undefined &&
+                        movimiento.proofType !== "invoice"
+                      ) {
+                        showAppToast(
+                          "Solo las comprobaciones tipo factura (CFDI) pueden registrarse en SAP.",
+                          "info"
+                        )
+                        return
+                      }
+                      if (
+                        movimiento.proofStatus !== undefined &&
+                        movimiento.proofStatus !== "submitted"
+                      ) {
+                        showAppToast(
+                          "Esta comprobación ya no está pendiente de aprobación.",
+                          "info"
+                        )
+                        return
+                      }
+                      const accountCode = categoriaPorConcepto[0]?.trim() ?? ""
+                      const taxCode = indicadorPorConcepto[0]?.trim() ?? ""
+                      if (accountCode.length === 0 || taxCode.length === 0) {
+                        showAppToast(
+                          "Selecciona categoría e indicador de impuesto en el primer concepto del CFDI.",
+                          "info"
+                        )
+                        return
+                      }
+                      setAprobacionSapEnCurso(true)
+                      try {
+                        const { docEntry } = await aprobarMovimientoFacturaSap({
+                          movimientoId: movimiento.id,
+                          tripMovementProofId: movimiento.tripMovementProofId,
+                          accountCode,
+                          taxCode,
+                          reviewerNotes:
+                            comentarioRevision.trim().length > 0
+                              ? comentarioRevision.trim()
+                              : undefined,
+                        })
+                        showAppToast(
+                          `Movimiento aprobado. SAP DocEntry ${String(docEntry)}.`,
+                          "success"
+                        )
+                      } catch (error: unknown) {
+                        logTravelAxiosError(
+                          `financial-authorization:Review:Aprobar movimientoId=${movimiento.id} tripMovementProofId=${String(movimiento.tripMovementProofId)}`,
+                          error
+                        )
+                        showAppToast(
+                          userMessageFromTravelAxiosError(error),
+                          "info"
+                        )
+                      } finally {
+                        setAprobacionSapEnCurso(false)
+                      }
+                    })()
                   }}
                 >
-                  <CheckCircle2
-                    className="size-4 transition-transform duration-300 group-hover:rotate-12"
-                    aria-hidden
-                  />
+                  {aprobacionSapEnCurso ? (
+                    <Loader2
+                      className="size-4 shrink-0 animate-spin transition-transform duration-300"
+                      aria-hidden
+                    />
+                  ) : (
+                    <CheckCircle2
+                      className="size-4 transition-transform duration-300 group-hover:rotate-12"
+                      aria-hidden
+                    />
+                  )}
                   Aprobar
                 </Button>
               </div>

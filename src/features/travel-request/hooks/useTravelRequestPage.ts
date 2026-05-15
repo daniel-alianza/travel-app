@@ -1,4 +1,4 @@
-import { useEffect, useState, type ChangeEvent } from "react"
+import { useEffect, useRef, useState, type ChangeEvent } from "react"
 import { AxiosError } from "axios"
 import { useNavigate, useSearchParams } from "react-router-dom"
 
@@ -22,6 +22,8 @@ import {
   fetchTravelRequestFormData,
   fetchTravelRequestPolicies,
   fetchUserFuelCards,
+  validateTripFoodExpense,
+  validateTripLodgingExpense,
   type TravelRequestDetalleViajeApi,
   type TravelRequestPolicyNoticeApi,
 } from "../services/travel-request-api"
@@ -102,6 +104,162 @@ export function useTravelRequestPage(): TravelRequestPageModel {
     Record<number, TravelRequestTripSubmitFieldErrors>
   >({})
 
+  const tripsRef = useRef(trips)
+  const selectedAreaIdRef = useRef(selectedAreaId)
+  const alimentosPolicyTimersRef = useRef<
+    Map<number, ReturnType<typeof globalThis.setTimeout>>
+  >(new Map())
+  const hospedajePolicyTimersRef = useRef<
+    Map<number, ReturnType<typeof globalThis.setTimeout>>
+  >(new Map())
+
+  tripsRef.current = trips
+  selectedAreaIdRef.current = selectedAreaId
+
+  function removeTripGastoAlimentosError(
+    prev: Record<number, Partial<Record<keyof TravelRequestGastos, string>>>,
+    tripIdx: number,
+  ): Record<number, Partial<Record<keyof TravelRequestGastos, string>>> {
+    const row = prev[tripIdx]
+    if (!row?.alimentos) {
+      return prev
+    }
+    const nextRow = { ...row }
+    delete nextRow.alimentos
+    if (Object.keys(nextRow).length === 0) {
+      const next = { ...prev }
+      delete next[tripIdx]
+      return next
+    }
+    return { ...prev, [tripIdx]: nextRow }
+  }
+
+  function scheduleTripAlimentosPolicyCheck(tripIdx: number): void {
+    const previous = alimentosPolicyTimersRef.current.get(tripIdx)
+    if (previous !== undefined) {
+      globalThis.clearTimeout(previous)
+    }
+    const timer = globalThis.setTimeout(() => {
+      alimentosPolicyTimersRef.current.delete(tripIdx)
+      void runTripAlimentosPolicyCheck(tripIdx)
+    }, 380)
+    alimentosPolicyTimersRef.current.set(tripIdx, timer)
+  }
+
+  async function runTripAlimentosPolicyCheck(tripIdx: number): Promise<void> {
+    const areaIdValue = selectedAreaIdRef.current
+    if (areaIdValue === null) {
+      return
+    }
+    const tripRow = tripsRef.current[tripIdx]
+    if (!tripRow) {
+      return
+    }
+    const start = tripRow.fechaSalida.trim()
+    const end = tripRow.fechaRegreso.trim()
+    if (!start || !end) {
+      setTripGastoErrors((prev) => removeTripGastoAlimentosError(prev, tripIdx))
+      return
+    }
+    const alimentosAmount = parseInputNumber(tripRow.gastos.alimentos)
+    try {
+      const outcome = await validateTripFoodExpense({
+        areaId: areaIdValue,
+        fechaSalida: start,
+        fechaRegreso: end,
+        alimentos: alimentosAmount,
+      })
+      if (outcome.appliesPolicy && !outcome.withinCap) {
+        const max = outcome.maximumAllowedAmount ?? 0
+        setTripGastoErrors((prev) => ({
+          ...prev,
+          [tripIdx]: {
+            ...prev[tripIdx],
+            alimentos: `Excede el tope permitido (${formatCurrency(max)}).`,
+          },
+        }))
+      } else {
+        setTripGastoErrors((prev) =>
+          removeTripGastoAlimentosError(prev, tripIdx),
+        )
+      }
+    } catch {
+      // La validación definitiva sigue ocurriendo al enviar la solicitud.
+    }
+  }
+
+  function removeTripGastoHospedajeError(
+    prev: Record<number, Partial<Record<keyof TravelRequestGastos, string>>>,
+    tripIdx: number,
+  ): Record<number, Partial<Record<keyof TravelRequestGastos, string>>> {
+    const row = prev[tripIdx]
+    if (!row?.hospedaje) {
+      return prev
+    }
+    const nextRow = { ...row }
+    delete nextRow.hospedaje
+    if (Object.keys(nextRow).length === 0) {
+      const next = { ...prev }
+      delete next[tripIdx]
+      return next
+    }
+    return { ...prev, [tripIdx]: nextRow }
+  }
+
+  function scheduleTripHospedajePolicyCheck(tripIdx: number): void {
+    const previous = hospedajePolicyTimersRef.current.get(tripIdx)
+    if (previous !== undefined) {
+      globalThis.clearTimeout(previous)
+    }
+    const timer = globalThis.setTimeout(() => {
+      hospedajePolicyTimersRef.current.delete(tripIdx)
+      void runTripHospedajePolicyCheck(tripIdx)
+    }, 380)
+    hospedajePolicyTimersRef.current.set(tripIdx, timer)
+  }
+
+  async function runTripHospedajePolicyCheck(tripIdx: number): Promise<void> {
+    const areaIdValue = selectedAreaIdRef.current
+    if (areaIdValue === null) {
+      return
+    }
+    const tripRow = tripsRef.current[tripIdx]
+    if (!tripRow) {
+      return
+    }
+    const start = tripRow.fechaSalida.trim()
+    const end = tripRow.fechaRegreso.trim()
+    if (!start || !end) {
+      setTripGastoErrors((prev) => removeTripGastoHospedajeError(prev, tripIdx))
+      return
+    }
+    const hospedajeAmount = parseInputNumber(tripRow.gastos.hospedaje)
+    try {
+      const outcome = await validateTripLodgingExpense({
+        areaId: areaIdValue,
+        fechaSalida: start,
+        fechaRegreso: end,
+        hospedaje: hospedajeAmount,
+      })
+      if (outcome.appliesPolicy && !outcome.withinCap) {
+        const max = outcome.maximumAllowedAmount ?? 0
+        setTripGastoErrors((prev) => ({
+          ...prev,
+          [tripIdx]: {
+            ...prev[tripIdx],
+            hospedaje: buildHospedajePolicyLimitMessage(max),
+          },
+        }))
+      } else {
+        setTripGastoErrors((prev) =>
+          removeTripGastoHospedajeError(prev, tripIdx),
+        )
+      }
+    } catch {
+      // La validación definitiva sigue ocurriendo al enviar la solicitud.
+    }
+  }
+
   const esModoCorreccionViaje = viajeCorreccionId !== null
   const etiquetaBotonEnviar = esModoCorreccionViaje
     ? "Reenviar viaje corregido"
@@ -114,6 +272,16 @@ export function useTravelRequestPage(): TravelRequestPageModel {
     window.addEventListener("mousemove", handleMouseMove)
     return () => window.removeEventListener("mousemove", handleMouseMove)
   }, [])
+
+  useEffect(() => {
+    if (selectedAreaId === null) {
+      return
+    }
+    tripsRef.current.forEach((_, tripIdx) => {
+      scheduleTripAlimentosPolicyCheck(tripIdx)
+      scheduleTripHospedajePolicyCheck(tripIdx)
+    })
+  }, [selectedAreaId])
 
   useEffect(() => {
     let isMounted = true
@@ -298,11 +466,68 @@ export function useTravelRequestPage(): TravelRequestPageModel {
     tripIndex: number,
     partial: Partial<TravelRequestTripData>
   ): void {
-    setTrips((prev) =>
-      prev.map((trip, i) => (i === tripIndex ? { ...trip, ...partial } : trip))
-    )
-    const errorKeysToClear = submitErrorKeysAffectedByTripPartial(partial)
+    const sanitized: Partial<TravelRequestTripData> =
+      tripIndex > 0
+        ? (Object.fromEntries(
+            Object.entries(partial).filter(([key]) => key !== "fechaDispersion")
+          ) as Partial<TravelRequestTripData>)
+        : partial
+
+    setTrips((prev) => {
+      if (
+        tripIndex === 0 &&
+        sanitized.fechaDispersion !== undefined
+      ) {
+        const siguienteDispersion = sanitized.fechaDispersion
+        return prev.map((trip, i) =>
+          i === 0
+            ? { ...trip, ...sanitized }
+            : { ...trip, fechaDispersion: siguienteDispersion }
+        )
+      }
+      return prev.map((trip, i) =>
+        i === tripIndex ? { ...trip, ...sanitized } : trip
+      )
+    })
+
+    const errorKeysToClear =
+      submitErrorKeysAffectedByTripPartial(sanitized)
     clearTripSubmitFieldErrorKeys(tripIndex, errorKeysToClear)
+
+    if (
+      tripIndex === 0 &&
+      sanitized.fechaDispersion !== undefined &&
+      errorKeysToClear.includes("fechaDispersion")
+    ) {
+      setTripSubmitFieldErrors((prev) => {
+        const next = { ...prev }
+        for (const key of Object.keys(next)) {
+          const index = Number(key)
+          if (!Number.isFinite(index)) {
+            continue
+          }
+          const tripErrors = next[index]
+          if (!tripErrors?.fechaDispersion) {
+            continue
+          }
+          const rest = { ...tripErrors }
+          delete rest.fechaDispersion
+          if (Object.keys(rest).length === 0) {
+            delete next[index]
+          } else {
+            next[index] = rest
+          }
+        }
+        return next
+      })
+    }
+    if (
+      partial.fechaSalida !== undefined ||
+      partial.fechaRegreso !== undefined
+    ) {
+      scheduleTripAlimentosPolicyCheck(tripIndex)
+      scheduleTripHospedajePolicyCheck(tripIndex)
+    }
   }
 
   function patchTripGasto(
@@ -332,6 +557,12 @@ export function useTravelRequestPage(): TravelRequestPageModel {
       return { ...prev, [tripIndex]: nextTripErrors }
     })
     clearTripSubmitFieldErrorKeys(tripIndex, ["gastosEstimados"])
+    if (field === "alimentos") {
+      scheduleTripAlimentosPolicyCheck(tripIndex)
+    }
+    if (field === "hospedaje") {
+      scheduleTripHospedajePolicyCheck(tripIndex)
+    }
   }
 
   function getTripGastoError(
@@ -352,7 +583,11 @@ export function useTravelRequestPage(): TravelRequestPageModel {
     if (viajeCorreccionId !== null) {
       return
     }
-    setTrips((prev) => [...prev, createEmptyTravelRequestTrip()])
+    setTrips((prev) => {
+      const dispersionDelPrimero = prev[0]?.fechaDispersion ?? ""
+      const nuevo = createEmptyTravelRequestTrip()
+      return [...prev, { ...nuevo, fechaDispersion: dispersionDelPrimero }]
+    })
   }
 
   function removeTrip(tripIndex: number): void {
@@ -363,7 +598,11 @@ export function useTravelRequestPage(): TravelRequestPageModel {
       if (prev.length <= 1) {
         return prev
       }
-      return prev.filter((_, i) => i !== tripIndex)
+      const filtered = prev.filter((_, i) => i !== tripIndex)
+      const canonico = filtered[0]?.fechaDispersion ?? ""
+      return filtered.map((trip, i) =>
+        i === 0 ? trip : { ...trip, fechaDispersion: canonico }
+      )
     })
     setTripGastoErrors((prev) => reindexErrorsAfterRemoval(prev, tripIndex))
     setTripSubmitFieldErrors((prev) =>
@@ -522,7 +761,37 @@ export function useTravelRequestPage(): TravelRequestPageModel {
         })
         showAppToast("Viaje corregido y reenviado a revisión.", "success")
         navigate("/travel-request/solicitudes")
-      } catch {
+      } catch (error) {
+        const policyError = extractTravelPolicyError(error)
+        if (policyError && policyError.field === "alimentos") {
+          setTripGastoErrors((prev) => ({
+            ...prev,
+            [tripIndex]: {
+              ...prev[tripIndex],
+              alimentos: `Excede el tope permitido (${formatCurrency(policyError.maximumAllowedAmount ?? 0)}).`,
+            },
+          }))
+          showAppToast(
+            "El monto de alimentos excede la política para las fechas seleccionadas.",
+            "error"
+          )
+          return
+        }
+        if (policyError && policyError.field === "hospedaje") {
+          const maxHospedaje = policyError.maximumAllowedAmount ?? 0
+          setTripGastoErrors((prev) => ({
+            ...prev,
+            [tripIndex]: {
+              ...prev[tripIndex],
+              hospedaje: buildHospedajePolicyLimitMessage(maxHospedaje),
+            },
+          }))
+          showAppToast(
+            buildHospedajePolicyToastMessage(maxHospedaje),
+            "error"
+          )
+          return
+        }
         showAppToast("No se pudo reenviar el viaje corregido.", "error")
       } finally {
         setOcupado(false)
@@ -658,6 +927,22 @@ export function useTravelRequestPage(): TravelRequestPageModel {
         )
         return
       }
+      if (policyError && policyError.field === "hospedaje") {
+        const zeroBasedTripIndex = Math.max((policyError.tripIndex ?? 1) - 1, 0)
+        const maximumAllowed = policyError.maximumAllowedAmount ?? 0
+        setTripGastoErrors((prev) => ({
+          ...prev,
+          [zeroBasedTripIndex]: {
+            ...prev[zeroBasedTripIndex],
+            hospedaje: buildHospedajePolicyLimitMessage(maximumAllowed),
+          },
+        }))
+        showAppToast(
+          buildHospedajePolicyToastMessage(maximumAllowed),
+          "error"
+        )
+        return
+      }
       showAppToast("No se pudo enviar la solicitud.", "error")
     } finally {
       setOcupado(false)
@@ -752,6 +1037,23 @@ function formatCurrency(value: number): string {
     currency: "MXN",
     maximumFractionDigits: 2,
   }).format(value)
+}
+
+const MENSAJE_HOSPEDAJE_VIAJE_UN_DIA =
+  "Este viaje es de un solo día; no está permitido solicitar hospedaje."
+
+function buildHospedajePolicyLimitMessage(maximumAllowed: number): string {
+  if (maximumAllowed <= 0) {
+    return MENSAJE_HOSPEDAJE_VIAJE_UN_DIA
+  }
+  return `Excede el tope permitido (${formatCurrency(maximumAllowed)}).`
+}
+
+function buildHospedajePolicyToastMessage(maximumAllowed: number): string {
+  if (maximumAllowed <= 0) {
+    return MENSAJE_HOSPEDAJE_VIAJE_UN_DIA
+  }
+  return "El monto de hospedaje excede la política nacional para las fechas seleccionadas."
 }
 
 function mapEstadoViajeApi(valor: string): EstadoViajeFormulario | undefined {

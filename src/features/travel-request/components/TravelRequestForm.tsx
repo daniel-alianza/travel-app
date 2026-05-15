@@ -10,6 +10,7 @@ import { TravelRequestObjectivesSection } from "@/features/travel-request/compon
 import { TravelRequestTagSection } from "@/features/travel-request/components/TravelRequestTagSection"
 import { TravelRequestTripSection } from "@/features/travel-request/components/TravelRequestTripSection"
 import { TravelRequestTripSummaryCard } from "@/features/travel-request/components/TravelRequestTripSummaryCard"
+import { TravelRequestDeleteTripModal } from "@/features/travel-request/components/TravelRequestDeleteTripModal"
 import { cn } from "@/lib/utils"
 import type { TravelRequestPageModel } from "../interfaces/travel-request-page-model.interface"
 
@@ -34,6 +35,8 @@ export function TravelRequestForm({ model }: TravelRequestFormProps) {
   const [edicionViajePasado, setEdicionViajePasado] = useState<
     Record<number, boolean>
   >({})
+  const [viajePendienteEliminarIndex, setViajePendienteEliminarIndex] =
+    useState<number | null>(null)
   const [viajeCerrandoResumen, setViajeCerrandoResumen] = useState<
     number | null
   >(null)
@@ -61,19 +64,37 @@ export function TravelRequestForm({ model }: TravelRequestFormProps) {
     if (trips.length <= 1) {
       return
     }
-    const confirmar = window.confirm(
-      "¿Eliminar este viaje? Los datos capturados en este viaje se perderán."
-    )
-    if (!confirmar) {
+    setViajePendienteEliminarIndex(tripIndex)
+  }
+
+  function confirmarEliminarViaje(): void {
+    if (viajePendienteEliminarIndex === null) {
       return
     }
-    removeTrip(tripIndex)
+    removeTrip(viajePendienteEliminarIndex)
     setEdicionViajePasado({})
     setViajeCerrandoResumen(null)
+    setViajePendienteEliminarIndex(null)
   }
 
   return (
-    <form
+    <>
+      <TravelRequestDeleteTripModal
+        abierto={viajePendienteEliminarIndex !== null}
+        onAbiertoChange={(abierto) => {
+          if (!abierto) {
+            setViajePendienteEliminarIndex(null)
+          }
+        }}
+        numeroViaje={
+          viajePendienteEliminarIndex !== null
+            ? (trips[viajePendienteEliminarIndex]?.ordenViajeEnSolicitud ??
+              viajePendienteEliminarIndex + 1)
+            : 1
+        }
+        onConfirmar={confirmarEliminarViaje}
+      />
+      <form
       onSubmit={(e) => {
         e.preventDefault()
         void handleSubmit()
@@ -288,5 +309,6 @@ export function TravelRequestForm({ model }: TravelRequestFormProps) {
         </div>
       </fieldset>
     </form>
+    </>
   )
 }

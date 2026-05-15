@@ -104,6 +104,29 @@ export async function verifyExpenseReconciliationCode(input: {
   return response.data.data.verified
 }
 
+interface ValidateInvoiceDraftApiResponse {
+  data: {
+    valid: boolean
+  }
+  message: string
+}
+
+export async function validateTripMovementInvoiceProofDraft(input: {
+  userId: number
+  tripId: number
+  movementSequence: number
+  archivos: readonly { file: File; fieldName: string }[]
+}): Promise<void> {
+  const formData = new FormData()
+  for (const item of input.archivos) {
+    formData.append(item.fieldName, item.file)
+  }
+  await travelApi.post<ValidateInvoiceDraftApiResponse>(
+    `/travel-checks/expense-trips/${String(input.userId)}/trips/${String(input.tripId)}/movements/${String(input.movementSequence)}/proofs/validate-invoice-draft`,
+    formData
+  )
+}
+
 export async function uploadTripFilesToDms(input: {
   userId: number
   tripId: number

@@ -339,7 +339,7 @@ export function ExpenseTicketComprobacionForm({
             <Textarea
               id={`${idBase}-comentario`}
               rows={3}
-              placeholder="Obligatorio: indica de qué es el gasto (alimentos, hospedaje, pago de servicio, casetas, etc.)."
+              placeholder="Mínimo 10 caracteres, con contexto. Ej.: pago de luz oficina, casetas autopista, comida con proveedor…"
               className={cn(
                 "min-h-[5rem] rounded-2xl border-2 bg-background/80",
                 formState.errors.comentario && "border-destructive/60"

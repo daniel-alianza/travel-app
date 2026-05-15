@@ -35,6 +35,7 @@ export function TravelRequestExpensesSection({
     calcularTotal,
     tripSoloLectura,
     getTripSubmitFieldError,
+    getTripGastoError,
   } = model
   const trip = trips[tripIndex]
 
@@ -117,6 +118,7 @@ export function TravelRequestExpensesSection({
                 onChange={(val) => patchTripGasto(tripIndex, "hospedaje", val)}
                 icon={Home}
                 disabled={soloLectura}
+                error={getTripGastoError(tripIndex, "hospedaje")}
               />
             ) : (
               <span className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
@@ -142,7 +144,7 @@ export function TravelRequestExpensesSection({
             onChange={(val) => patchTripGasto(tripIndex, "alimentos", val)}
             icon={Utensils}
             disabled={soloLectura}
-            error={model.getTripGastoError(tripIndex, "alimentos")}
+            error={getTripGastoError(tripIndex, "alimentos")}
           />
           <TravelRequestGastoInput
             label="Fletes"

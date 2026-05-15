@@ -1,6 +1,7 @@
 import { useId, useState, type ReactElement } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { isAxiosError } from "axios"
 import { ArrowLeft, FileText, Loader2, Trash2 } from "lucide-react"
 
 import { showAppToast } from "@/components/app-toast"
@@ -22,6 +23,7 @@ import type { ExpenseViajeResumen } from "@/features/travel-expenses/interfaces/
 import {
   submitTripMovementProof,
   uploadTripFilesToDms,
+  validateTripMovementInvoiceProofDraft,
 } from "@/features/travel-expenses/services/travel-expenses-api"
 import {
   expenseFacturaComprobacionSchema,
@@ -308,6 +310,15 @@ export function ExpenseFacturaComprobacionForm({
     )
     onCambioSubiendo?.(true)
     try {
+      await validateTripMovementInvoiceProofDraft({
+        userId: authenticatedUserId,
+        tripId: Number(viaje.id),
+        movementSequence: movimiento.numeroMovimiento,
+        archivos: archivosFinales.map((item) => ({
+          file: item.file,
+          fieldName: item.fileRole,
+        })),
+      })
       const uploadedFiles = await uploadTripFilesToDms({
         userId: authenticatedUserId,
         tripId: Number(viaje.id),
@@ -329,8 +340,18 @@ export function ExpenseFacturaComprobacionForm({
         })),
       })
     } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : "No se pudo subir los archivos al bucket."
+      let errorMessage = "No se pudo subir los archivos al bucket."
+      if (isAxiosError(error)) {
+        const body = error.response?.data as { message?: string } | undefined
+        const fromApi = body?.message?.trim()
+        if (fromApi !== undefined && fromApi.length > 0) {
+          errorMessage = fromApi
+        } else if (error.message.trim().length > 0) {
+          errorMessage = error.message
+        }
+      } else if (error instanceof Error && error.message.trim().length > 0) {
+        errorMessage = error.message
+      }
       setErrorArchivos(errorMessage)
       setEstadoCarga(null)
       onCambioSubiendo?.(false)
@@ -531,7 +552,7 @@ export function ExpenseFacturaComprobacionForm({
             <Textarea
               id={`${idBase}-comentario`}
               rows={3}
-              placeholder="Obligatorio: indica de qué es el gasto (alimentos, hospedaje, servicios, autobús ida/vuelta, etc.)."
+              placeholder="Mínimo 10 caracteres, con contexto. Ej.: desayuno con el cliente, hospedaje 1 noche, autobús ida y vuelta…"
               className={cn(
                 "min-h-[5rem] rounded-2xl border-2 bg-background/80",
                 formState.errors.comentario && "border-destructive/60"

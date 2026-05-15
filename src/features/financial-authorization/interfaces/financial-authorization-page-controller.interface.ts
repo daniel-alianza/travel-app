@@ -70,4 +70,11 @@ export interface FinancialAuthorizationPageController {
   limpiarSeleccionEnvio: () => void
   enviarAprobacionMovimientosConjunta: () => void
   cerrarContabilidadMock: () => void
+  aprobarMovimientoFacturaSap: (input: {
+    movimientoId: string
+    tripMovementProofId: number
+    accountCode: string
+    taxCode: string
+    reviewerNotes?: string
+  }) => Promise<{ docEntry: number }>
 }

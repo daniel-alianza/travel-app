@@ -92,6 +92,54 @@ export async function createTravelRequest(
   return response.data.data
 }
 
+export type ValidateTripFoodExpenseApiData = {
+  appliesPolicy: boolean
+  withinCap: boolean
+  requestedAmount: number
+  maximumAllowedAmount: number | null
+}
+
+interface ValidateTripFoodExpenseApiResponse {
+  data: ValidateTripFoodExpenseApiData
+}
+
+export async function validateTripFoodExpense(body: {
+  areaId: number
+  fechaSalida: string
+  fechaRegreso: string
+  alimentos: number
+}): Promise<ValidateTripFoodExpenseApiData> {
+  const response = await travelApi.post<ValidateTripFoodExpenseApiResponse>(
+    "/travel-request/validate-trip-food-expense",
+    body
+  )
+  return response.data.data
+}
+
+export type ValidateTripLodgingExpenseApiData = {
+  appliesPolicy: boolean
+  withinCap: boolean
+  requestedAmount: number
+  maximumAllowedAmount: number | null
+}
+
+interface ValidateTripLodgingExpenseApiResponse {
+  data: ValidateTripLodgingExpenseApiData
+}
+
+export async function validateTripLodgingExpense(body: {
+  areaId: number
+  fechaSalida: string
+  fechaRegreso: string
+  hospedaje: number
+}): Promise<ValidateTripLodgingExpenseApiData> {
+  const response = await travelApi.post<ValidateTripLodgingExpenseApiResponse>(
+    "/travel-request/validate-trip-lodging-expense",
+    body
+  )
+  return response.data.data
+}
+
 export interface MyTravelRequestTripApi {
   tripId: number
   tripOrder: number

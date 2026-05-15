@@ -103,9 +103,22 @@ export function solicitudVisibleEnColaContabilidadMock(
 export function movimientoElegibleEnvioSapMock(
   mov: FinancialAuthorizationMovimientoComprobado
 ): boolean {
-  return (
-    movimientoTieneComprobacionUsuario(mov) && mov.facturadoSapMock !== true
-  )
+  if (!movimientoTieneComprobacionUsuario(mov) || mov.facturadoSapMock === true) {
+    return false
+  }
+  if (mov.proofStatus === "approved") {
+    return false
+  }
+  if (mov.tripMovementProofId === undefined) {
+    return false
+  }
+  if (mov.proofType !== undefined && mov.proofType !== "invoice") {
+    return false
+  }
+  if (mov.proofStatus !== undefined && mov.proofStatus !== "submitted") {
+    return false
+  }
+  return true
 }
 
 export function totalComprobadoSolicitud(

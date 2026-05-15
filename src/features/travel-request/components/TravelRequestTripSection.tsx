@@ -22,6 +22,12 @@ export function TravelRequestTripSection({
   }
 
   const soloLectura = tripSoloLectura(tripIndex)
+  const primerViaje = trips[0]
+  const valorFechaDispersion =
+    tripIndex === 0
+      ? trip.fechaDispersion
+      : (primerViaje?.fechaDispersion ?? "")
+  const dispersionBloqueada = soloLectura || tripIndex > 0
   const errorDestino = getTripSubmitFieldError(tripIndex, "destinoViaje")
   const errorMotivo = getTripSubmitFieldError(tripIndex, "motivoViaje")
   const errorFechaSalida = getTripSubmitFieldError(tripIndex, "fechaSalida")
@@ -146,21 +152,40 @@ export function TravelRequestTripSection({
               </Label>
               <Input
                 type="date"
-                value={trip.fechaDispersion}
+                value={valorFechaDispersion}
                 onChange={(e) =>
-                  updateTrip(tripIndex, { fechaDispersion: e.target.value })
+                  updateTrip(0, { fechaDispersion: e.target.value })
                 }
-                disabled={soloLectura}
+                disabled={dispersionBloqueada}
                 aria-invalid={Boolean(errorFechaDispersion)}
-                className={`h-12 rounded-2xl border-2 transition-all duration-500 focus:scale-[1.02] focus:shadow-lg focus:shadow-primary/20 ${errorFechaDispersion ? "border-destructive/70" : ""}`}
+                aria-readonly={tripIndex > 0}
+                title={
+                  tripIndex > 0
+                    ? "La fecha de dispersión se toma del primer viaje."
+                    : undefined
+                }
+                className={`h-12 rounded-2xl border-2 transition-all duration-500 focus:scale-[1.02] focus:shadow-lg focus:shadow-primary/20 ${errorFechaDispersion ? "border-destructive/70" : ""} ${tripIndex > 0 && !soloLectura ? "cursor-not-allowed opacity-90" : ""}`}
               />
               {errorFechaDispersion ? (
                 <span className="block text-xs text-destructive">
                   {errorFechaDispersion}
                 </span>
               ) : null}
+              {tripIndex > 0 && !soloLectura ? (
+                <span className="block text-xs text-muted-foreground">
+                  Misma fecha que en el primer viaje; solo puedes cambiarla en
+                  ese bloque.
+                </span>
+              ) : null}
             </div>
           </div>
+          {tripIndex === 0 ? (
+            <span className="block text-xs text-muted-foreground">
+              La fecha de dispersión es una sola para toda la solicitud. En viajes
+              adicionales se muestra bloqueada y copia automáticamente la de
+              aquí.
+            </span>
+          ) : null}
         </div>
       </div>
     </section>

@@ -41,6 +41,7 @@ import {
 import type { FinancialAuthorizationPageController } from "@/features/financial-authorization/interfaces/financial-authorization-page-controller.interface"
 import {
   fetchCompanyExpenseCatalogs,
+  downloadMovementPdfFromSupabase,
   fetchMovementCfdi,
   type CompanyExpenseCatalogOption,
   type MovementCfdiPayload,
@@ -1117,21 +1118,41 @@ export function FinancialAuthorizationReview(props: {
                     "disabled:pointer-events-none disabled:opacity-55"
                   )}
                   onClick={() => {
+                    const tripId = Number.parseInt(viaje.idViaje, 10)
+                    if (Number.isNaN(tripId)) {
+                      showAppToast(
+                        "No se pudo identificar el viaje para descargar el PDF.",
+                        "info"
+                      )
+                      return
+                    }
                     setDescargaEnCurso("pdf")
-                    const cuerpoPdf = `Resumen movimiento ${movimiento.numeroMovimiento}
-Solicitud: ${solicitudEnRevision.folioSolicitud}
-Monto: ${formatearMonto(movimiento.monto)}
-Descripción: ${movimiento.descripcion}`
-                    descargarTextoComoArchivo(
-                      cuerpoPdf,
-                      `comprobante-mov-${movimiento.numeroMovimiento}.pdf`,
-                      "application/pdf"
-                    )
-                    showAppToast(
-                      "Archivo PDF de respaldo generado.",
-                      "info"
-                    )
-                    window.setTimeout(() => setDescargaEnCurso(null), 500)
+                    void downloadMovementPdfFromSupabase({
+                      tripId,
+                      movementSequence: movimiento.numeroMovimiento,
+                    })
+                      .then((nombreArchivo) => {
+                        showAppToast(
+                          `PDF descargado (${nombreArchivo}).`,
+                          "success"
+                        )
+                      })
+                      .catch((error: unknown) => {
+                        logTravelAxiosError(
+                          `financial-authorization:Review:DescargarPdf movimientoId=${movimiento.id}`,
+                          error
+                        )
+                        const mensaje = userMessageFromTravelAxiosError(error)
+                        showAppToast(
+                          mensaje.length > 0
+                            ? mensaje
+                            : "No se pudo descargar el PDF de la comprobación.",
+                          "error"
+                        )
+                      })
+                      .finally(() => {
+                        window.setTimeout(() => setDescargaEnCurso(null), 500)
+                      })
                   }}
                 >
                   {descargaEnCurso === "pdf" ? (

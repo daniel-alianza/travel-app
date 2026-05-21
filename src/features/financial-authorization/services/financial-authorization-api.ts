@@ -98,6 +98,49 @@ export async function fetchMovementCfdi(input: {
   return response.data.data
 }
 
+export interface MovementPdfDownloadPayload {
+  readonly movementSequence: number
+  readonly pdfFileName: string | null
+  readonly signedUrl: string
+  readonly expiresInSeconds: number
+}
+
+type MovementPdfDownloadApiResponse = ApiEnvelope<MovementPdfDownloadPayload>
+
+export async function fetchMovementPdfDownload(input: {
+  tripId: number
+  movementSequence: number
+}): Promise<MovementPdfDownloadPayload> {
+  const response = await travelApi.get<MovementPdfDownloadApiResponse>(
+    `/travel-checks/trips/${String(input.tripId)}/movements/${String(input.movementSequence)}/pdf`
+  )
+  return response.data.data
+}
+
+export async function downloadMovementPdfFromSupabase(input: {
+  tripId: number
+  movementSequence: number
+}): Promise<string> {
+  const meta = await fetchMovementPdfDownload(input)
+  const fileResponse = await fetch(meta.signedUrl)
+  if (!fileResponse.ok) {
+    throw new Error("No se pudo descargar el PDF desde almacenamiento.")
+  }
+  const buffer = await fileResponse.arrayBuffer()
+  const nombreArchivo =
+    meta.pdfFileName !== null && meta.pdfFileName.trim().length > 0
+      ? meta.pdfFileName
+      : `comprobante-mov-${String(input.movementSequence)}.pdf`
+  const blob = new Blob([buffer], { type: "application/pdf" })
+  const url = URL.createObjectURL(blob)
+  const enlace = document.createElement("a")
+  enlace.href = url
+  enlace.download = nombreArchivo
+  enlace.click()
+  URL.revokeObjectURL(url)
+  return nombreArchivo
+}
+
 type DispersedTravelChecksApiResponse = ApiEnvelope<{
   solicitudes: Array<{
     id: number

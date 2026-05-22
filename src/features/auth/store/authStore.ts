@@ -10,11 +10,14 @@ type AuthStore = {
   userId: number | null
   rolSesion: string
   permisosSesion: string[]
+  /** Solo en memoria (no persistido): respaldo si la cookie cross-site no viaja */
+  accessTokenSesion: string | null
   login: (entrada: {
     correo: string
     userId: number
     rol: string
     permisos?: readonly string[]
+    accessToken?: string
   }) => void
   logout: () => void
 }
@@ -28,6 +31,7 @@ export const useAuthStore = create<AuthStore>()(
       userId: null,
       rolSesion: "",
       permisosSesion: [],
+      accessTokenSesion: null,
       login: (entrada) => {
         if (
           entrada === undefined ||
@@ -47,6 +51,11 @@ export const useAuthStore = create<AuthStore>()(
           Array.isArray(entrada.permisos) && entrada.permisos.length > 0
             ? entrada.permisos.map((p) => String(p).trim()).filter((p) => p.length > 0)
             : []
+        const accessToken =
+          typeof entrada.accessToken === "string" &&
+          entrada.accessToken.trim().length > 0
+            ? entrada.accessToken.trim()
+            : null
         set({
           isAuthenticated: true,
           nombreResponsable: nombreMostradoDesdeCorreo(normalizado),
@@ -54,6 +63,7 @@ export const useAuthStore = create<AuthStore>()(
           userId: entrada.userId,
           rolSesion: entrada.rol.trim(),
           permisosSesion: permisos,
+          accessTokenSesion: accessToken,
         })
       },
       logout: () => {
@@ -64,6 +74,7 @@ export const useAuthStore = create<AuthStore>()(
           userId: null,
           rolSesion: "",
           permisosSesion: [],
+          accessTokenSesion: null,
         })
       },
     }),

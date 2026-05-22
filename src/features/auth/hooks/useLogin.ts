@@ -79,6 +79,7 @@ export function useLoginPage(): UseLoginPageReturn {
         userId: response.data.data.userId,
         rol: response.data.data.role,
         permisos: response.data.data.permisos ?? [],
+        accessToken: response.data.data.accessToken,
       })
       navigate("/home")
     } catch (error) {

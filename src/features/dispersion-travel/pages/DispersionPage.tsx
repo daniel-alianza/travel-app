@@ -30,6 +30,7 @@ export function DispersionPage() {
             accionCargandoReporte={page.accionCargando === "reporte"}
             onFechaDesdeChange={page.setFechaReporteDesde}
             onFechaHastaChange={page.setFechaReporteHasta}
+            onLimpiarFiltros={page.limpiarFiltrosFechasReporte}
             onGenerarReporte={() => void page.generarReporteDispersionExcel()}
           />
 

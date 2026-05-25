@@ -29,6 +29,8 @@ export type IamUsePageResult = {
   cargarUsuarios: (esRefresco: boolean) => Promise<void>
   opcionesArea: OpcionFiltroIam[]
   opcionesSucursal: OpcionFiltroIam[]
+  opcionesAreaCatalogo: OpcionFiltroIam[]
+  opcionesSucursalCatalogo: OpcionFiltroIam[]
   opcionesRol: OpcionFiltroIam[]
   metaLista: ListaPaginadaMeta
   usuariosPagina: UsuarioIam[]

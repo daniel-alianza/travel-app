@@ -151,3 +151,30 @@ export function construirOpcionesFiltroDesdeValores(
     ...unicos.map((v) => ({ value: v, label: v })),
   ]
 }
+
+export function construirOpcionesSelectCatalogo(
+  valores: readonly string[],
+): OpcionFiltroIam[] {
+  const unicos = [
+    ...new Set(
+      valores.map((v) => v.trim()).filter((v) => v.length > 0),
+    ),
+  ].sort((a, b) => a.localeCompare(b, "es", { sensitivity: "base" }))
+  return unicos.map((v) => ({ value: v, label: v }))
+}
+
+export function opcionesSelectConValorActual(
+  opcionesBase: readonly OpcionFiltroIam[],
+  valorActual: string,
+): OpcionFiltroIam[] {
+  const valor = valorActual.trim()
+  if (valor.length === 0) {
+    return [...opcionesBase]
+  }
+  if (opcionesBase.some((opcion) => opcion.value === valor)) {
+    return [...opcionesBase]
+  }
+  return [...opcionesBase, { value: valor, label: valor }].sort((a, b) =>
+    a.label.localeCompare(b.label, "es", { sensitivity: "base" }),
+  )
+}

@@ -32,6 +32,7 @@ import {
   formatearFechaPoliticas,
   inicialesDesdeUsuario,
   nombreCompletoDesdePartes,
+  opcionesSelectConValorActual,
   resolverValorSelectJefeDirecto,
   type EstadoLineaCoincidenciaContrasenaIam,
 } from "@/features/iam/hooks/iam-page-helpers"
@@ -69,6 +70,8 @@ function clasesBarraCoincidenciaContrasena(
 export type IamUsuarioCardProps = {
   usuario: UsuarioIam
   index: number
+  opcionesAreaCatalogo: OpcionFiltroIam[]
+  opcionesSucursalCatalogo: OpcionFiltroIam[]
   candidatosJefeDirecto: UsuarioIam[]
   guardandoId: string | null
   actualizandoContrasenaId: string | null
@@ -102,6 +105,8 @@ export type IamUsuarioCardProps = {
 export function IamUsuarioCard({
   usuario,
   index,
+  opcionesAreaCatalogo,
+  opcionesSucursalCatalogo,
   candidatosJefeDirecto,
   guardandoId,
   actualizandoContrasenaId,
@@ -132,6 +137,19 @@ export function IamUsuarioCard({
       })),
     ]
   }, [candidatosJefeSinPropio])
+
+  const opcionesArea = useMemo(
+    () => opcionesSelectConValorActual(opcionesAreaCatalogo, usuario.area),
+    [opcionesAreaCatalogo, usuario.area],
+  )
+  const opcionesSucursal = useMemo(
+    () => opcionesSelectConValorActual(opcionesSucursalCatalogo, usuario.sucursal),
+    [opcionesSucursalCatalogo, usuario.sucursal],
+  )
+  const opcionesRolPill: OpcionFiltroIam[] = useMemo(
+    () => ROLES_IAM.map((rol) => ({ value: rol, label: rol })),
+    [],
+  )
 
   const camposContrasena = obtenerCamposContrasena(usuario.id)
   const estadoLineaContrasena = estadoLineaCoincidenciaContrasena(
@@ -196,54 +214,21 @@ export function IamUsuarioCard({
       </div>
 
       <div className="relative mt-4 grid gap-3">
-        <div className="grid gap-1.5 sm:grid-cols-3 sm:gap-3">
-          <div className="grid gap-1.5 sm:col-span-3">
-            <Label htmlFor={`iam-nombres-${usuario.id}`} className="text-xs">
-              Nombre(s)
-            </Label>
-            <Input
-              id={`iam-nombres-${usuario.id}`}
-              value={usuario.nombres}
-              onChange={(e) => {
-                actualizarUsuario(usuario.id, {
-                  nombres: e.target.value,
-                })
-              }}
-              placeholder="Ej. María Fernanda"
-              className="h-10 cursor-text rounded-xl border-border/70 bg-background/80 shadow-sm transition-shadow focus-visible:ring-primary/25"
-            />
-          </div>
-          <div className="grid gap-1.5">
-            <Label htmlFor={`iam-ap-${usuario.id}`} className="text-xs">
-              Apellido paterno
-            </Label>
-            <Input
-              id={`iam-ap-${usuario.id}`}
-              value={usuario.apellidoPaterno}
-              onChange={(e) => {
-                actualizarUsuario(usuario.id, {
-                  apellidoPaterno: e.target.value,
-                })
-              }}
-              className="h-10 cursor-text rounded-xl border-border/70 bg-background/80 shadow-sm"
-            />
-          </div>
-          <div className="grid gap-1.5 sm:col-span-2">
-            <Label htmlFor={`iam-am-${usuario.id}`} className="text-xs">
-              Apellido materno
-            </Label>
-            <Input
-              id={`iam-am-${usuario.id}`}
-              value={usuario.apellidoMaterno}
-              onChange={(e) => {
-                actualizarUsuario(usuario.id, {
-                  apellidoMaterno: e.target.value,
-                })
-              }}
-              placeholder="Opcional"
-              className="h-10 cursor-text rounded-xl border-border/70 bg-background/80 shadow-sm"
-            />
-          </div>
+        <div className="grid gap-1.5">
+          <Label htmlFor={`iam-nombres-${usuario.id}`} className="text-xs">
+            Nombre(s)
+          </Label>
+          <Input
+            id={`iam-nombres-${usuario.id}`}
+            value={usuario.nombres}
+            onChange={(e) => {
+              actualizarUsuario(usuario.id, {
+                nombres: e.target.value,
+              })
+            }}
+            placeholder="Ej. María Fernanda"
+            className="h-10 cursor-text rounded-xl border-border/70 bg-background/80 shadow-sm transition-shadow focus-visible:ring-primary/25"
+          />
         </div>
         <div className="grid gap-1.5">
           <Label
@@ -285,58 +270,61 @@ export function IamUsuarioCard({
         </div>
         <div className="grid gap-1.5 sm:grid-cols-2 sm:gap-3">
           <div className="grid gap-1.5">
-            <Label htmlFor={`iam-area-${usuario.id}`} className="text-xs">
+            <Label id={`iam-area-label-${usuario.id}`} className="text-xs">
               Área
             </Label>
-            <Input
-              id={`iam-area-${usuario.id}`}
+            <DispersionPillSelect
+              instanceId={`iam-area-${usuario.id}`}
               value={usuario.area}
-              onChange={(e) => {
-                actualizarUsuario(usuario.id, { area: e.target.value })
+              options={opcionesArea}
+              onChange={(v) => {
+                actualizarUsuario(usuario.id, { area: v })
               }}
-              className="h-10 cursor-text rounded-xl border-border/70 bg-background/80 text-sm shadow-sm"
+              placeholder="Seleccionar área"
+              disabled={actualizandoLista || opcionesArea.length === 0}
+              dropdownOpen={dropdownPillAbierto}
+              setDropdownOpen={setDropdownPillAbierto}
+              ariaLabel={`Área de ${nombreCompletoDesdePartes(usuario)}`}
             />
           </div>
           <div className="grid gap-1.5">
-            <Label htmlFor={`iam-sucursal-${usuario.id}`} className="text-xs">
+            <Label id={`iam-sucursal-label-${usuario.id}`} className="text-xs">
               Sucursal
             </Label>
-            <Input
-              id={`iam-sucursal-${usuario.id}`}
+            <DispersionPillSelect
+              instanceId={`iam-sucursal-${usuario.id}`}
               value={usuario.sucursal}
-              onChange={(e) => {
-                actualizarUsuario(usuario.id, {
-                  sucursal: e.target.value,
-                })
+              options={opcionesSucursal}
+              onChange={(v) => {
+                actualizarUsuario(usuario.id, { sucursal: v })
               }}
-              className="h-10 cursor-text rounded-xl border-border/70 bg-background/80 text-sm shadow-sm"
+              placeholder="Seleccionar sucursal"
+              disabled={actualizandoLista || opcionesSucursal.length === 0}
+              dropdownOpen={dropdownPillAbierto}
+              setDropdownOpen={setDropdownPillAbierto}
+              ariaLabel={`Sucursal de ${nombreCompletoDesdePartes(usuario)}`}
             />
           </div>
         </div>
         <div className="grid gap-1.5">
-          <Label htmlFor={`iam-rol-${usuario.id}`} className="text-xs">
+          <Label id={`iam-rol-label-${usuario.id}`} className="text-xs">
             Rol
           </Label>
-          <select
-            id={`iam-rol-${usuario.id}`}
+          <DispersionPillSelect
+            instanceId={`iam-rol-${usuario.id}`}
             value={usuario.rol}
-            onChange={(e) => {
-              const valor = e.target.value
-              if (esRolIam(valor)) {
-                actualizarUsuario(usuario.id, { rol: valor })
+            options={opcionesRolPill}
+            onChange={(v) => {
+              if (esRolIam(v)) {
+                actualizarUsuario(usuario.id, { rol: v })
               }
             }}
-            className={cn(
-              "h-10 w-full cursor-pointer rounded-xl border border-border/70 bg-background/80 px-3 text-sm text-foreground shadow-sm",
-              "outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50",
-            )}
-          >
-            {ROLES_IAM.map((r) => (
-              <option key={r} value={r}>
-                {r}
-              </option>
-            ))}
-          </select>
+            placeholder="Seleccionar rol"
+            disabled={actualizandoLista}
+            dropdownOpen={dropdownPillAbierto}
+            setDropdownOpen={setDropdownPillAbierto}
+            ariaLabel={`Rol de ${nombreCompletoDesdePartes(usuario)}`}
+          />
         </div>
       </div>
 

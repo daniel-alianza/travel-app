@@ -93,6 +93,8 @@ export function IamPage() {
                   key={usuario.id}
                   usuario={usuario}
                   index={index}
+                  opcionesAreaCatalogo={p.opcionesAreaCatalogo}
+                  opcionesSucursalCatalogo={p.opcionesSucursalCatalogo}
                   candidatosJefeDirecto={p.candidatosJefeDirecto}
                   dropdownPillAbierto={p.dropdownPillAbierto}
                   setDropdownPillAbierto={p.setDropdownPillAbierto}

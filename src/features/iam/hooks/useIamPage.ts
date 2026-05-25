@@ -6,6 +6,7 @@ import { showAppToast } from "@/components/app-toast"
 import type { TravelRequestMousePosition } from "@/features/travel-request/interfaces/travel-request-mouse-position.interface"
 import {
   construirOpcionesFiltroDesdeValores,
+  construirOpcionesSelectCatalogo,
   esRolElegibleJefeDirecto,
   nombreCompletoDesdePartes,
   ordenarPermisosSegunDefinicionesIam,
@@ -147,6 +148,22 @@ export function useIamPage(): IamUsePageResult {
         ? catalogoFiltros.rolesEtiqueta
         : usuarios.map((u) => u.rol)
     return construirOpcionesFiltroDesdeValores(valores, "Todos los roles")
+  }, [catalogoFiltros, usuarios])
+
+  const opcionesAreaCatalogo = useMemo(() => {
+    const valores =
+      catalogoFiltros !== null && catalogoFiltros.areas.length > 0
+        ? catalogoFiltros.areas
+        : usuarios.map((u) => u.area)
+    return construirOpcionesSelectCatalogo(valores)
+  }, [catalogoFiltros, usuarios])
+
+  const opcionesSucursalCatalogo = useMemo(() => {
+    const valores =
+      catalogoFiltros !== null && catalogoFiltros.sucursales.length > 0
+        ? catalogoFiltros.sucursales
+        : usuarios.map((u) => u.sucursal)
+    return construirOpcionesSelectCatalogo(valores)
   }, [catalogoFiltros, usuarios])
 
   const candidatosJefeDirecto = useMemo(() => {
@@ -371,6 +388,8 @@ export function useIamPage(): IamUsePageResult {
     cargarUsuarios,
     opcionesArea,
     opcionesSucursal,
+    opcionesAreaCatalogo,
+    opcionesSucursalCatalogo,
     opcionesRol,
     metaLista,
     usuariosPagina,

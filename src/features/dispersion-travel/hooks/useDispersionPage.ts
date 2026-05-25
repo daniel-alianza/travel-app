@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react"
+import axios from "axios"
 
 import { showAppToast } from "@/components/app-toast"
 import {
@@ -11,6 +12,7 @@ import {
 import type { FilaDispersion } from "@/features/dispersion-travel/interfaces/dispersion-fila.interface"
 import {
   confirmTravelRequestDispersion,
+  downloadDispersionReportExcel,
   fetchDispersionQueue,
 } from "@/features/dispersion-travel/services/dispersion-travel-api"
 import type { TravelRequestMousePosition } from "@/features/travel-request/interfaces/travel-request-mouse-position.interface"
@@ -32,9 +34,9 @@ export function useDispersionPage() {
   const [tamanoPagina, setTamanoPagina] = useState(
     TAMANO_PAGINA_DISPERSION_DEFECTO
   )
-  const [dropdownPillAbierto, setDropdownPillAbierto] = useState<
-    string | null
-  >(null)
+  const [dropdownPillAbierto, setDropdownPillAbierto] = useState<string | null>(
+    null
+  )
   const [rechazoIdsPendientes, setRechazoIdsPendientes] = useState<
     number[] | null
   >(null)
@@ -62,10 +64,7 @@ export function useDispersionPage() {
     [filas, indiceInicio, tamanoPagina]
   )
 
-  const idsEnPagina = useMemo(
-    () => filasPagina.map((f) => f.id),
-    [filasPagina]
-  )
+  const idsEnPagina = useMemo(() => filasPagina.map((f) => f.id), [filasPagina])
 
   const seleccionEfectiva = useMemo(() => {
     const permitidos = new Set(filas.map((f) => f.id))
@@ -86,8 +85,7 @@ export function useDispersionPage() {
   )
 
   const todasSeleccionadas =
-    idsEnPagina.length > 0 &&
-    seleccionadasEnPagina === idsEnPagina.length
+    idsEnPagina.length > 0 && seleccionadasEnPagina === idsEnPagina.length
 
   useEffect(() => {
     function handleMouseMove(event: MouseEvent): void {
@@ -131,8 +129,7 @@ export function useDispersionPage() {
   useEffect(() => {
     const el = selectAllRef.current
     if (el) {
-      el.indeterminate =
-        seleccionadasEnPagina > 0 && !todasSeleccionadas
+      el.indeterminate = seleccionadasEnPagina > 0 && !todasSeleccionadas
     }
   }, [seleccionadasEnPagina, todasSeleccionadas])
 
@@ -180,7 +177,10 @@ export function useDispersionPage() {
             }
           }
           if ("montoEsAbsoluto" in patch) {
-            siguiente = { ...siguiente, montoEsAbsoluto: patch.montoEsAbsoluto! }
+            siguiente = {
+              ...siguiente,
+              montoEsAbsoluto: patch.montoEsAbsoluto!,
+            }
           }
           return siguiente
         }
@@ -304,8 +304,7 @@ export function useDispersionPage() {
       }
     }
 
-    const clave =
-      ids.length === 1 ? `dispersar-${ids[0]}` : "dispersar-masivo"
+    const clave = ids.length === 1 ? `dispersar-${ids[0]}` : "dispersar-masivo"
     setAccionCargando(clave)
     try {
       await Promise.all(
@@ -393,7 +392,39 @@ export function useDispersionPage() {
     }
     setAccionCargando("reporte")
     try {
-      await esperar(720)
+      const desde = fechaReporteDesde.trim()
+      const hasta = fechaReporteHasta.trim()
+      const { blob, fileName } = await downloadDispersionReportExcel({
+        from: desde.length > 0 ? desde : undefined,
+        to: hasta.length > 0 ? hasta : undefined,
+      })
+      const url = URL.createObjectURL(blob)
+      const enlace = document.createElement("a")
+      enlace.href = url
+      enlace.download = fileName
+      enlace.click()
+      URL.revokeObjectURL(url)
+      showAppToast("Reporte Excel generado correctamente.", "success")
+    } catch (error) {
+      let mensaje = "No se pudo generar el reporte Excel. Intenta de nuevo."
+      if (axios.isAxiosError(error) && error.response?.data instanceof Blob) {
+        try {
+          const texto = await error.response.data.text()
+          const cuerpo = JSON.parse(texto) as { message?: string | string[] }
+          const raw = cuerpo.message
+          const textoError = Array.isArray(raw)
+            ? raw.join(" ")
+            : typeof raw === "string"
+              ? raw
+              : ""
+          if (textoError.trim().length > 0) {
+            mensaje = textoError.trim()
+          }
+        } catch {
+          // mantener mensaje genérico
+        }
+      }
+      showAppToast(mensaje, "error")
     } finally {
       setAccionCargando(null)
     }
@@ -412,6 +443,11 @@ export function useDispersionPage() {
       return
     }
     setTamanoPagina(nuevo)
+  }
+
+  function limpiarFiltrosFechasReporte(): void {
+    setFechaReporteDesde("")
+    setFechaReporteHasta("")
   }
 
   return {
@@ -454,5 +490,6 @@ export function useDispersionPage() {
     confirmarRechazoConComentario,
     puedeConfirmarRechazo,
     generarReporteDispersionExcel,
+    limpiarFiltrosFechasReporte,
   }
 }

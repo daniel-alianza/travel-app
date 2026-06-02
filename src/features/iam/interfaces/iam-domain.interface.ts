@@ -4,6 +4,12 @@ export type DefinicionPermisoIam = {
   descripcion: string
 }
 
+export type DefinicionNotificacionGasolinaIam = {
+  id: "treasuryApprover" | "dispersalNotify"
+  etiqueta: string
+  descripcion: string
+}
+
 export type PoliticaCorporativaDef = {
   id: string
   titulo: string
@@ -36,6 +42,8 @@ export type UsuarioIam = {
   /** Códigos que vienen del rol en BD; los checkboxes quedan marcados y bloqueados. */
   permisosPorDefectoRol: string[]
   aceptacionesPoliticas: Record<string, AceptacionPoliticaRegistro>
+  gasolinaTesoreriaAprobador: boolean
+  gasolinaNotificacionDispersion: boolean
 }
 
 export type OpcionFiltroIam = {

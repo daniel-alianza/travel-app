@@ -6,7 +6,7 @@ interface HomeMenuGridProps {
   mounted: boolean
   hoveredCard: number | null
   menuOptions: HomeMenuOption[]
-  onMenuNavigate: (href: string) => void
+  onMenuOptionSelect: (option: HomeMenuOption) => void
   onCardEnter: (id: number) => void
   onCardLeave: () => void
 }
@@ -15,7 +15,7 @@ export function HomeMenuGrid({
   mounted,
   hoveredCard,
   menuOptions,
-  onMenuNavigate,
+  onMenuOptionSelect,
   onCardEnter,
   onCardLeave,
 }: HomeMenuGridProps) {
@@ -25,7 +25,7 @@ export function HomeMenuGrid({
         <button
           key={option.id}
           type="button"
-          onClick={() => onMenuNavigate(option.href)}
+          onClick={() => onMenuOptionSelect(option)}
           onMouseEnter={() => onCardEnter(option.id)}
           onMouseLeave={onCardLeave}
           className={`group relative cursor-pointer rounded-3xl border-2 border-transparent bg-card p-6 text-left transition-all duration-700 ease-out hover:border-primary/20 sm:p-7 ${mounted ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"}`}

@@ -340,8 +340,9 @@ export function useTravelRequestPage(): TravelRequestPageModel {
   }, [])
 
   useEffect(() => {
-    const solicitudParam = searchParams.get("solicitud")
-    const viajeParam = searchParams.get("viaje")
+    const solicitudParam =
+      searchParams.get("request") ?? searchParams.get("solicitud")
+    const viajeParam = searchParams.get("trip") ?? searchParams.get("viaje")
     if (!solicitudParam || !viajeParam) {
       return
     }
@@ -372,7 +373,7 @@ export function useTravelRequestPage(): TravelRequestPageModel {
             "Ese viaje no está rechazado o no pertenece a la solicitud.",
             "error"
           )
-          navigate("/travel-request/solicitudes", { replace: true })
+          navigate("/travel-request/requests", { replace: true })
           return
         }
 
@@ -412,7 +413,7 @@ export function useTravelRequestPage(): TravelRequestPageModel {
             "No se pudo cargar la solicitud para corrección.",
             "error"
           )
-          navigate("/travel-request/solicitudes", { replace: true })
+          navigate("/travel-request/requests", { replace: true })
         }
       }
     }
@@ -760,7 +761,7 @@ export function useTravelRequestPage(): TravelRequestPageModel {
           trip: tripPayload,
         })
         showAppToast("Viaje corregido y reenviado a revisión.", "success")
-        navigate("/travel-request/solicitudes")
+        navigate("/travel-request/requests")
       } catch (error) {
         const policyError = extractTravelPolicyError(error)
         if (policyError && policyError.field === "alimentos") {

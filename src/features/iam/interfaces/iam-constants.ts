@@ -1,4 +1,5 @@
 import type {
+  DefinicionNotificacionGasolinaIam,
   DefinicionPermisoIam,
   PoliticaCorporativaDef,
   RolIam,
@@ -41,6 +42,22 @@ export const DEFINICIONES_PERMISOS: readonly DefinicionPermisoIam[] = [
     descripcion: "Gestionar usuarios y permisos",
   },
 ] as const
+
+export const DEFINICIONES_NOTIFICACIONES_GASOLINA: readonly DefinicionNotificacionGasolinaIam[] =
+  [
+    {
+      id: "treasuryApprover",
+      etiqueta: "Tesorería gasolina (aprobar/rechazar)",
+      descripcion:
+        "Puede autorizar o rechazar cualquier solicitud pendiente de combustible.",
+    },
+    {
+      id: "dispersalNotify",
+      etiqueta: "Avisos de dispersión gasolina",
+      descripcion:
+        "Recibe notificaciones cuando hay solicitudes listas para dispersar (cola tesorería).",
+    },
+  ] as const
 
 export const POLITICAS_CORPORATIVAS: readonly PoliticaCorporativaDef[] = [
   {

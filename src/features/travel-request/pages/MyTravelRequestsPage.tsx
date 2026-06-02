@@ -238,7 +238,7 @@ export function MyTravelRequestsPage() {
                             className="h-8 cursor-pointer rounded-lg px-3 text-xs"
                             onClick={() =>
                               navigate(
-                                `/travel-request?solicitud=${solicitud.id}&viaje=${viaje.tripId}`
+                                `/travel-request?request=${solicitud.id}&trip=${viaje.tripId}`
                               )
                             }
                           >

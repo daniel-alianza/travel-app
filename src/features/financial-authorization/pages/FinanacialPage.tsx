@@ -10,7 +10,7 @@ import { TravelRequestBackground } from "@/features/travel-request/components/Tr
 
 export function FinanacialPage() {
   const navigate = useNavigate()
-  const { solicitudId } = useParams<{ solicitudId?: string }>()
+  const { requestId } = useParams<{ requestId?: string }>()
   const page = useFinancialAuthorizationPage()
 
   useEffect(() => {
@@ -18,28 +18,28 @@ export function FinanacialPage() {
       return
     }
 
-    if (solicitudId === undefined) {
+    if (requestId === undefined) {
       if (page.idSolicitudEnRevision !== null) {
         page.cerrarRevision()
       }
       return
     }
 
-    if (page.idSolicitudEnRevision === solicitudId) {
+    if (page.idSolicitudEnRevision === requestId) {
       return
     }
 
     const existeSolicitud = page.solicitudes.some(
-      (solicitud) => solicitud.id === solicitudId
+      (solicitud) => solicitud.id === requestId
     )
     if (!existeSolicitud) {
       navigate("/financial-authorization", { replace: true })
       return
     }
 
-    void page.abrirRevisionConFeedback(solicitudId)
+    void page.abrirRevisionConFeedback(requestId)
   }, [
-    solicitudId,
+    requestId,
     page.cargando,
     page.idSolicitudEnRevision,
     page.solicitudes,

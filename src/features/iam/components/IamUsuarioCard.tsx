@@ -3,6 +3,7 @@ import {
   AlertCircle,
   BookOpen,
   CheckCircle2,
+  Fuel,
   KeyRound,
   Loader2,
   Save,
@@ -17,6 +18,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import {
+  DEFINICIONES_NOTIFICACIONES_GASOLINA,
   DEFINICIONES_PERMISOS,
   POLITICAS_CORPORATIVAS,
   ROLES_IAM,
@@ -86,9 +88,19 @@ export type IamUsuarioCardProps = {
   actualizarUsuario: (
     id: string,
     parcial: Partial<
-      Omit<UsuarioIam, "id" | "permisos" | "permisosPorDefectoRol" | "aceptacionesPoliticas">
+      Omit<
+        UsuarioIam,
+        | "id"
+        | "permisos"
+        | "permisosPorDefectoRol"
+        | "aceptacionesPoliticas"
+        | "gasolinaTesoreriaAprobador"
+        | "gasolinaNotificacionDispersion"
+      >
     > & {
       permisos?: string[]
+      gasolinaTesoreriaAprobador?: boolean
+      gasolinaNotificacionDispersion?: boolean
     },
   ) => void
   alternarPermiso: (
@@ -505,6 +517,58 @@ export function IamUsuarioCard({
                   ) : null}
                 </div>
               </div>
+            )
+          })}
+        </div>
+      </div>
+
+      <div className="relative mt-4 rounded-xl border border-orange-500/25 bg-orange-500/[0.06] p-3 shadow-inner">
+        <div className="mb-3 flex items-center gap-2">
+          <Fuel className="size-4 text-orange-600 dark:text-orange-400" />
+          <span className="text-xs font-semibold uppercase tracking-wide text-foreground">
+            Gasolina — notificaciones y tesorería
+          </span>
+        </div>
+        <p className="mb-3 text-[11px] leading-relaxed text-muted-foreground">
+          Define quién puede autorizar como tesorería y quién recibe avisos de
+          dispersión. Los cambios se guardan con el botón Guardar.
+        </p>
+        <div className="grid gap-3">
+          {DEFINICIONES_NOTIFICACIONES_GASOLINA.map((def) => {
+            const marcado =
+              def.id === "treasuryApprover"
+                ? usuario.gasolinaTesoreriaAprobador
+                : usuario.gasolinaNotificacionDispersion
+            return (
+              <label
+                key={def.id}
+                className="flex items-start justify-between gap-3 rounded-lg border border-border/40 bg-background/50 px-3 py-2"
+              >
+                <span className="min-w-0">
+                  <span className="block text-xs font-medium text-foreground">
+                    {def.etiqueta}
+                  </span>
+                  <span className="block text-[11px] text-muted-foreground">
+                    {def.descripcion}
+                  </span>
+                </span>
+                <Switch
+                  checked={marcado}
+                  onCheckedChange={(valor) => {
+                    if (def.id === "treasuryApprover") {
+                      actualizarUsuario(usuario.id, {
+                        gasolinaTesoreriaAprobador: valor,
+                      })
+                    } else {
+                      actualizarUsuario(usuario.id, {
+                        gasolinaNotificacionDispersion: valor,
+                      })
+                    }
+                  }}
+                  className="shrink-0 cursor-pointer"
+                  aria-label={`${def.etiqueta} para ${nombreCompletoDesdePartes(usuario)}`}
+                />
+              </label>
             )
           })}
         </div>

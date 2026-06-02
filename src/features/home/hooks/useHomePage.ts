@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import {
   Banknote,
+  Car,
   ClipboardCheck,
   CreditCard,
   FilePlus,
@@ -10,6 +11,9 @@ import {
   Receipt,
 } from "lucide-react"
 
+import { showAppToast } from "@/components/app-toast"
+import { GASOLINA_MENU_OPTION_ID } from "@/features/home/constants/home-fuel-module-options"
+import type { HomeFuelModuleOption } from "@/features/home/interfaces/home-fuel-module-option.interface"
 import type { HomeMenuOption } from "../interfaces/home-menu-option.interface"
 import type { HomeMousePosition } from "../interfaces/home-mouse-position.interface"
 
@@ -18,7 +22,10 @@ interface UseHomePageReturn {
   hoveredCard: number | null
   mousePosition: HomeMousePosition
   menuOptions: HomeMenuOption[]
-  handleMenuNavigate: (href: string) => void
+  modalGasolinaAbierto: boolean
+  setModalGasolinaAbierto: (abierto: boolean) => void
+  handleMenuOptionSelect: (option: HomeMenuOption) => void
+  handleFuelModuleOptionSelect: (opcion: HomeFuelModuleOption) => void
   handleCardEnter: (id: number) => void
   handleCardLeave: () => void
 }
@@ -94,12 +101,23 @@ const menuOptions: HomeMenuOption[] = [
     delay: 400,
     href: "#",
   },
+  {
+    id: 8,
+    title: "Reserva de Autos",
+    description: "Gestiona reservas de vehículos corporativos",
+    icon: Car,
+    color: "from-indigo-500 to-indigo-600",
+    shadowColor: "shadow-indigo-500/25",
+    delay: 450,
+    href: "/car-reservation",
+  },
 ]
 
 export function useHomePage(): UseHomePageReturn {
   const navigate = useNavigate()
   const mounted = true
   const [hoveredCard, setHoveredCard] = useState<number | null>(null)
+  const [modalGasolinaAbierto, setModalGasolinaAbierto] = useState(false)
   const [mousePosition, setMousePosition] = useState<HomeMousePosition>({
     x: 0,
     y: 0,
@@ -113,10 +131,25 @@ export function useHomePage(): UseHomePageReturn {
     return () => window.removeEventListener("mousemove", handleMouseMove)
   }, [])
 
-  function handleMenuNavigate(href: string): void {
-    if (href !== "#") {
-      navigate(href)
+  function handleMenuOptionSelect(option: HomeMenuOption): void {
+    if (option.id === GASOLINA_MENU_OPTION_ID) {
+      setModalGasolinaAbierto(true)
+      return
     }
+    if (option.href !== "#") {
+      navigate(option.href)
+      return
+    }
+    showAppToast("Este módulo estará disponible próximamente.", "info")
+  }
+
+  function handleFuelModuleOptionSelect(opcion: HomeFuelModuleOption): void {
+    setModalGasolinaAbierto(false)
+    if (opcion.href) {
+      navigate(opcion.href)
+      return
+    }
+    showAppToast("Este módulo estará disponible próximamente.", "info")
   }
 
   function handleCardEnter(id: number): void {
@@ -132,7 +165,10 @@ export function useHomePage(): UseHomePageReturn {
     hoveredCard,
     mousePosition,
     menuOptions,
-    handleMenuNavigate,
+    modalGasolinaAbierto,
+    setModalGasolinaAbierto,
+    handleMenuOptionSelect,
+    handleFuelModuleOptionSelect,
     handleCardEnter,
     handleCardLeave,
   }

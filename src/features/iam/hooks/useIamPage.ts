@@ -17,6 +17,7 @@ import {
   fetchIamFilterCatalog,
   fetchIamUsers,
   putIamUserExtraPermissions,
+  putIamUserGasolineNotifications,
   putIamUsuarioContrasena,
   type IamFilterCatalogApi,
 } from "@/features/iam/services/iam-travel-api"
@@ -225,9 +226,19 @@ export function useIamPage(): IamUsePageResult {
   function actualizarUsuario(
     id: string,
     parcial: Partial<
-      Omit<UsuarioIam, "id" | "permisos" | "permisosPorDefectoRol" | "aceptacionesPoliticas">
+      Omit<
+        UsuarioIam,
+        | "id"
+        | "permisos"
+        | "permisosPorDefectoRol"
+        | "aceptacionesPoliticas"
+        | "gasolinaTesoreriaAprobador"
+        | "gasolinaNotificacionDispersion"
+      >
     > & {
       permisos?: string[]
+      gasolinaTesoreriaAprobador?: boolean
+      gasolinaNotificacionDispersion?: boolean
     },
   ): void {
     setUsuarios((prev) =>
@@ -334,9 +345,15 @@ export function useIamPage(): IamUsePageResult {
       const extras = usuario.permisos.filter(
         (p) => !usuario.permisosPorDefectoRol.includes(p),
       )
-      await putIamUserExtraPermissions(usuario.id, extras)
+      await Promise.all([
+        putIamUserExtraPermissions(usuario.id, extras),
+        putIamUserGasolineNotifications(usuario.id, {
+          treasuryApprover: usuario.gasolinaTesoreriaAprobador,
+          dispersalNotify: usuario.gasolinaNotificacionDispersion,
+        }),
+      ])
       showAppToast(
-        `Permisos guardados: ${nombreCompletoDesdePartes(usuario)}.`,
+        `Permisos y notificaciones de gasolina guardados: ${nombreCompletoDesdePartes(usuario)}.`,
         "success",
       )
     } catch (error) {

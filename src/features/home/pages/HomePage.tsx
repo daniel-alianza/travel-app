@@ -1,6 +1,7 @@
 import { AppFooter } from "@/components/app-footer"
 import { AppHeader } from "@/components/app-header"
 import { HomeBackground } from "@/features/home/components/HomeBackground"
+import { HomeFuelModuleModal } from "@/features/home/components/HomeFuelModuleModal"
 import { HomeHeroSection } from "@/features/home/components/HomeHeroSection"
 import { HomeMenuGrid } from "@/features/home/components/HomeMenuGrid"
 import { useHomePage } from "@/features/home/hooks/useHomePage"
@@ -11,7 +12,10 @@ export function HomePage() {
     hoveredCard,
     mousePosition,
     menuOptions,
-    handleMenuNavigate,
+    modalGasolinaAbierto,
+    setModalGasolinaAbierto,
+    handleMenuOptionSelect,
+    handleFuelModuleOptionSelect,
     handleCardEnter,
     handleCardLeave,
   } = useHomePage()
@@ -30,12 +34,18 @@ export function HomePage() {
             mounted={mounted}
             hoveredCard={hoveredCard}
             menuOptions={menuOptions}
-            onMenuNavigate={handleMenuNavigate}
+            onMenuOptionSelect={handleMenuOptionSelect}
             onCardEnter={handleCardEnter}
             onCardLeave={handleCardLeave}
           />
         </div>
       </main>
+
+      <HomeFuelModuleModal
+        abierto={modalGasolinaAbierto}
+        onAbiertoChange={setModalGasolinaAbierto}
+        onSeleccionarOpcion={handleFuelModuleOptionSelect}
+      />
 
       <AppFooter mounted={mounted} />
     </div>

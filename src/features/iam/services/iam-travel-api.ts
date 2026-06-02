@@ -19,6 +19,8 @@ export type IamUserApiRow = {
   activo: boolean
   permisos: readonly string[]
   permisosPorDefectoRol: readonly string[]
+  gasolinaTesoreriaAprobador: boolean
+  gasolinaNotificacionDispersion: boolean
 }
 
 type ApiEnvelope<T> = {
@@ -45,6 +47,8 @@ export function mapearFilaApiAUsuarioIam(fila: IamUserApiRow): UsuarioIam {
     permisos: [...fila.permisos],
     permisosPorDefectoRol: [...fila.permisosPorDefectoRol],
     aceptacionesPoliticas: semillaAceptacionesPoliticas(false, null),
+    gasolinaTesoreriaAprobador: fila.gasolinaTesoreriaAprobador,
+    gasolinaNotificacionDispersion: fila.gasolinaNotificacionDispersion,
   }
 }
 
@@ -84,6 +88,19 @@ export async function putIamUsuarioContrasena(
   await travelApi.put<ApiEnvelope<null>>(
     `/iam/users/${idUsuario}/password`,
     { newPassword: nuevaContrasena },
+  )
+}
+
+export async function putIamUserGasolineNotifications(
+  idUsuario: string,
+  payload: {
+    treasuryApprover: boolean
+    dispersalNotify: boolean
+  },
+): Promise<void> {
+  await travelApi.put<ApiEnvelope<null>>(
+    `/iam/users/${idUsuario}/gasoline-notifications`,
+    payload,
   )
 }
 

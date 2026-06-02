@@ -8,6 +8,7 @@ type AuthStore = {
   nombreResponsable: string
   correoSesion: string
   userId: number | null
+  roleId: number | null
   rolSesion: string
   permisosSesion: string[]
   /** Solo en memoria (no persistido): respaldo si la cookie cross-site no viaja */
@@ -15,6 +16,7 @@ type AuthStore = {
   login: (entrada: {
     correo: string
     userId: number
+    roleId?: number
     rol: string
     permisos?: readonly string[]
     accessToken?: string
@@ -29,6 +31,7 @@ export const useAuthStore = create<AuthStore>()(
       nombreResponsable: "",
       correoSesion: "",
       userId: null,
+      roleId: null,
       rolSesion: "",
       permisosSesion: [],
       accessTokenSesion: null,
@@ -61,6 +64,10 @@ export const useAuthStore = create<AuthStore>()(
           nombreResponsable: nombreMostradoDesdeCorreo(normalizado),
           correoSesion: normalizado.toLowerCase(),
           userId: entrada.userId,
+          roleId:
+            typeof entrada.roleId === "number" && Number.isFinite(entrada.roleId)
+              ? entrada.roleId
+              : null,
           rolSesion: entrada.rol.trim(),
           permisosSesion: permisos,
           accessTokenSesion: accessToken,
@@ -72,6 +79,7 @@ export const useAuthStore = create<AuthStore>()(
           nombreResponsable: "",
           correoSesion: "",
           userId: null,
+          roleId: null,
           rolSesion: "",
           permisosSesion: [],
           accessTokenSesion: null,
@@ -86,6 +94,7 @@ export const useAuthStore = create<AuthStore>()(
         nombreResponsable: state.nombreResponsable,
         correoSesion: state.correoSesion,
         userId: state.userId,
+        roleId: state.roleId,
         rolSesion: state.rolSesion,
         permisosSesion: state.permisosSesion,
       }),

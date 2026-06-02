@@ -13,6 +13,12 @@ import { MyTravelRequestsPage } from "@/features/travel-request/pages/MyTravelRe
 import { RequestPage } from "@/features/travel-request/pages/RequestPage"
 import { ProfilePage } from "@/features/profile/pages/ProfilePage"
 import { IamPage } from "@/features/iam/pages/IamPage"
+import { GasolineAuthorizationsPage } from "@/features/gasoline/pages/GasolineAuthorizationsPage"
+import { GasolineDispersionPage } from "@/features/gasoline/pages/GasolineDispersionPage"
+import { GasolinePerformancePage } from "@/features/gasoline/pages/GasolinePerformancePage"
+import { GasolineReportPage } from "@/features/gasoline/pages/GasolineReportPage"
+import { GasolineRequestPage } from "@/features/gasoline/pages/GasolineRequestPage"
+import { CarReservationPage } from "@/features/car-reservation/pages/CarReservationPage"
 import { ProtectedRouter } from "@/router/ProtectedRouter"
 
 export function AppRouter() {
@@ -27,15 +33,31 @@ export function AppRouter() {
           element={<Navigate to="/settings/users-permissions" replace />}
         />
         <Route path="/settings/users-permissions" element={<IamPage />} />
+        <Route path="/gasoline/request" element={<GasolineRequestPage />} />
+        <Route
+          path="/gasoline/authorizations"
+          element={<GasolineAuthorizationsPage />}
+        />
+        <Route
+          path="/gasoline/dispersion"
+          element={<GasolineDispersionPage />}
+        />
+        <Route path="/gasoline/report" element={<GasolineReportPage />} />
+        <Route
+          path="/gasoline/performance"
+          element={<GasolinePerformancePage />}
+        />
+        <Route path="/car-reservation" element={<CarReservationPage />} />
         <Route path="/travel-request" element={<RequestPage />} />
         <Route
           path="/travel-request/mis-solicitudes"
-          element={<Navigate to="/travel-request/solicitudes" replace />}
+          element={<Navigate to="/travel-request/requests" replace />}
         />
         <Route
           path="/travel-request/solicitudes"
-          element={<MyTravelRequestsPage />}
+          element={<Navigate to="/travel-request/requests" replace />}
         />
+        <Route path="/travel-request/requests" element={<MyTravelRequestsPage />} />
         <Route path="/travel-approval" element={<ApprovalPage />} />
         <Route path="/dispersion-travel" element={<DispersionPage />} />
         <Route path="/card-assignment" element={<CardPage />} />
@@ -50,7 +72,7 @@ export function AppRouter() {
           element={<Navigate to="/menu-accounting/reconciliation-checks" replace />}
         />
         <Route path="/financial-authorization" element={<FinanacialPage />} />
-        <Route path="/financial-authorization/:solicitudId" element={<FinanacialPage />} />
+        <Route path="/financial-authorization/:requestId" element={<FinanacialPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

@@ -74,7 +74,9 @@ export function TravelRequestSelectDropdown({
                   : "border-border hover:border-primary/50 hover:shadow-md"
           }`}
         >
-          <span className={value ? "text-foreground" : "text-muted-foreground"}>
+          <span
+            className={`min-w-0 flex-1 break-all font-mono text-sm ${value ? "text-foreground" : "text-muted-foreground"}`}
+          >
             {value || placeholder}
           </span>
           {showChevron ? (
@@ -107,7 +109,11 @@ export function TravelRequestSelectDropdown({
                 }`}
               >
                 {value === option && <Check className="h-4 w-4 text-primary" />}
-                <span className={value === option ? "" : "ml-7"}>{option}</span>
+                <span
+                  className={`min-w-0 flex-1 break-all font-mono text-sm ${value === option ? "" : "ml-7"}`}
+                >
+                  {option}
+                </span>
               </button>
             ))}
           </div>

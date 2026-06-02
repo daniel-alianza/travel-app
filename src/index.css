@@ -129,6 +129,26 @@
   html {
     @apply font-sans;
   }
+
+  html.car-reservation-layout,
+  html.car-reservation-layout body,
+  html.car-reservation-layout #root {
+    height: 100dvh;
+    max-height: 100dvh;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  html.car-reservation-layout #root {
+    display: flex;
+    flex-direction: column;
+  }
+
+  html.car-reservation-layout .car-reservation-page {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+  }
 }
 
 @keyframes float {

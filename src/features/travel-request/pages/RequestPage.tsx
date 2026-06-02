@@ -26,7 +26,7 @@ export function RequestPage() {
             type="button"
             variant="outline"
             title="Ver solicitudes enviadas y resolución por viaje"
-            onClick={() => navigate("/travel-request/solicitudes")}
+            onClick={() => navigate("/travel-request/requests")}
             className="h-9 max-w-[10rem] shrink cursor-pointer rounded-2xl px-2.5 text-xs transition-all duration-500 hover:bg-primary/10 sm:h-10 sm:max-w-none sm:px-4 sm:text-sm"
           >
             <ClipboardList className="mr-1.5 h-4 w-4 shrink-0 sm:mr-2 sm:h-4 sm:w-4" />

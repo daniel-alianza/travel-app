@@ -19,6 +19,7 @@ interface UseLoginPageReturn {
 interface LoginApiResponse {
   data: {
     userId: number
+    roleId: number
     accessToken: string
     expiresInSeconds: number
     role: string
@@ -77,6 +78,7 @@ export function useLoginPage(): UseLoginPageReturn {
       login({
         correo: correoNormalizado,
         userId: response.data.data.userId,
+        roleId: response.data.data.roleId,
         rol: response.data.data.role,
         permisos: response.data.data.permisos ?? [],
         accessToken: response.data.data.accessToken,

@@ -1,18 +1,19 @@
 import { Dialog } from "radix-ui"
 import { ChevronRight, Fuel, X } from "lucide-react"
 
-import { HOME_FUEL_MODULE_OPTIONS } from "@/features/home/constants/home-fuel-module-options"
 import type { HomeFuelModuleOption } from "@/features/home/interfaces/home-fuel-module-option.interface"
 import { cn } from "@/lib/utils"
 
 interface HomeFuelModuleModalProps {
   abierto: boolean
+  opciones: readonly HomeFuelModuleOption[]
   onAbiertoChange: (abierto: boolean) => void
   onSeleccionarOpcion: (opcion: HomeFuelModuleOption) => void
 }
 
 export function HomeFuelModuleModal({
   abierto,
+  opciones,
   onAbiertoChange,
   onSeleccionarOpcion,
 }: HomeFuelModuleModalProps) {
@@ -67,7 +68,7 @@ export function HomeFuelModuleModal({
 
           <div className="overflow-y-auto px-4 py-4 sm:px-5 sm:py-5">
             <ul className="grid grid-cols-1 gap-2 sm:gap-2.5">
-              {HOME_FUEL_MODULE_OPTIONS.map((opcion) => (
+              {opciones.map((opcion) => (
                 <li key={opcion.id}>
                   <button
                     type="button"

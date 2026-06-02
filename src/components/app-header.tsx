@@ -15,9 +15,8 @@ import { DropdownMenu } from "radix-ui"
 
 import { Button } from "@/components/ui/button"
 import { GRUPO_FG_LOGO_URL } from "@/components/app-brand"
-import { ROL_SUPER_ADMINISTRADOR } from "@/features/auth/constants/auth-roles"
-import { PERMISO_IAM_USUARIOS } from "@/features/auth/constants/auth-permissions"
 import { useAuthStore } from "@/features/auth/store/authStore"
+import { puedeAccederRuta } from "@/features/auth/utils/auth-route-access"
 import { useDaysUntilMonthEndQuery } from "@/hooks/useDaysUntilMonthEndQuery"
 
 type AppHeaderProps = {
@@ -43,9 +42,11 @@ export function AppHeader({
   const logout = useAuthStore((state) => state.logout)
   const rolSesion = useAuthStore((state) => state.rolSesion ?? "")
   const permisosSesion = useAuthStore((state) => state.permisosSesion ?? [])
-  const puedeVerConfiguracion =
-    rolSesion === ROL_SUPER_ADMINISTRADOR ||
-    permisosSesion.includes(PERMISO_IAM_USUARIOS)
+  const puedeVerConfiguracion = puedeAccederRuta(
+    "/settings/users-permissions",
+    permisosSesion,
+    rolSesion,
+  )
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [mobileConfigSubmenuOpen, setMobileConfigSubmenuOpen] =
     useState<boolean>(false)

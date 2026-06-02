@@ -10,6 +10,7 @@ import {
   esRolElegibleJefeDirecto,
   nombreCompletoDesdePartes,
   ordenarPermisosSegunDefinicionesIam,
+  resolverManagerUserIdParaApi,
 } from "@/features/iam/hooks/iam-page-helpers"
 import type { IamUsePageResult } from "@/features/iam/interfaces/iam-use-page-result.interface"
 import type { OpcionFiltroIam, UsuarioIam } from "@/features/iam/interfaces/iam-domain.interface"
@@ -18,6 +19,7 @@ import {
   fetchIamUsers,
   putIamUserExtraPermissions,
   putIamUserGasolineNotifications,
+  putIamUserProfile,
   putIamUsuarioContrasena,
   type IamFilterCatalogApi,
 } from "@/features/iam/services/iam-travel-api"
@@ -342,9 +344,32 @@ export function useIamPage(): IamUsePageResult {
   async function guardarUsuario(usuario: UsuarioIam): Promise<void> {
     setGuardandoId(usuario.id)
     try {
-      const extras = usuario.permisos.filter(
-        (p) => !usuario.permisosPorDefectoRol.includes(p),
-      )
+      const nombreCompleto = nombreCompletoDesdePartes(usuario)
+      await putIamUserProfile(usuario.id, {
+        name: nombreCompleto,
+        email: usuario.correoElectronico.trim().toLowerCase(),
+        isActive: usuario.activo,
+        roleLabel: usuario.rol,
+        areaName: usuario.area,
+        branchName: usuario.sucursal,
+        managerUserId: resolverManagerUserIdParaApi(
+          usuario,
+          candidatosJefeDirecto,
+        ),
+      })
+
+      let lista = await fetchIamUsers({
+        search: textoBusquedaRef.current.trim(),
+      })
+      const usuarioTrasPerfil = lista.find((u) => u.id === usuario.id)
+      const permisosUi =
+        usuarioTrasPerfil !== undefined ? usuario.permisos : usuario.permisos
+      const porDefectoRol =
+        usuarioTrasPerfil !== undefined
+          ? usuarioTrasPerfil.permisosPorDefectoRol
+          : usuario.permisosPorDefectoRol
+      const extras = permisosUi.filter((p) => !porDefectoRol.includes(p))
+
       await Promise.all([
         putIamUserExtraPermissions(usuario.id, extras),
         putIamUserGasolineNotifications(usuario.id, {
@@ -352,12 +377,17 @@ export function useIamPage(): IamUsePageResult {
           dispersalNotify: usuario.gasolinaNotificacionDispersion,
         }),
       ])
+
+      lista = await fetchIamUsers({
+        search: textoBusquedaRef.current.trim(),
+      })
+      setUsuarios(lista)
       showAppToast(
-        `Permisos y notificaciones de gasolina guardados: ${nombreCompletoDesdePartes(usuario)}.`,
+        `Datos guardados correctamente: ${nombreCompleto}.`,
         "success",
       )
     } catch (error) {
-      let mensaje = "No se pudieron guardar los permisos. Intenta de nuevo."
+      let mensaje = "No se pudieron guardar los cambios. Intenta de nuevo."
       if (axios.isAxiosError(error)) {
         const cuerpo = error.response?.data as { message?: string | string[] } | undefined
         const raw = cuerpo?.message

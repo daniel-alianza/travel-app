@@ -51,6 +51,25 @@ export function estadoLineaCoincidenciaContrasena(
   return "verde"
 }
 
+export function resolverManagerUserIdParaApi(
+  usuario: UsuarioIam,
+  candidatosJefeDirecto: readonly UsuarioIam[],
+): number | null {
+  const candidatos = candidatosJefeDirecto.filter((c) => c.id !== usuario.id)
+  const valorSelect = resolverValorSelectJefeDirecto(
+    usuario.jefeDirecto,
+    candidatos,
+  )
+  if (valorSelect.length === 0) {
+    return null
+  }
+  const id = Number(valorSelect)
+  if (!Number.isFinite(id) || id <= 0) {
+    return null
+  }
+  return id
+}
+
 export function resolverValorSelectJefeDirecto(
   jefeDirecto: string,
   candidatos: readonly UsuarioIam[],

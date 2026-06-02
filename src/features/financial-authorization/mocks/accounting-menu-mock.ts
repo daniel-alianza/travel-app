@@ -57,6 +57,7 @@ export function obtenerKpisMesMock(companyId: number): AccountingMonthKpisMock {
   const semilla = KPI_SEMILLA_POR_EMPRESA[companyId] ?? KPI_SEMILLA_POR_EMPRESA[1]
   return {
     companyId,
+    companyName: obtenerNombreEmpresaMock(companyId),
     etiquetaMes: etiquetaMesActual(),
     ...semilla,
   }
@@ -71,6 +72,7 @@ export function obtenerTotalesConsolidadoMock(): AccountingMonthKpisMock {
   const filas = EMPRESAS_MOCK_CONTABILIDAD.map((e) => obtenerKpisMesMock(e.id))
   return {
     companyId: 0,
+    companyName: "Total grupo",
     etiquetaMes: etiquetaMesActual(),
     totalDispersadoMes: filas.reduce((a, f) => a + f.totalDispersadoMes, 0),
     totalComprobadoMes: filas.reduce((a, f) => a + f.totalComprobadoMes, 0),

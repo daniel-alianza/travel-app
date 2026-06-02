@@ -31,6 +31,8 @@ export function TravelRequestForm({ model }: TravelRequestFormProps) {
     viaticCards,
   } = model
   const showEmpresa = trips.length === 1
+  const sinTarjetaViatico =
+    !esModoCorreccionViaje && viaticCards.length === 0
 
   const [edicionViajePasado, setEdicionViajePasado] = useState<
     Record<number, boolean>
@@ -102,22 +104,36 @@ export function TravelRequestForm({ model }: TravelRequestFormProps) {
       className="space-y-8"
       aria-busy={ocupado}
     >
+      {showEmpresa ? (
+        <div className="transition-all duration-700 ease-out">
+          <TravelRequestCompanySection model={model} />
+        </div>
+      ) : (
+        <div
+          key="empresa-compacta"
+          className="transition-all duration-700 ease-out"
+        >
+          <TravelRequestCompanyCompactBanner model={model} />
+        </div>
+      )}
+
       <fieldset
-        disabled={ocupado}
-        className="min-w-0 space-y-8 border-0 p-0 disabled:pointer-events-none disabled:opacity-[0.68]"
-      >
-        {showEmpresa ? (
-          <div className="transition-all duration-700 ease-out">
-            <TravelRequestCompanySection model={model} />
-          </div>
-        ) : (
-          <div
-            key="empresa-compacta"
-            className="transition-all duration-700 ease-out"
-          >
-            <TravelRequestCompanyCompactBanner model={model} />
-          </div>
+        disabled={ocupado || sinTarjetaViatico}
+        aria-disabled={sinTarjetaViatico}
+        className={cn(
+          "min-w-0 space-y-8 border-0 p-0",
+          (ocupado || sinTarjetaViatico) &&
+            "pointer-events-none opacity-[0.68]"
         )}
+      >
+        {sinTarjetaViatico ? (
+          <p
+            className="rounded-2xl border border-amber-500/35 bg-amber-500/10 px-4 py-3 text-center text-sm text-amber-950 dark:text-amber-100"
+            role="status"
+          >
+            Asigna una tarjeta viático para habilitar el resto del formulario.
+          </p>
+        ) : null}
 
         {trips.map((_, tripIndex) => {
           const numeroViajeEnTitulo =
@@ -284,9 +300,7 @@ export function TravelRequestForm({ model }: TravelRequestFormProps) {
         >
           <Button
             type="submit"
-            disabled={
-              ocupado || (!esModoCorreccionViaje && viaticCards.length === 0)
-            }
+            disabled={ocupado || sinTarjetaViatico}
             className="group relative h-14 cursor-pointer overflow-hidden rounded-2xl bg-gradient-to-r from-primary to-primary/90 px-8 text-base font-medium text-primary-foreground shadow-lg shadow-primary/25 transition-all duration-500 hover:scale-105 hover:from-primary/90 hover:to-primary hover:shadow-xl hover:shadow-primary/30 disabled:opacity-70 disabled:hover:scale-100"
           >
             <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-1000 group-hover:translate-x-full" />

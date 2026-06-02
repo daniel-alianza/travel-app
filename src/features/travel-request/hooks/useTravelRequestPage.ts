@@ -3,6 +3,7 @@ import { AxiosError } from "axios"
 import { useNavigate, useSearchParams } from "react-router-dom"
 
 import { showAppToast } from "@/components/app-toast"
+import { useAuthStore } from "@/features/auth/store/authStore"
 import type { TravelRequestGastos } from "../interfaces/travel-request-gastos.interface"
 import type { TravelRequestMousePosition } from "../interfaces/travel-request-mouse-position.interface"
 import type { TravelRequestPageModel } from "../interfaces/travel-request-page-model.interface"
@@ -56,7 +57,7 @@ type TravelRequestApiErrorResponse = {
 }
 
 export function useTravelRequestPage(): TravelRequestPageModel {
-  const AUTHENTICATED_USER_ID = 1
+  const userIdSesion = useAuthStore((state) => state.userId)
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const mounted = true
@@ -274,6 +275,11 @@ export function useTravelRequestPage(): TravelRequestPageModel {
   }, [])
 
   useEffect(() => {
+    setFuelCards([])
+    setFuelCardsLoaded(false)
+  }, [userIdSesion])
+
+  useEffect(() => {
     if (selectedAreaId === null) {
       return
     }
@@ -305,11 +311,15 @@ export function useTravelRequestPage(): TravelRequestPageModel {
   }, [])
 
   useEffect(() => {
+    if (userIdSesion === null) {
+      return
+    }
+
     let isMounted = true
 
     async function loadFormData(): Promise<void> {
       try {
-        const formData = await fetchTravelRequestFormData(AUTHENTICATED_USER_ID)
+        const formData = await fetchTravelRequestFormData(userIdSesion)
         if (!isMounted) {
           return
         }
@@ -337,9 +347,13 @@ export function useTravelRequestPage(): TravelRequestPageModel {
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [userIdSesion])
 
   useEffect(() => {
+    if (userIdSesion === null) {
+      return
+    }
+
     const solicitudParam =
       searchParams.get("request") ?? searchParams.get("solicitud")
     const viajeParam = searchParams.get("trip") ?? searchParams.get("viaje")
@@ -359,7 +373,7 @@ export function useTravelRequestPage(): TravelRequestPageModel {
       try {
         const detalle = await fetchTravelRequestDetalleParaUsuario(
           solicitudId,
-          AUTHENTICATED_USER_ID
+          userIdSesion
         )
         if (cancelado) {
           return
@@ -378,9 +392,7 @@ export function useTravelRequestPage(): TravelRequestPageModel {
         }
 
         try {
-          const fuelCardsResponse = await fetchUserFuelCards(
-            AUTHENTICATED_USER_ID
-          )
+          const fuelCardsResponse = await fetchUserFuelCards(userIdSesion)
           if (!cancelado) {
             setFuelCards(fuelCardsResponse.fuelCards)
             setFuelCardsLoaded(true)
@@ -423,7 +435,7 @@ export function useTravelRequestPage(): TravelRequestPageModel {
     return () => {
       cancelado = true
     }
-  }, [searchParams, navigate])
+  }, [searchParams, navigate, userIdSesion])
 
   function tripSoloLectura(tripIndex: number): boolean {
     if (viajeCorreccionId === null) {
@@ -681,12 +693,12 @@ export function useTravelRequestPage(): TravelRequestPageModel {
   }
 
   async function loadFuelCards(): Promise<void> {
-    if (fuelCardsLoaded) {
+    if (fuelCardsLoaded || userIdSesion === null) {
       return
     }
 
     try {
-      const fuelCardsResponse = await fetchUserFuelCards(AUTHENTICATED_USER_ID)
+      const fuelCardsResponse = await fetchUserFuelCards(userIdSesion)
       setFuelCards(fuelCardsResponse.fuelCards)
       setFuelCardsLoaded(true)
     } catch {
@@ -695,6 +707,10 @@ export function useTravelRequestPage(): TravelRequestPageModel {
   }
 
   async function handleSubmit(): Promise<void> {
+    if (userIdSesion === null) {
+      showAppToast("No hay sesión activa. Inicia sesión de nuevo.", "error")
+      return
+    }
     if (ocupado) {
       return
     }
@@ -728,7 +744,7 @@ export function useTravelRequestPage(): TravelRequestPageModel {
       let tarjetasCombustible = fuelCards
       if (trip.necesitaGasolina && !fuelCardsLoaded) {
         try {
-          const respuesta = await fetchUserFuelCards(AUTHENTICATED_USER_ID)
+          const respuesta = await fetchUserFuelCards(userIdSesion)
           tarjetasCombustible = respuesta.fuelCards
           setFuelCards(respuesta.fuelCards)
           setFuelCardsLoaded(true)
@@ -757,7 +773,7 @@ export function useTravelRequestPage(): TravelRequestPageModel {
       try {
         const tripPayload = buildTripPayloadForApi(trip, tarjetasCombustible)
         await correctRejectedTravelTrip(viajeCorreccionId, {
-          userId: AUTHENTICATED_USER_ID,
+          userId: userIdSesion,
           trip: tripPayload,
         })
         showAppToast("Viaje corregido y reenviado a revisión.", "success")
@@ -825,7 +841,7 @@ export function useTravelRequestPage(): TravelRequestPageModel {
     const haySolicitudGasolina = trips.some((t) => t.necesitaGasolina)
     if (haySolicitudGasolina && !fuelCardsLoaded) {
       try {
-        const respuesta = await fetchUserFuelCards(AUTHENTICATED_USER_ID)
+        const respuesta = await fetchUserFuelCards(userIdSesion)
         tarjetasCombustible = respuesta.fuelCards
         setFuelCards(respuesta.fuelCards)
         setFuelCardsLoaded(true)
@@ -862,7 +878,7 @@ export function useTravelRequestPage(): TravelRequestPageModel {
     setOcupado(true)
     try {
       const payload = {
-        userId: AUTHENTICATED_USER_ID,
+        userId: userIdSesion,
         companyId,
         branchId,
         areaId,

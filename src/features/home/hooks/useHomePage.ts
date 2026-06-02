@@ -1,18 +1,17 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import {
-  Banknote,
-  Car,
-  ClipboardCheck,
-  CreditCard,
-  FilePlus,
-  FileText,
-  Fuel,
-  Receipt,
-} from "lucide-react"
 
 import { showAppToast } from "@/components/app-toast"
-import { GASOLINA_MENU_OPTION_ID } from "@/features/home/constants/home-fuel-module-options"
+import { useAuthStore } from "@/features/auth/store/authStore"
+import {
+  filtrarRutasPorPermiso,
+  puedeAccederRuta,
+} from "@/features/auth/utils/auth-route-access"
+import {
+  GASOLINA_MENU_OPTION_ID,
+  HOME_FUEL_MODULE_OPTIONS,
+} from "@/features/home/constants/home-fuel-module-options"
+import { HOME_MENU_OPTIONS } from "@/features/home/constants/home-menu-options"
 import type { HomeFuelModuleOption } from "@/features/home/interfaces/home-fuel-module-option.interface"
 import type { HomeMenuOption } from "../interfaces/home-menu-option.interface"
 import type { HomeMousePosition } from "../interfaces/home-mouse-position.interface"
@@ -22,6 +21,7 @@ interface UseHomePageReturn {
   hoveredCard: number | null
   mousePosition: HomeMousePosition
   menuOptions: HomeMenuOption[]
+  opcionesGasolina: HomeFuelModuleOption[]
   modalGasolinaAbierto: boolean
   setModalGasolinaAbierto: (abierto: boolean) => void
   handleMenuOptionSelect: (option: HomeMenuOption) => void
@@ -30,91 +30,10 @@ interface UseHomePageReturn {
   handleCardLeave: () => void
 }
 
-const menuOptions: HomeMenuOption[] = [
-  {
-    id: 1,
-    title: "Crear Solicitud",
-    description: "Genera una nueva solicitud de viáticos",
-    icon: FilePlus,
-    color: "from-blue-500 to-blue-600",
-    shadowColor: "shadow-blue-500/25",
-    delay: 100,
-    href: "/travel-request",
-  },
-  {
-    id: 2,
-    title: "Solicitudes de Viáticos",
-    description: "Consulta el estado de tus solicitudes",
-    icon: FileText,
-    color: "from-emerald-500 to-emerald-600",
-    shadowColor: "shadow-emerald-500/25",
-    delay: 150,
-    href: "/travel-approval",
-  },
-  {
-    id: 3,
-    title: "Dispersión de Viáticos",
-    description: "Gestiona la distribución de fondos",
-    icon: Banknote,
-    color: "from-amber-500 to-amber-600",
-    shadowColor: "shadow-amber-500/25",
-    delay: 200,
-    href: "/dispersion-travel",
-  },
-  {
-    id: 4,
-    title: "Autorización Contable",
-    description: "Aprueba movimientos contables",
-    icon: ClipboardCheck,
-    color: "from-violet-500 to-violet-600",
-    shadowColor: "shadow-violet-500/25",
-    delay: 250,
-    href: "/menu-accounting",
-  },
-  {
-    id: 5,
-    title: "Asignación de Tarjeta",
-    description: "Administra tarjetas corporativas",
-    icon: CreditCard,
-    color: "from-rose-500 to-rose-600",
-    shadowColor: "shadow-rose-500/25",
-    delay: 300,
-    href: "/card-assignment",
-  },
-  {
-    id: 6,
-    title: "Comprobación de Viáticos",
-    description: "Verifica y comprueba gastos",
-    icon: Receipt,
-    color: "from-cyan-500 to-cyan-600",
-    shadowColor: "shadow-cyan-500/25",
-    delay: 350,
-    href: "/travel-expenses",
-  },
-  {
-    id: 7,
-    title: "Módulo de Gasolina",
-    description: "Control de consumo de combustible",
-    icon: Fuel,
-    color: "from-orange-500 to-orange-600",
-    shadowColor: "shadow-orange-500/25",
-    delay: 400,
-    href: "#",
-  },
-  {
-    id: 8,
-    title: "Reserva de Autos",
-    description: "Gestiona reservas de vehículos corporativos",
-    icon: Car,
-    color: "from-indigo-500 to-indigo-600",
-    shadowColor: "shadow-indigo-500/25",
-    delay: 450,
-    href: "/car-reservation",
-  },
-]
-
 export function useHomePage(): UseHomePageReturn {
   const navigate = useNavigate()
+  const permisosSesion = useAuthStore((state) => state.permisosSesion ?? [])
+  const rolSesion = useAuthStore((state) => state.rolSesion ?? "")
   const mounted = true
   const [hoveredCard, setHoveredCard] = useState<number | null>(null)
   const [modalGasolinaAbierto, setModalGasolinaAbierto] = useState(false)
@@ -122,6 +41,33 @@ export function useHomePage(): UseHomePageReturn {
     x: 0,
     y: 0,
   })
+
+  const opcionesGasolina = useMemo(() => {
+    return HOME_FUEL_MODULE_OPTIONS.filter((opcion) => {
+      if (opcion.href === null || opcion.href.length === 0) {
+        return false
+      }
+      return puedeAccederRuta(opcion.href, permisosSesion, rolSesion)
+    })
+  }, [permisosSesion, rolSesion])
+
+  const menuOptions = useMemo(() => {
+    const conRuta = filtrarRutasPorPermiso(
+      HOME_MENU_OPTIONS,
+      permisosSesion,
+      rolSesion,
+    )
+    if (opcionesGasolina.length === 0) {
+      return conRuta
+    }
+    const gasolina = HOME_MENU_OPTIONS.find(
+      (opcion) => opcion.id === GASOLINA_MENU_OPTION_ID,
+    )
+    if (gasolina === undefined) {
+      return conRuta
+    }
+    return [...conRuta, gasolina]
+  }, [permisosSesion, rolSesion, opcionesGasolina.length])
 
   useEffect(() => {
     function handleMouseMove(event: MouseEvent): void {
@@ -133,6 +79,10 @@ export function useHomePage(): UseHomePageReturn {
 
   function handleMenuOptionSelect(option: HomeMenuOption): void {
     if (option.id === GASOLINA_MENU_OPTION_ID) {
+      if (opcionesGasolina.length === 0) {
+        showAppToast("No tienes permisos para el módulo de gasolina.", "error")
+        return
+      }
       setModalGasolinaAbierto(true)
       return
     }
@@ -165,6 +115,7 @@ export function useHomePage(): UseHomePageReturn {
     hoveredCard,
     mousePosition,
     menuOptions,
+    opcionesGasolina,
     modalGasolinaAbierto,
     setModalGasolinaAbierto,
     handleMenuOptionSelect,

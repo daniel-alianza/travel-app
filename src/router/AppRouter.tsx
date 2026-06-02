@@ -6,6 +6,7 @@ import { CardPage } from "@/features/card-assignment/page/CardPage"
 import { DispersionPage } from "@/features/dispersion-travel/pages/DispersionPage"
 import { ExpensePage } from "@/features/travel-expenses/pages/ExpensePage"
 import { FinanacialPage } from "@/features/financial-authorization/pages/FinanacialPage"
+import { AccountingExpensesSummaryPage } from "@/features/financial-authorization/pages/AccountingExpensesSummaryPage"
 import { MenuAccountingPage } from "@/features/financial-authorization/pages/MenuAccountingPage"
 import { TravelReconciliationPage } from "@/features/financial-authorization/pages/TravelReconciliationPage"
 import { ApprovalPage } from "@/features/travel-approval/pages/ApprovalPage"
@@ -19,6 +20,7 @@ import { GasolinePerformancePage } from "@/features/gasoline/pages/GasolinePerfo
 import { GasolineReportPage } from "@/features/gasoline/pages/GasolineReportPage"
 import { GasolineRequestPage } from "@/features/gasoline/pages/GasolineRequestPage"
 import { CarReservationPage } from "@/features/car-reservation/pages/CarReservationPage"
+import { PermissionOutlet } from "@/router/PermissionOutlet"
 import { ProtectedRouter } from "@/router/ProtectedRouter"
 
 export function AppRouter() {
@@ -26,6 +28,7 @@ export function AppRouter() {
     <Routes>
       <Route path="/" element={<LoginPage />} />
       <Route element={<ProtectedRouter />}>
+        <Route element={<PermissionOutlet />}>
         <Route path="/home" element={<HomePage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route
@@ -64,6 +67,10 @@ export function AppRouter() {
         <Route path="/travel-expenses" element={<ExpensePage />} />
         <Route path="/menu-accounting" element={<MenuAccountingPage />} />
         <Route
+          path="/menu-accounting/expenses-summary"
+          element={<AccountingExpensesSummaryPage />}
+        />
+        <Route
           path="/menu-accounting/reconciliation-checks"
           element={<TravelReconciliationPage />}
         />
@@ -73,6 +80,7 @@ export function AppRouter() {
         />
         <Route path="/financial-authorization" element={<FinanacialPage />} />
         <Route path="/financial-authorization/:requestId" element={<FinanacialPage />} />
+        </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

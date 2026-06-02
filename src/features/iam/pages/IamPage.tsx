@@ -9,9 +9,8 @@ import { IamUsersEmptyState } from "@/features/iam/components/IamUsersEmptyState
 import { IamUsersErrorState } from "@/features/iam/components/IamUsersErrorState"
 import { IamUsersLoadingSkeleton } from "@/features/iam/components/IamUsersLoadingSkeleton"
 import { IamUsuarioCard } from "@/features/iam/components/IamUsuarioCard"
-import { ROL_SUPER_ADMINISTRADOR } from "@/features/auth/constants/auth-roles"
-import { PERMISO_IAM_USUARIOS } from "@/features/auth/constants/auth-permissions"
 import { useAuthStore } from "@/features/auth/store/authStore"
+import { puedeAccederRuta } from "@/features/auth/utils/auth-route-access"
 import { useIamPage } from "@/features/iam/hooks/useIamPage"
 import { OPCIONES_TAMANO_PAGINA } from "@/features/iam/interfaces/iam-constants"
 import { TravelRequestBackground } from "@/features/travel-request/components/TravelRequestBackground"
@@ -20,9 +19,11 @@ export function IamPage() {
   const p = useIamPage()
   const rolSesion = useAuthStore((state) => state.rolSesion ?? "")
   const permisosSesion = useAuthStore((state) => state.permisosSesion ?? [])
-  const puedeAccederIam =
-    rolSesion === ROL_SUPER_ADMINISTRADOR ||
-    permisosSesion.includes(PERMISO_IAM_USUARIOS)
+  const puedeAccederIam = puedeAccederRuta(
+    "/settings/users-permissions",
+    permisosSesion,
+    rolSesion,
+  )
 
   if (!puedeAccederIam) {
     return <Navigate to="/home" replace />

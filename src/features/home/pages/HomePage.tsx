@@ -12,6 +12,7 @@ export function HomePage() {
     hoveredCard,
     mousePosition,
     menuOptions,
+    opcionesGasolina,
     modalGasolinaAbierto,
     setModalGasolinaAbierto,
     handleMenuOptionSelect,
@@ -43,6 +44,7 @@ export function HomePage() {
 
       <HomeFuelModuleModal
         abierto={modalGasolinaAbierto}
+        opciones={opcionesGasolina}
         onAbiertoChange={setModalGasolinaAbierto}
         onSeleccionarOpcion={handleFuelModuleOptionSelect}
       />

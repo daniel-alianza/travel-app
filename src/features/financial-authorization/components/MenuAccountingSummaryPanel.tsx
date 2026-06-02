@@ -1,18 +1,18 @@
 import type { ReactElement } from "react"
 
 import type {
-  AccountingMonthKpisMock,
-  AccountingScopeMock,
+  AccountingMonthKpis,
+  AccountingScope,
 } from "@/features/financial-authorization/interfaces/accounting-menu-mock.interface"
-import { obtenerNombreEmpresaMock } from "@/features/financial-authorization/mocks/accounting-menu-mock"
 import { formatearMonto } from "@/features/financial-authorization/hooks/financial-authorization-page-helpers"
 
 interface MenuAccountingSummaryPanelProps {
-  alcance: AccountingScopeMock
+  alcance: AccountingScope
   etiquetaAlcance: string
   descripcionAlcance: string
-  kpisTotales: AccountingMonthKpisMock | null
-  kpisPorEmpresa: AccountingMonthKpisMock[]
+  kpisTotales: AccountingMonthKpis | null
+  kpisPorEmpresa: AccountingMonthKpis[]
+  errorMensaje?: string | null
 }
 
 function MetricaResumen(props: {
@@ -39,7 +39,7 @@ function MetricaResumen(props: {
 
 function BloqueKpisEmpresa(props: {
   tituloEmpresa: string
-  kpi: AccountingMonthKpisMock
+  kpi: AccountingMonthKpis
   mostrarTituloEmpresa: boolean
   indiceAnimacion: number
 }): ReactElement {
@@ -83,9 +83,11 @@ export function MenuAccountingSummaryPanel({
   descripcionAlcance,
   kpisTotales,
   kpisPorEmpresa,
+  errorMensaje = null,
 }: MenuAccountingSummaryPanelProps): ReactElement {
   const desfaseBloques =
     kpisTotales !== null && alcance.tipo === "consolidado" ? 1 : 0
+  const nombreEmpresaPrincipal = kpisPorEmpresa[0]?.companyName.trim() ?? ""
 
   return (
     <section
@@ -93,13 +95,33 @@ export function MenuAccountingSummaryPanel({
       aria-label="Resumen contable del mes"
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-1">
-          <h2 className="text-lg font-semibold text-foreground sm:text-xl">
+        <div className="space-y-2">
+          {alcance.tipo === "empresa" && nombreEmpresaPrincipal.length > 0 ? (
+            <div className="space-y-1">
+              <p className="text-xs font-semibold uppercase tracking-wide text-primary sm:text-sm">
+                De acuerdo a la empresa que tienes asignada
+              </p>
+              <p className="text-2xl font-bold leading-tight tracking-tight text-foreground sm:text-3xl lg:text-4xl">
+                {nombreEmpresaPrincipal}
+              </p>
+            </div>
+          ) : null}
+          {alcance.tipo === "consolidado" ? (
+            <p className="text-2xl font-bold leading-tight tracking-tight text-foreground sm:text-3xl lg:text-4xl">
+              Todas las empresas
+            </p>
+          ) : null}
+          <h2 className="text-base font-semibold text-muted-foreground sm:text-lg">
             Indicadores del mes
           </h2>
           <p className="max-w-2xl text-sm text-muted-foreground">
             {descripcionAlcance}
           </p>
+          {errorMensaje !== null && errorMensaje.length > 0 ? (
+            <p className="text-sm text-destructive" role="alert">
+              {errorMensaje}
+            </p>
+          ) : null}
           <p className="text-xs font-medium text-muted-foreground/90">
             Periodo:{" "}
             <span className="text-foreground">
@@ -108,7 +130,9 @@ export function MenuAccountingSummaryPanel({
           </p>
         </div>
         <span className="inline-flex w-fit shrink-0 items-center rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-xs font-medium text-primary shadow-sm shadow-primary/10 transition-all duration-300 hover:scale-105 hover:border-primary/40 hover:bg-primary/15 hover:shadow-md">
-          {etiquetaAlcance}
+          {alcance.tipo === "empresa" && nombreEmpresaPrincipal.length > 0
+            ? `Empresa asignada · ${nombreEmpresaPrincipal}`
+            : etiquetaAlcance}
         </span>
       </div>
 
@@ -135,7 +159,7 @@ export function MenuAccountingSummaryPanel({
         {kpisPorEmpresa.map((kpi, indice) => (
           <BloqueKpisEmpresa
             key={kpi.companyId}
-            tituloEmpresa={obtenerNombreEmpresaMock(kpi.companyId)}
+            tituloEmpresa={kpi.companyName}
             kpi={kpi}
             mostrarTituloEmpresa={alcance.tipo === "consolidado"}
             indiceAnimacion={desfaseBloques + indice}

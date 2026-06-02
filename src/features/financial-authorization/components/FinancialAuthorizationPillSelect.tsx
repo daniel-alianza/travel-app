@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useLayoutEffect, useRef, useState } from "react"
+import { createPortal } from "react-dom"
 import { ChevronDown } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -32,18 +33,56 @@ export function FinancialAuthorizationPillSelect({
   ariaLabel,
 }: FinancialAuthorizationPillSelectProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const [menuRect, setMenuRect] = useState<{
+    top: number
+    left: number
+    width: number
+  } | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
   const selectedLabel = options.find((option) => option.value === value)?.label
+
+  function actualizarPosicionMenu(): void {
+    const trigger = triggerRef.current
+    if (trigger === null) {
+      return
+    }
+    const rect = trigger.getBoundingClientRect()
+    setMenuRect({
+      top: rect.bottom + 8,
+      left: rect.left,
+      width: rect.width,
+    })
+  }
+
+  useLayoutEffect(() => {
+    if (!isOpen) {
+      setMenuRect(null)
+      return
+    }
+    actualizarPosicionMenu()
+    window.addEventListener("resize", actualizarPosicionMenu)
+    window.addEventListener("scroll", actualizarPosicionMenu, true)
+    return () => {
+      window.removeEventListener("resize", actualizarPosicionMenu)
+      window.removeEventListener("scroll", actualizarPosicionMenu, true)
+    }
+  }, [isOpen])
 
   useEffect(() => {
     if (!isOpen) {
       return
     }
     function handlePointerDown(event: PointerEvent): void {
-      const node = containerRef.current
-      if (node !== null && !node.contains(event.target as Node)) {
-        setIsOpen(false)
+      const target = event.target as Node
+      if (containerRef.current?.contains(target)) {
+        return
       }
+      if (menuRef.current?.contains(target)) {
+        return
+      }
+      setIsOpen(false)
     }
     function handleEscape(event: KeyboardEvent): void {
       if (event.key === "Escape") {
@@ -58,9 +97,61 @@ export function FinancialAuthorizationPillSelect({
     }
   }, [isOpen])
 
+  const menuContent = (
+    <div
+      ref={menuRef}
+      role="listbox"
+      aria-hidden={!isOpen}
+      style={
+        menuRect !== null
+          ? {
+              position: "fixed",
+              top: menuRect.top,
+              left: menuRect.left,
+              width: menuRect.width,
+              zIndex: 9999,
+            }
+          : undefined
+      }
+      className={cn(
+        "origin-top overflow-hidden rounded-3xl border border-border/80 bg-card py-2 shadow-xl transition-all duration-300",
+        isOpen && menuRect !== null
+          ? "pointer-events-auto translate-y-0 opacity-100"
+          : "pointer-events-none -translate-y-1 opacity-0",
+        dropdownClassName,
+      )}
+    >
+      <div className="max-h-56 overflow-y-auto py-1">
+        {options.map((option) => {
+          const selected = option.value === value
+          return (
+            <button
+              key={option.value}
+              type="button"
+              role="option"
+              aria-selected={selected}
+              onClick={() => {
+                onChange(option.value)
+                setIsOpen(false)
+              }}
+              className={cn(
+                "flex w-full cursor-pointer items-center justify-center px-6 py-3.5 text-sm transition-colors duration-200",
+                "text-foreground hover:bg-muted/70",
+                selected && "bg-primary/10 font-medium text-primary",
+              )}
+            >
+              {option.label}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+
   return (
     <div ref={containerRef} className={cn("relative w-full", className)}>
       <button
+        ref={triggerRef}
         id={id}
         type="button"
         disabled={disabled}
@@ -92,42 +183,9 @@ export function FinancialAuthorizationPillSelect({
         />
       </button>
 
-      <div
-        role="listbox"
-        aria-hidden={!isOpen}
-        className={cn(
-          "absolute top-full left-0 z-50 mt-2 w-full origin-top overflow-hidden rounded-3xl border border-border/80 bg-card py-2 shadow-xl transition-all duration-300",
-          isOpen
-            ? "pointer-events-auto translate-y-0 opacity-100"
-            : "pointer-events-none -translate-y-1 opacity-0",
-          dropdownClassName,
-        )}
-      >
-        <div className="max-h-56 overflow-y-auto py-1">
-          {options.map((option) => {
-            const selected = option.value === value
-            return (
-              <button
-                key={option.value}
-                type="button"
-                role="option"
-                aria-selected={selected}
-                onClick={() => {
-                  onChange(option.value)
-                  setIsOpen(false)
-                }}
-                className={cn(
-                  "flex w-full items-center justify-center px-6 py-3.5 text-sm transition-colors duration-200",
-                  "text-foreground hover:bg-muted/70",
-                  selected && "bg-primary/10 font-medium text-primary",
-                )}
-              >
-                {option.label}
-              </button>
-            )
-          })}
-        </div>
-      </div>
+      {typeof document !== "undefined" && isOpen
+        ? createPortal(menuContent, document.body)
+        : null}
     </div>
   )
 }

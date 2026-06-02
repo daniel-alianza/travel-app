@@ -37,6 +37,38 @@ export const DEFINICIONES_PERMISOS: readonly DefinicionPermisoIam[] = [
     descripcion: "Revisar comprobación de gastos",
   },
   {
+    id: "gasolina.solicitar",
+    etiqueta: "Gasolina · Solicitud",
+    descripcion:
+      "Crear y consultar solicitudes de combustible (asignado a todos los roles por defecto)",
+  },
+  {
+    id: "gasolina.autorizar",
+    etiqueta: "Gasolina · Autorización",
+    descripcion: "Aprobar o rechazar solicitudes de gasolina",
+  },
+  {
+    id: "gasolina.dispersar",
+    etiqueta: "Gasolina · Dispersión",
+    descripcion: "Dispersar fondos de solicitudes de gasolina",
+  },
+  {
+    id: "gasolina.reporte",
+    etiqueta: "Gasolina · Reporte",
+    descripcion: "Consultar reportes y movimientos de gasolina",
+  },
+  {
+    id: "gasolina.rendimiento",
+    etiqueta: "Gasolina · Rendimiento",
+    descripcion: "Analizar rendimiento de consumo por vehículo",
+  },
+  {
+    id: "autos.reservar",
+    etiqueta: "Reserva de autos",
+    descripcion:
+      "Acceso al módulo de reserva de vehículos corporativos (asignado a todos los roles por defecto)",
+  },
+  {
     id: "admin.usuarios",
     etiqueta: "Administración IAM",
     descripcion: "Gestionar usuarios y permisos",

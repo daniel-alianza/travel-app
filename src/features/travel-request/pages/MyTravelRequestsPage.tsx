@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom"
 import { AppFooter } from "@/components/app-footer"
 import { AppHeader } from "@/components/app-header"
 import { showAppToast } from "@/components/app-toast"
+import { useAuthStore } from "@/features/auth/store/authStore"
 import { Button } from "@/components/ui/button"
 import { TravelRequestBackground } from "@/features/travel-request/components/TravelRequestBackground"
 import type { TravelRequestMousePosition } from "@/features/travel-request/interfaces/travel-request-mouse-position.interface"
@@ -13,8 +14,6 @@ import {
   type MyTravelRequestApi,
 } from "@/features/travel-request/services/travel-request-api"
 import { cn } from "@/lib/utils"
-
-const AUTHENTICATED_USER_ID = 1
 
 function etiquetaEstadoSolicitud(status: string): string {
   switch (status) {
@@ -74,6 +73,7 @@ function claseEstadoSolicitud(status: string): string {
 }
 
 export function MyTravelRequestsPage() {
+  const userIdSesion = useAuthStore((state) => state.userId)
   const navigate = useNavigate()
   const mounted = true
   const [mousePosition, setMousePosition] = useState<TravelRequestMousePosition>({
@@ -92,11 +92,15 @@ export function MyTravelRequestsPage() {
   }, [])
 
   useEffect(() => {
+    if (userIdSesion === null) {
+      return
+    }
+
     let activo = true
     async function cargar(): Promise<void> {
       setCargando(true)
       try {
-        const lista = await fetchMyTravelRequests(AUTHENTICATED_USER_ID)
+        const lista = await fetchMyTravelRequests(userIdSesion)
         if (activo) {
           setSolicitudes(lista)
         }
@@ -118,7 +122,7 @@ export function MyTravelRequestsPage() {
     return () => {
       activo = false
     }
-  }, [])
+  }, [userIdSesion])
 
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-br from-background via-background to-secondary/20">

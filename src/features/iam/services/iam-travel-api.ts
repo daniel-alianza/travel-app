@@ -113,3 +113,20 @@ export async function putIamUserExtraPermissions(
     { extraPermissionCodes: [...extraPermissionCodes] },
   )
 }
+
+export type PutIamUserProfilePayload = {
+  readonly name: string
+  readonly email: string
+  readonly isActive: boolean
+  readonly roleLabel: string
+  readonly areaName: string
+  readonly branchName: string
+  readonly managerUserId: number | null
+}
+
+export async function putIamUserProfile(
+  idUsuario: string,
+  payload: PutIamUserProfilePayload,
+): Promise<void> {
+  await travelApi.put<ApiEnvelope<null>>(`/iam/users/${idUsuario}`, payload)
+}

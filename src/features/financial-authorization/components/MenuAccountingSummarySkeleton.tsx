@@ -1,10 +1,10 @@
 import type { ReactElement } from "react"
 import { Loader2 } from "lucide-react"
 
-import type { AccountingScopeMock } from "@/features/financial-authorization/interfaces/accounting-menu-mock.interface"
+import type { AccountingScope } from "@/features/financial-authorization/interfaces/accounting-menu-mock.interface"
 
 interface MenuAccountingSummarySkeletonProps {
-  alcance: AccountingScopeMock
+  alcance: AccountingScope
 }
 
 function SkeletonMetrica(): ReactElement {

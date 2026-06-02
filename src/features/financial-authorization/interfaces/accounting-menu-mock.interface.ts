@@ -3,8 +3,9 @@ export interface AccountingCompanyMock {
   nombre: string
 }
 
-export interface AccountingMonthKpisMock {
+export interface AccountingMonthKpis {
   companyId: number
+  companyName: string
   etiquetaMes: string
   totalDispersadoMes: number
   totalComprobadoMes: number
@@ -12,6 +13,12 @@ export interface AccountingMonthKpisMock {
   solicitudesAbiertas: number
 }
 
-export type AccountingScopeMock =
+export type AccountingScope =
   | { tipo: "consolidado" }
   | { tipo: "empresa"; companyId: number }
+
+/** @deprecated Usar AccountingMonthKpis */
+export type AccountingMonthKpisMock = AccountingMonthKpis
+
+/** @deprecated Usar AccountingScope */
+export type AccountingScopeMock = AccountingScope

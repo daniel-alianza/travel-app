@@ -1,8 +1,11 @@
+import type { ReactNode } from "react"
+
 interface HomeHeroSectionProps {
   mounted: boolean
+  children?: ReactNode
 }
 
-export function HomeHeroSection({ mounted }: HomeHeroSectionProps) {
+export function HomeHeroSection({ mounted, children }: HomeHeroSectionProps) {
   return (
     <div
       className={`mb-10 transition-all duration-1000 sm:mb-14 ${mounted ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"}`}
@@ -18,6 +21,7 @@ export function HomeHeroSection({ mounted }: HomeHeroSectionProps) {
           <p className="max-w-xl text-base text-muted-foreground sm:text-lg">
             Selecciona una opción para comenzar a gestionar tus operaciones
           </p>
+          {children}
         </div>
       </div>
     </div>

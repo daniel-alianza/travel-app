@@ -2,8 +2,10 @@ import type {
   DefinicionNotificacionGasolinaIam,
   DefinicionPermisoIam,
   PoliticaCorporativaDef,
-  RolIam,
+  RequisitoNotificacionViaticosDispersion,
 } from "@/features/iam/interfaces/iam-domain.interface"
+
+export const AREA_TESORERIA_NOMBRE = "Tesoreria" as const
 
 export const DEFINICIONES_PERMISOS: readonly DefinicionPermisoIam[] = [
   {
@@ -19,7 +21,8 @@ export const DEFINICIONES_PERMISOS: readonly DefinicionPermisoIam[] = [
   {
     id: "viaticos.dispersar",
     etiqueta: "Dispersión",
-    descripcion: "Operar dispersión de fondos",
+    descripcion:
+      "Operar cola de dispersión de viáticos. En Tesorería, también habilita avisos por correo y Teams.",
   },
   {
     id: "contabilidad.autorizar",
@@ -91,6 +94,37 @@ export const DEFINICIONES_NOTIFICACIONES_GASOLINA: readonly DefinicionNotificaci
     },
   ] as const
 
+export const REQUISITOS_NOTIFICACION_VIATICOS_DISPERSION: readonly RequisitoNotificacionViaticosDispersion[] =
+  [
+    {
+      id: "activo",
+      etiqueta: "Usuario activo",
+      descripcion: "La cuenta debe estar activa en el sistema.",
+    },
+    {
+      id: "areaTesoreria",
+      etiqueta: `Área ${AREA_TESORERIA_NOMBRE}`,
+      descripcion:
+        "Debe pertenecer al área de Tesorería (misma empresa que la solicitud).",
+    },
+    {
+      id: "permisoDispersar",
+      etiqueta: "Permiso de dispersión",
+      descripcion: "Debe tener el permiso viaticos.dispersar.",
+    },
+    {
+      id: "correoElectronico",
+      etiqueta: "Correo registrado",
+      descripcion: "Debe tener un correo válido para recibir la notificación.",
+    },
+  ] as const
+
+export const OPCIONES_FILTRO_AVISOS_DISPERSION_VIATICOS = [
+  { value: "", label: "Todos los avisos" },
+  { value: "recibe", label: "Recibe avisos de dispersión" },
+  { value: "no_recibe", label: "No recibe avisos de dispersión" },
+] as const
+
 export const POLITICAS_CORPORATIVAS: readonly PoliticaCorporativaDef[] = [
   {
     id: "aviso-privacidad",
@@ -118,18 +152,6 @@ export const POLITICAS_CORPORATIVAS: readonly PoliticaCorporativaDef[] = [
     descripcion: "Lineamientos para solicitud, dispersión y comprobación de gastos.",
   },
 ] as const
-
-export const ROLES_IAM: readonly RolIam[] = [
-  "Super Admin",
-  "Administrador",
-  "Supervisor",
-  "Colaborador",
-]
-
-export const ROLES_ELEGIBLES_JEFE_DIRECTO: readonly RolIam[] = [
-  "Administrador",
-  "Supervisor",
-]
 
 export const VALOR_FILTRO_TODOS = ""
 

@@ -4,6 +4,7 @@ import { AppFooter } from "@/components/app-footer"
 import { AppHeader } from "@/components/app-header"
 import { ListPaginationBar } from "@/components/list-pagination-bar"
 import { IamPageHeader } from "@/features/iam/components/IamPageHeader"
+import { IamRegistroUsuarioModal } from "@/features/iam/components/IamRegistroUsuarioModal"
 import { IamSearchFilters } from "@/features/iam/components/IamSearchFilters"
 import { IamUsersEmptyState } from "@/features/iam/components/IamUsersEmptyState"
 import { IamUsersErrorState } from "@/features/iam/components/IamUsersErrorState"
@@ -43,6 +44,20 @@ export function IamPage() {
             onActualizarLista={() => {
               void p.cargarUsuarios(true)
             }}
+            onAbrirRegistroUsuario={() => {
+              p.setModalRegistroAbierto(true)
+            }}
+          />
+
+          <IamRegistroUsuarioModal
+            abierto={p.modalRegistroAbierto}
+            enviando={p.registrandoUsuario}
+            empresas={p.catalogoRegistro.empresas}
+            areas={p.catalogoRegistro.areas}
+            sucursales={p.catalogoRegistro.sucursales}
+            rolesEtiqueta={p.rolesEtiqueta}
+            onAbiertoChange={p.setModalRegistroAbierto}
+            onConfirmar={p.registrarUsuario}
           />
 
           <IamSearchFilters
@@ -59,6 +74,8 @@ export function IamPage() {
             filtroRol={p.filtroRol}
             setFiltroRol={p.setFiltroRol}
             opcionesRol={p.opcionesRol}
+            filtroAvisosDispersionViaticos={p.filtroAvisosDispersionViaticos}
+            setFiltroAvisosDispersionViaticos={p.setFiltroAvisosDispersionViaticos}
             dropdownPillAbierto={p.dropdownPillAbierto}
             setDropdownPillAbierto={p.setDropdownPillAbierto}
           />
@@ -78,12 +95,7 @@ export function IamPage() {
 
           {!p.cargandoInicial && p.errorCarga === null && p.listaVacia ? (
             <IamUsersEmptyState
-              onLimpiarFiltros={() => {
-                p.setTextoBusqueda("")
-                p.setFiltroArea("")
-                p.setFiltroSucursal("")
-                p.setFiltroRol("")
-              }}
+              onLimpiarFiltros={p.limpiarFiltros}
             />
           ) : null}
 
@@ -96,6 +108,7 @@ export function IamPage() {
                   index={index}
                   opcionesAreaCatalogo={p.opcionesAreaCatalogo}
                   opcionesSucursalCatalogo={p.opcionesSucursalCatalogo}
+                  opcionesRolCatalogo={p.opcionesRolCatalogo}
                   candidatosJefeDirecto={p.candidatosJefeDirecto}
                   dropdownPillAbierto={p.dropdownPillAbierto}
                   setDropdownPillAbierto={p.setDropdownPillAbierto}

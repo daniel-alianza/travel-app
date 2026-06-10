@@ -1,4 +1,4 @@
-import { Loader2, RefreshCw, Shield } from "lucide-react"
+import { Loader2, RefreshCw, Shield, UserPlus } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 
@@ -6,13 +6,17 @@ type IamPageHeaderProps = {
   cargandoInicial: boolean
   actualizandoLista: boolean
   onActualizarLista: () => void
+  onAbrirRegistroUsuario: () => void
 }
 
 export function IamPageHeader({
   cargandoInicial,
   actualizandoLista,
   onActualizarLista,
+  onAbrirRegistroUsuario,
 }: IamPageHeaderProps) {
+  const deshabilitado = cargandoInicial || actualizandoLista
+
   return (
     <div className="mb-8 translate-y-0 opacity-100 transition-all duration-700">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -29,21 +33,33 @@ export function IamPageHeader({
             </p>
           </div>
         </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={cargandoInicial || actualizandoLista}
-          className="h-10 shrink-0 cursor-pointer gap-2 rounded-xl border-border/80 shadow-sm transition-all hover:scale-[1.02] hover:shadow-md active:scale-[0.98]"
-          onClick={onActualizarLista}
-        >
-          {actualizandoLista ? (
-            <Loader2 className="size-4 animate-spin" aria-hidden />
-          ) : (
-            <RefreshCw className="size-4 transition-transform duration-500 hover:rotate-180" aria-hidden />
-          )}
-          Actualizar lista
-        </Button>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <Button
+            type="button"
+            size="sm"
+            disabled={deshabilitado}
+            className="h-10 shrink-0 cursor-pointer gap-2 rounded-xl bg-linear-to-r from-indigo-500 to-violet-600 text-white shadow-md shadow-indigo-500/20 transition-all hover:scale-[1.02] hover:from-indigo-600 hover:to-violet-700 hover:shadow-lg active:scale-[0.98]"
+            onClick={onAbrirRegistroUsuario}
+          >
+            <UserPlus className="size-4" aria-hidden />
+            Registrar usuario
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={deshabilitado}
+            className="h-10 shrink-0 cursor-pointer gap-2 rounded-xl border-border/80 shadow-sm transition-all hover:scale-[1.02] hover:shadow-md active:scale-[0.98]"
+            onClick={onActualizarLista}
+          >
+            {actualizandoLista ? (
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+            ) : (
+              <RefreshCw className="size-4 transition-transform duration-500 hover:rotate-180" aria-hidden />
+            )}
+            Actualizar lista
+          </Button>
+        </div>
       </div>
     </div>
   )

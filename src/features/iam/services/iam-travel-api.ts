@@ -1,8 +1,5 @@
 import { travelApi } from "@/api/travel-api"
-import {
-  esRolIam,
-  semillaAceptacionesPoliticas,
-} from "@/features/iam/hooks/iam-page-helpers"
+import { semillaAceptacionesPoliticas } from "@/features/iam/hooks/iam-page-helpers"
 import type { RolIam, UsuarioIam } from "@/features/iam/interfaces/iam-domain.interface"
 
 export type IamUserApiRow = {
@@ -29,7 +26,8 @@ type ApiEnvelope<T> = {
 }
 
 function mapearRolSeguro(rol: string): RolIam {
-  return esRolIam(rol) ? rol : "Colaborador"
+  const normalizado = rol.trim()
+  return normalizado.length > 0 ? normalizado : "Colaborador"
 }
 
 export function mapearFilaApiAUsuarioIam(fila: IamUserApiRow): UsuarioIam {
@@ -68,10 +66,27 @@ export async function fetchIamUsers(entrada?: {
   return respuesta.data.data.map(mapearFilaApiAUsuarioIam)
 }
 
+export type IamRegistroCatalogItemApi = {
+  id: number
+  name: string
+}
+
+export type IamRegistroSucursalCatalogItemApi = {
+  id: number
+  name: string
+  companyId: number | null
+}
+
 export type IamFilterCatalogApi = {
   areas: readonly string[]
   sucursales: readonly string[]
   rolesEtiqueta: readonly string[]
+  rolesElegiblesJefeDirecto: readonly string[]
+  registro: {
+    empresas: readonly IamRegistroCatalogItemApi[]
+    areas: readonly IamRegistroCatalogItemApi[]
+    sucursales: readonly IamRegistroSucursalCatalogItemApi[]
+  }
 }
 
 export async function fetchIamFilterCatalog(): Promise<IamFilterCatalogApi> {
@@ -129,4 +144,30 @@ export async function putIamUserProfile(
   payload: PutIamUserProfilePayload,
 ): Promise<void> {
   await travelApi.put<ApiEnvelope<null>>(`/iam/users/${idUsuario}`, payload)
+}
+
+export type PostIamUserPayload = {
+  readonly name: string
+  readonly email: string
+  readonly password: string
+  readonly companyId: number
+  readonly branchId: number
+  readonly areaId: number
+  readonly roleLabel?: string
+}
+
+export type PostIamUserResponse = {
+  id: number
+  name: string
+  email: string
+}
+
+export async function postIamUser(
+  payload: PostIamUserPayload,
+): Promise<PostIamUserResponse> {
+  const respuesta = await travelApi.post<ApiEnvelope<PostIamUserResponse>>(
+    "/iam/users",
+    payload,
+  )
+  return respuesta.data.data
 }

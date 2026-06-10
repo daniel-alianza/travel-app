@@ -1,19 +1,21 @@
+import { PERMISO_VIATICOS_DISPERSAR } from "@/features/auth/constants/auth-permissions"
 import {
+  AREA_TESORERIA_NOMBRE,
   DEFINICIONES_PERMISOS,
   POLITICAS_CORPORATIVAS,
-  ROLES_ELEGIBLES_JEFE_DIRECTO,
-  ROLES_IAM,
+  REQUISITOS_NOTIFICACION_VIATICOS_DISPERSION,
   VALOR_FILTRO_TODOS,
 } from "@/features/iam/interfaces/iam-constants"
 import type {
   AceptacionPoliticaRegistro,
+  EvaluacionRequisitoNotificacionViaticosDispersion,
   OpcionFiltroIam,
   RolIam,
   UsuarioIam,
 } from "@/features/iam/interfaces/iam-domain.interface"
 
 export function esRolIam(valor: string): valor is RolIam {
-  return (ROLES_IAM as readonly string[]).includes(valor)
+  return valor.trim().length > 0
 }
 
 export function ordenarPermisosSegunDefinicionesIam(
@@ -22,8 +24,21 @@ export function ordenarPermisosSegunDefinicionesIam(
   return DEFINICIONES_PERMISOS.map((def) => def.id).filter((id) => codes.has(id))
 }
 
-export function esRolElegibleJefeDirecto(rol: RolIam): boolean {
-  return (ROLES_ELEGIBLES_JEFE_DIRECTO as readonly RolIam[]).includes(rol)
+export function esRolElegibleJefeDirecto(
+  rol: RolIam,
+  rolesElegiblesJefeDirecto: readonly string[],
+): boolean {
+  return rolesElegiblesJefeDirecto.includes(rol)
+}
+
+export function resolverRolInicialDesdeCatalogo(
+  rolesEtiqueta: readonly string[],
+): string {
+  const colaborador = rolesEtiqueta.find((rol) => rol === "Colaborador")
+  if (colaborador !== undefined) {
+    return colaborador
+  }
+  return rolesEtiqueta[0] ?? ""
 }
 
 export type EstadoLineaCoincidenciaContrasenaIam =
@@ -196,4 +211,50 @@ export function opcionesSelectConValorActual(
   return [...opcionesBase, { value: valor, label: valor }].sort((a, b) =>
     a.label.localeCompare(b.label, "es", { sensitivity: "base" }),
   )
+}
+
+export function evaluarRequisitosNotificacionDispersionViaticos(
+  usuario: UsuarioIam,
+): readonly EvaluacionRequisitoNotificacionViaticosDispersion[] {
+  const cumpleArea =
+    usuario.area.trim().localeCompare(AREA_TESORERIA_NOMBRE, "es", {
+      sensitivity: "base",
+    }) === 0
+
+  return REQUISITOS_NOTIFICACION_VIATICOS_DISPERSION.map((requisito) => {
+    let cumplido = false
+
+    switch (requisito.id) {
+      case "activo":
+        cumplido = usuario.activo
+        break
+      case "areaTesoreria":
+        cumplido = cumpleArea
+        break
+      case "permisoDispersar":
+        cumplido = usuario.permisos.includes(PERMISO_VIATICOS_DISPERSAR)
+        break
+      case "correoElectronico":
+        cumplido = usuario.correoElectronico.trim().length > 0
+        break
+      default:
+        cumplido = false
+    }
+
+    return { id: requisito.id, cumplido }
+  })
+}
+
+export function usuarioRecibeAvisosDispersionViaticos(
+  usuario: UsuarioIam,
+): boolean {
+  return evaluarRequisitosNotificacionDispersionViaticos(usuario).every(
+    (requisito) => requisito.cumplido,
+  )
+}
+
+export function usuarioTienePermisoDispersarViaticosPorRol(
+  usuario: UsuarioIam,
+): boolean {
+  return usuario.permisosPorDefectoRol.includes(PERMISO_VIATICOS_DISPERSAR)
 }

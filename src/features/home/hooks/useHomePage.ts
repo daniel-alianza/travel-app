@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom"
 
 import { showAppToast } from "@/components/app-toast"
 import { useAuthStore } from "@/features/auth/store/authStore"
+import { useHomeSalesViaticosNotice } from "@/features/home/hooks/useHomeSalesViaticosNotice"
+import type { HomeSalesViaticosNoticeModel } from "@/features/home/interfaces/home-sales-viaticos-notice.interface"
 import {
   filtrarRutasPorPermiso,
   puedeAccederRuta,
@@ -18,6 +20,9 @@ import type { HomeMousePosition } from "../interfaces/home-mouse-position.interf
 
 interface UseHomePageReturn {
   mounted: boolean
+  avisoViaticosVentas: HomeSalesViaticosNoticeModel | null
+  cargandoAvisoViaticosVentas: boolean
+  mostrarSeccionAvisoViaticos: boolean
   hoveredCard: number | null
   mousePosition: HomeMousePosition
   menuOptions: HomeMenuOption[]
@@ -34,6 +39,7 @@ export function useHomePage(): UseHomePageReturn {
   const navigate = useNavigate()
   const permisosSesion = useAuthStore((state) => state.permisosSesion ?? [])
   const rolSesion = useAuthStore((state) => state.rolSesion ?? "")
+  const { avisoViaticosVentas, cargandoAviso } = useHomeSalesViaticosNotice()
   const mounted = true
   const [hoveredCard, setHoveredCard] = useState<number | null>(null)
   const [modalGasolinaAbierto, setModalGasolinaAbierto] = useState(false)
@@ -110,8 +116,14 @@ export function useHomePage(): UseHomePageReturn {
     setHoveredCard(null)
   }
 
+  const mostrarSeccionAvisoViaticos =
+    cargandoAviso || avisoViaticosVentas !== null
+
   return {
     mounted,
+    avisoViaticosVentas,
+    cargandoAvisoViaticosVentas: cargandoAviso,
+    mostrarSeccionAvisoViaticos,
     hoveredCard,
     mousePosition,
     menuOptions,

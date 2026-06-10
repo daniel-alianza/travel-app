@@ -11,12 +11,18 @@ import {
   nombreCompletoDesdePartes,
   ordenarPermisosSegunDefinicionesIam,
   resolverManagerUserIdParaApi,
+  usuarioRecibeAvisosDispersionViaticos,
 } from "@/features/iam/hooks/iam-page-helpers"
 import type { IamUsePageResult } from "@/features/iam/interfaces/iam-use-page-result.interface"
-import type { OpcionFiltroIam, UsuarioIam } from "@/features/iam/interfaces/iam-domain.interface"
+import type {
+  FiltroAvisosDispersionViaticosIam,
+  OpcionFiltroIam,
+  UsuarioIam,
+} from "@/features/iam/interfaces/iam-domain.interface"
 import {
   fetchIamFilterCatalog,
   fetchIamUsers,
+  postIamUser,
   putIamUserExtraPermissions,
   putIamUserGasolineNotifications,
   putIamUserProfile,
@@ -28,6 +34,7 @@ import {
   limitarPagina,
   rebanarPagina,
 } from "@/lib/list-pagination-helpers"
+import type { IamRegistroUsuarioFormValues } from "@/features/iam/schemas/iam-registro-usuario.schema"
 
 export function useIamPage(): IamUsePageResult {
   const navigate = useNavigate()
@@ -53,9 +60,13 @@ export function useIamPage(): IamUsePageResult {
   const [filtroArea, setFiltroArea] = useState("")
   const [filtroSucursal, setFiltroSucursal] = useState("")
   const [filtroRol, setFiltroRol] = useState("")
+  const [filtroAvisosDispersionViaticos, setFiltroAvisosDispersionViaticos] =
+    useState<FiltroAvisosDispersionViaticosIam>("")
   const [dropdownPillAbierto, setDropdownPillAbierto] = useState<string | null>(
     null,
   )
+  const [modalRegistroAbierto, setModalRegistroAbierto] = useState(false)
+  const [registrandoUsuario, setRegistrandoUsuario] = useState(false)
 
   const textoBusquedaRef = useRef<string>(textoBusqueda)
   textoBusquedaRef.current = textoBusqueda
@@ -169,9 +180,29 @@ export function useIamPage(): IamUsePageResult {
     return construirOpcionesSelectCatalogo(valores)
   }, [catalogoFiltros, usuarios])
 
+  const opcionesRolCatalogo = useMemo(() => {
+    const valores =
+      catalogoFiltros !== null && catalogoFiltros.rolesEtiqueta.length > 0
+        ? catalogoFiltros.rolesEtiqueta
+        : usuarios.map((u) => u.rol)
+    return construirOpcionesSelectCatalogo(valores)
+  }, [catalogoFiltros, usuarios])
+
+  const rolesElegiblesJefeDirecto = useMemo(() => {
+    if (
+      catalogoFiltros !== null &&
+      catalogoFiltros.rolesElegiblesJefeDirecto.length > 0
+    ) {
+      return catalogoFiltros.rolesElegiblesJefeDirecto
+    }
+    return opcionesRolCatalogo
+      .map((opcion) => opcion.value)
+      .filter((rol) => rol !== "Colaborador" && rol !== "Super Admin")
+  }, [catalogoFiltros, opcionesRolCatalogo])
+
   const candidatosJefeDirecto = useMemo(() => {
     return [...usuarios]
-      .filter((u) => esRolElegibleJefeDirecto(u.rol))
+      .filter((u) => esRolElegibleJefeDirecto(u.rol, rolesElegiblesJefeDirecto))
       .sort((a, b) =>
         nombreCompletoDesdePartes(a).localeCompare(
           nombreCompletoDesdePartes(b),
@@ -179,7 +210,7 @@ export function useIamPage(): IamUsePageResult {
           { sensitivity: "base" },
         ),
       )
-  }, [usuarios])
+  }, [usuarios, rolesElegiblesJefeDirecto])
 
   const usuariosFiltrados = useMemo(() => {
     let lista = usuarios
@@ -192,8 +223,20 @@ export function useIamPage(): IamUsePageResult {
     if (filtroRol.length > 0) {
       lista = lista.filter((u) => u.rol === filtroRol)
     }
+    if (filtroAvisosDispersionViaticos === "recibe") {
+      lista = lista.filter((u) => usuarioRecibeAvisosDispersionViaticos(u))
+    }
+    if (filtroAvisosDispersionViaticos === "no_recibe") {
+      lista = lista.filter((u) => !usuarioRecibeAvisosDispersionViaticos(u))
+    }
     return lista
-  }, [usuarios, filtroArea, filtroSucursal, filtroRol])
+  }, [
+    usuarios,
+    filtroArea,
+    filtroSucursal,
+    filtroRol,
+    filtroAvisosDispersionViaticos,
+  ])
 
   const metaLista = useMemo(() => {
     return construirMetaDesdeTotal(
@@ -223,7 +266,16 @@ export function useIamPage(): IamUsePageResult {
     filtroArea,
     filtroSucursal,
     filtroRol,
+    filtroAvisosDispersionViaticos,
   ])
+
+  const limpiarFiltros = useCallback((): void => {
+    setTextoBusqueda("")
+    setFiltroArea("")
+    setFiltroSucursal("")
+    setFiltroRol("")
+    setFiltroAvisosDispersionViaticos("")
+  }, [])
 
   function actualizarUsuario(
     id: string,
@@ -405,6 +457,67 @@ export function useIamPage(): IamUsePageResult {
 
   const listaVacia = !cargandoInicial && !errorCarga && usuariosFiltrados.length === 0
 
+  const catalogoRegistro = useMemo(() => {
+    return (
+      catalogoFiltros?.registro ?? {
+        empresas: [],
+        areas: [],
+        sucursales: [],
+      }
+    )
+  }, [catalogoFiltros])
+
+  async function registrarUsuario(
+    valores: IamRegistroUsuarioFormValues,
+  ): Promise<void> {
+    const companyId = Number.parseInt(valores.empresaId, 10)
+    const branchId = Number.parseInt(valores.sucursalId, 10)
+    const areaId = Number.parseInt(valores.areaId, 10)
+
+    if (
+      !Number.isFinite(companyId) ||
+      !Number.isFinite(branchId) ||
+      !Number.isFinite(areaId)
+    ) {
+      showAppToast("Selecciona empresa, área y sucursal válidas.", "error")
+      return
+    }
+
+    setRegistrandoUsuario(true)
+    try {
+      const usuarioCreado = await postIamUser({
+        name: valores.nombre.trim(),
+        email: valores.correoElectronico.trim().toLowerCase(),
+        password: valores.contrasena,
+        companyId,
+        branchId,
+        areaId,
+        roleLabel: valores.rol,
+      })
+      await cargarUsuarios(true)
+      setModalRegistroAbierto(false)
+      setTextoBusqueda(usuarioCreado.email)
+      showAppToast(
+        `Usuario registrado correctamente: ${usuarioCreado.name}.`,
+        "success",
+      )
+    } catch (error) {
+      let mensaje = "No se pudo registrar el usuario. Intenta de nuevo."
+      if (axios.isAxiosError(error)) {
+        const cuerpo = error.response?.data as { message?: string | string[] } | undefined
+        const raw = cuerpo?.message
+        const texto =
+          Array.isArray(raw) ? raw.join(" ") : typeof raw === "string" ? raw : ""
+        if (texto.trim().length > 0) {
+          mensaje = texto.trim()
+        }
+      }
+      showAppToast(mensaje, "error")
+    } finally {
+      setRegistrandoUsuario(false)
+    }
+  }
+
   const onBackToHome = useCallback(() => {
     navigate("/home")
   }, [navigate])
@@ -430,6 +543,8 @@ export function useIamPage(): IamUsePageResult {
     setFiltroSucursal,
     filtroRol,
     setFiltroRol,
+    filtroAvisosDispersionViaticos,
+    setFiltroAvisosDispersionViaticos,
     dropdownPillAbierto,
     setDropdownPillAbierto,
     cargarUsuarios,
@@ -437,16 +552,24 @@ export function useIamPage(): IamUsePageResult {
     opcionesSucursal,
     opcionesAreaCatalogo,
     opcionesSucursalCatalogo,
+    opcionesRolCatalogo,
+    rolesEtiqueta: catalogoFiltros?.rolesEtiqueta ?? [],
     opcionesRol,
     metaLista,
     usuariosPagina,
     candidatosJefeDirecto,
     listaVacia,
+    limpiarFiltros,
     actualizarUsuario,
     alternarPermiso,
     obtenerCamposContrasena,
     establecerCamposContrasena,
     aplicarActualizacionContrasena,
     guardarUsuario,
+    modalRegistroAbierto,
+    setModalRegistroAbierto,
+    registrandoUsuario,
+    catalogoRegistro,
+    registrarUsuario,
   }
 }

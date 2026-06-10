@@ -21,13 +21,12 @@ import {
   DEFINICIONES_NOTIFICACIONES_GASOLINA,
   DEFINICIONES_PERMISOS,
   POLITICAS_CORPORATIVAS,
-  ROLES_IAM,
 } from "@/features/iam/interfaces/iam-constants"
 import type {
   OpcionFiltroIam,
   UsuarioIam,
 } from "@/features/iam/interfaces/iam-domain.interface"
-import { DispersionPillSelect } from "@/features/dispersion-travel/components/DispersionPillSelect"
+import { IamViaticosDispersionNotificacionSection } from "@/features/iam/components/IamViaticosDispersionNotificacionSection"
 import {
   esRolIam,
   estadoLineaCoincidenciaContrasena,
@@ -38,6 +37,7 @@ import {
   resolverValorSelectJefeDirecto,
   type EstadoLineaCoincidenciaContrasenaIam,
 } from "@/features/iam/hooks/iam-page-helpers"
+import { DispersionPillSelect } from "@/features/dispersion-travel/components/DispersionPillSelect"
 import { cn } from "@/lib/utils"
 
 function mensajeCoincidenciaContrasenaIam(
@@ -74,6 +74,7 @@ export type IamUsuarioCardProps = {
   index: number
   opcionesAreaCatalogo: OpcionFiltroIam[]
   opcionesSucursalCatalogo: OpcionFiltroIam[]
+  opcionesRolCatalogo: OpcionFiltroIam[]
   candidatosJefeDirecto: UsuarioIam[]
   guardandoId: string | null
   actualizandoContrasenaId: string | null
@@ -119,6 +120,7 @@ export function IamUsuarioCard({
   index,
   opcionesAreaCatalogo,
   opcionesSucursalCatalogo,
+  opcionesRolCatalogo,
   candidatosJefeDirecto,
   guardandoId,
   actualizandoContrasenaId,
@@ -158,9 +160,9 @@ export function IamUsuarioCard({
     () => opcionesSelectConValorActual(opcionesSucursalCatalogo, usuario.sucursal),
     [opcionesSucursalCatalogo, usuario.sucursal],
   )
-  const opcionesRolPill: OpcionFiltroIam[] = useMemo(
-    () => ROLES_IAM.map((rol) => ({ value: rol, label: rol })),
-    [],
+  const opcionesRolPill = useMemo(
+    () => opcionesSelectConValorActual(opcionesRolCatalogo, usuario.rol),
+    [opcionesRolCatalogo, usuario.rol],
   )
 
   const camposContrasena = obtenerCamposContrasena(usuario.id)
@@ -521,6 +523,12 @@ export function IamUsuarioCard({
           })}
         </div>
       </div>
+
+      <IamViaticosDispersionNotificacionSection
+        usuario={usuario}
+        actualizarUsuario={actualizarUsuario}
+        alternarPermiso={alternarPermiso}
+      />
 
       <div className="relative mt-4 rounded-xl border border-orange-500/25 bg-orange-500/[0.06] p-3 shadow-inner">
         <div className="mb-3 flex items-center gap-2">

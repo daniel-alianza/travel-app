@@ -1,7 +1,13 @@
 import type { Dispatch, SetStateAction } from "react"
 import type { TravelRequestMousePosition } from "@/features/travel-request/interfaces/travel-request-mouse-position.interface"
 import type { ListaPaginadaMeta } from "@/lib/list-pagination-types"
-import type { OpcionFiltroIam, UsuarioIam } from "@/features/iam/interfaces/iam-domain.interface"
+import type {
+  FiltroAvisosDispersionViaticosIam,
+  OpcionFiltroIam,
+  UsuarioIam,
+} from "@/features/iam/interfaces/iam-domain.interface"
+import type { IamFilterCatalogApi } from "@/features/iam/services/iam-travel-api"
+import type { IamRegistroUsuarioFormValues } from "@/features/iam/schemas/iam-registro-usuario.schema"
 
 export type IamUsePageResult = {
   mounted: boolean
@@ -24,6 +30,10 @@ export type IamUsePageResult = {
   setFiltroSucursal: Dispatch<SetStateAction<string>>
   filtroRol: string
   setFiltroRol: Dispatch<SetStateAction<string>>
+  filtroAvisosDispersionViaticos: FiltroAvisosDispersionViaticosIam
+  setFiltroAvisosDispersionViaticos: Dispatch<
+    SetStateAction<FiltroAvisosDispersionViaticosIam>
+  >
   dropdownPillAbierto: string | null
   setDropdownPillAbierto: Dispatch<SetStateAction<string | null>>
   cargarUsuarios: (esRefresco: boolean) => Promise<void>
@@ -31,11 +41,14 @@ export type IamUsePageResult = {
   opcionesSucursal: OpcionFiltroIam[]
   opcionesAreaCatalogo: OpcionFiltroIam[]
   opcionesSucursalCatalogo: OpcionFiltroIam[]
+  opcionesRolCatalogo: OpcionFiltroIam[]
+  rolesEtiqueta: readonly string[]
   opcionesRol: OpcionFiltroIam[]
   metaLista: ListaPaginadaMeta
   usuariosPagina: UsuarioIam[]
   candidatosJefeDirecto: UsuarioIam[]
   listaVacia: boolean
+  limpiarFiltros: () => void
   actualizarUsuario: (
     id: string,
     parcial: Partial<
@@ -58,4 +71,9 @@ export type IamUsePageResult = {
   ) => void
   aplicarActualizacionContrasena: (usuario: UsuarioIam) => Promise<void>
   guardarUsuario: (usuario: UsuarioIam) => Promise<void>
+  modalRegistroAbierto: boolean
+  setModalRegistroAbierto: Dispatch<SetStateAction<boolean>>
+  registrandoUsuario: boolean
+  catalogoRegistro: IamFilterCatalogApi["registro"]
+  registrarUsuario: (valores: IamRegistroUsuarioFormValues) => Promise<void>
 }

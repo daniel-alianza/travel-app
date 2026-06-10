@@ -10,6 +10,25 @@ export type DefinicionNotificacionGasolinaIam = {
   descripcion: string
 }
 
+export type RequisitoNotificacionViaticosDispersionId =
+  | "activo"
+  | "areaTesoreria"
+  | "permisoDispersar"
+  | "correoElectronico"
+
+export type RequisitoNotificacionViaticosDispersion = {
+  id: RequisitoNotificacionViaticosDispersionId
+  etiqueta: string
+  descripcion: string
+}
+
+export type EvaluacionRequisitoNotificacionViaticosDispersion = {
+  id: RequisitoNotificacionViaticosDispersionId
+  cumplido: boolean
+}
+
+export type FiltroAvisosDispersionViaticosIam = "" | "recibe" | "no_recibe"
+
 export type PoliticaCorporativaDef = {
   id: string
   titulo: string
@@ -21,11 +40,7 @@ export type AceptacionPoliticaRegistro = {
   fechaAceptacion: string | null
 }
 
-export type RolIam =
-  | "Super Admin"
-  | "Administrador"
-  | "Supervisor"
-  | "Colaborador"
+export type RolIam = string
 
 export type UsuarioIam = {
   id: string

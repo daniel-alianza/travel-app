@@ -4,7 +4,11 @@ import { Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { DispersionPillSelect } from "@/features/dispersion-travel/components/DispersionPillSelect"
-import type { OpcionFiltroIam } from "@/features/iam/interfaces/iam-domain.interface"
+import { OPCIONES_FILTRO_AVISOS_DISPERSION_VIATICOS } from "@/features/iam/interfaces/iam-constants"
+import type {
+  FiltroAvisosDispersionViaticosIam,
+  OpcionFiltroIam,
+} from "@/features/iam/interfaces/iam-domain.interface"
 import { cn } from "@/lib/utils"
 
 type IamSearchFiltersProps = {
@@ -21,6 +25,10 @@ type IamSearchFiltersProps = {
   filtroRol: string
   setFiltroRol: Dispatch<SetStateAction<string>>
   opcionesRol: OpcionFiltroIam[]
+  filtroAvisosDispersionViaticos: FiltroAvisosDispersionViaticosIam
+  setFiltroAvisosDispersionViaticos: Dispatch<
+    SetStateAction<FiltroAvisosDispersionViaticosIam>
+  >
   dropdownPillAbierto: string | null
   setDropdownPillAbierto: Dispatch<SetStateAction<string | null>>
 }
@@ -39,10 +47,17 @@ export function IamSearchFilters({
   filtroRol,
   setFiltroRol,
   opcionesRol,
+  filtroAvisosDispersionViaticos,
+  setFiltroAvisosDispersionViaticos,
   dropdownPillAbierto,
   setDropdownPillAbierto,
 }: IamSearchFiltersProps) {
   const deshabilitado = cargandoInicial || actualizandoLista
+  const opcionesAvisosDispersion: OpcionFiltroIam[] =
+    OPCIONES_FILTRO_AVISOS_DISPERSION_VIATICOS.map((opcion) => ({
+      value: opcion.value,
+      label: opcion.label,
+    }))
 
   return (
     <div
@@ -66,7 +81,7 @@ export function IamSearchFilters({
           className="h-11 cursor-text rounded-xl border-border/70 bg-background/80 pr-4 pl-10 shadow-inner transition-all focus-visible:ring-primary/30"
         />
       </div>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <div className="space-y-2">
           <Label className="text-sm font-medium text-foreground">Área</Label>
           <DispersionPillSelect
@@ -101,7 +116,7 @@ export function IamSearchFilters({
             ariaLabel="Filtrar por sucursal"
           />
         </div>
-        <div className="space-y-2 sm:col-span-2 xl:col-span-1">
+        <div className="space-y-2">
           <Label className="text-sm font-medium text-foreground">Rol</Label>
           <DispersionPillSelect
             instanceId="iam-filter-rol"
@@ -115,6 +130,24 @@ export function IamSearchFilters({
             dropdownOpen={dropdownPillAbierto}
             setDropdownOpen={setDropdownPillAbierto}
             ariaLabel="Filtrar por rol"
+          />
+        </div>
+        <div className="space-y-2 sm:col-span-2 xl:col-span-1">
+          <Label className="text-sm font-medium text-foreground">
+            Avisos viáticos
+          </Label>
+          <DispersionPillSelect
+            instanceId="iam-filter-avisos-dispersion-viaticos"
+            value={filtroAvisosDispersionViaticos}
+            options={opcionesAvisosDispersion}
+            onChange={(v) => {
+              setFiltroAvisosDispersionViaticos(v as FiltroAvisosDispersionViaticosIam)
+            }}
+            placeholder="Todos los avisos"
+            disabled={deshabilitado}
+            dropdownOpen={dropdownPillAbierto}
+            setDropdownOpen={setDropdownPillAbierto}
+            ariaLabel="Filtrar por avisos de dispersión de viáticos"
           />
         </div>
       </div>

@@ -85,5 +85,5 @@ export interface TravelRequestPageModel {
   handleFileUpload: (
     tripIndex: number,
     event: ChangeEvent<HTMLInputElement>
-  ) => void
+  ) => Promise<void>
 }

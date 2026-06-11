@@ -3,6 +3,10 @@ import { AxiosError } from "axios"
 import { useNavigate, useSearchParams } from "react-router-dom"
 
 import { showAppToast } from "@/components/app-toast"
+import {
+  CompressOdometerImageError,
+  compressOdometerImage,
+} from "@/lib/compress-odometer-image"
 import { useAuthStore } from "@/features/auth/store/authStore"
 import type { TravelRequestGastos } from "../interfaces/travel-request-gastos.interface"
 import type { TravelRequestMousePosition } from "../interfaces/travel-request-mouse-position.interface"
@@ -16,6 +20,7 @@ import type {
   TravelRequestTripSubmitFieldErrorKey,
   TravelRequestTripSubmitFieldErrors,
 } from "../interfaces/travel-request-trip-submit-field-errors.interface"
+import { computeTravelRequestTripTotal } from "../utils/travel-request-trip-totals"
 import {
   correctRejectedTravelTrip,
   createTravelRequest,
@@ -628,10 +633,7 @@ export function useTravelRequestPage(): TravelRequestPageModel {
     if (!trip) {
       return 0
     }
-    return Object.values(trip.gastos).reduce(
-      (acc, val) => acc + (parseFloat(val) || 0),
-      0
-    )
+    return computeTravelRequestTripTotal(trip)
   }
 
   function calcularTotalTodosLosViajes(): number {
@@ -914,6 +916,7 @@ export function useTravelRequestPage(): TravelRequestPageModel {
             montoSolicitado: parseNullableNumber(viaje.montoGasolina),
             distanciaKm: parseNullableNumber(viaje.distancia),
             comentarios: viaje.comentariosGasolina || null,
+            fotoOdometroBase64: viaje.fotoOdometro,
           },
           tag: {
             necesitaTag: viaje.necesitaTag,
@@ -966,22 +969,34 @@ export function useTravelRequestPage(): TravelRequestPageModel {
     }
   }
 
-  function handleFileUpload(
+  async function handleFileUpload(
     tripIndex: number,
     event: ChangeEvent<HTMLInputElement>
-  ): void {
+  ): Promise<void> {
     const file = event.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onload = (loadEvent) => {
-        const result = loadEvent.target?.result as string
-        setTrips((prev) =>
-          prev.map((trip, i) =>
-            i === tripIndex ? { ...trip, fotoOdometro: result } : trip
-          )
+    if (!file) {
+      return
+    }
+
+    try {
+      const result = await compressOdometerImage(file)
+      setTrips((prev) =>
+        prev.map((trip, i) =>
+          i === tripIndex ? { ...trip, fotoOdometro: result } : trip
         )
+      )
+    } catch (error) {
+      if (
+        error instanceof CompressOdometerImageError &&
+        error.code === "FILE_TOO_LARGE"
+      ) {
+        showAppToast("La imagen no debe superar 10MB.", "error")
+        return
       }
-      reader.readAsDataURL(file)
+
+      showAppToast("No se pudo procesar la imagen del odómetro.", "error")
+    } finally {
+      event.target.value = ""
     }
   }
 
@@ -1401,6 +1416,7 @@ function buildTripPayloadForApi(
       montoSolicitado: parseNullableNumber(trip.montoGasolina),
       distanciaKm: parseNullableNumber(trip.distancia),
       comentarios: trip.comentariosGasolina || null,
+      fotoOdometroBase64: trip.fotoOdometro,
     },
     tag: {
       necesitaTag: trip.necesitaTag,
